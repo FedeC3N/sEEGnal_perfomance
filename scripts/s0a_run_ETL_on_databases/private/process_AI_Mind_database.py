@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Each step of the ETL called on the AI-Mind database
+
+Created on Mon 20/05/2024
+
+@author: Fede
+"""
+
+# Imports
+import os
+import re
+import sys
+
+from pprint import pprint
+
+import aimind.meeg.io.bids as bids
+import aimind.meeg.tools.mne as aimind_mne
+from eeglabio.utils import export_mne_epochs
+
+
+
+def create_eeg_task(func):
+
+    def wrapper(*args):
+
+        # Get the input
+        config = args[0]
+        current_session_id = args[1]
+
+        # Create the eeg_task variable
+        eeg_task = {
+            'id':20921,
+            'session_id':current_session_id,
+            'task_type_id':'eeg',
+            'eegdetails':[{
+                'id':1454,
+                'data_collector':'Mario Alberti',
+                'head_circ_cm':51.0,
+                'inion_nasion_cm':25.0,
+                'cap_size':'L'}],
+            'eegmetadata':[]}
+
+        # Find all the eeg recordings
+        pattern = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(1-EO|2-EC|3-EO|4-EC)_.*"
+        current_path = os.path.join(config['dw_folder'],config['dw_raw_folder'],
+                                    config['prospective_folder'],'eeg',current_session_id,current_session_id)
+        current_subject_files = os.listdir(os.path.join(config['data_root'],current_path))
+
+        # For each file complete the EEG variable
+        for ifile in range(len(current_subject_files)):
+
+            current_file = current_subject_files[ifile]
+            type_id = current_file[-3:]
+
+            dummy = re.findall(pattern,current_file)
+            if len(dummy) == 0:
+                continue
+
+            eeg_task_id = dummy[0]
+
+            # Add the file to the metadata
+            eegmetadata = {'id':97759,
+                           'path':current_path,
+                           'filename':current_file,
+                           'eeg_task_id':eeg_task_id,
+                           'eeg_type_id':type_id}
+
+            eeg_task['eegmetadata'].append(eegmetadata)
+
+        func(config,eeg_task)
+
+    return wrapper
+
+
+
+def create_curated_bids_path(func):
+
+    def wrapper(*args):
+
+        # Get the original config and eeg_task
+        config = args[0]
+        eeg_task = args[1]
+
+
+
+        # Update the bids_path
+        bids_path = mne_bids.BIDSPath(
+            subject=original_bids_path.subject,
+            session=original_bids_path.session,
+            task=original_bids_path.task,
+            datatype=original_bids_path.datatype,
+            root=original_bids_path.root,
+            suffix=original_bids_path.suffix,
+            extension='.vhdr')
+
+        # Badchannel detection
+        func(config,bids_path)
+
+
+    return wrapper
+
+
+
+@create_eeg_task
+def standardize(config,eeg_task):
+    """
+
+    Call the ETL functions to standardize
+
+    """
+
+    # Add the ETL functions to the path
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    from aimind.etl.standardize.standardize import standardize_eeg_meg
+
+    # Standardize
+    result = standardize_eeg_meg(config,eeg_task)
+
+    # Some output
+    print(result['metrics'])
+    pprint(result['metadata']['detail'])
+    print('')
+
+    # Return the search path to the original state
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+
+
+
+@create_eeg_task
+def badchannel_detection(config,eeg_task):
+    """
+
+    Call the ETL functions to standardize
+
+    """
+
+    # Add the ETL functions to the path
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    from aimind.etl.preprocess.badchannel_detection import badchannel_detection as etl_badchannel_detection
+
+    # Standardize
+    result = etl_badchannel_detection(config,eeg_task)
+
+    # Some output
+    print(result['metrics'])
+    pprint(result['metadata']['detail'])
+    print('')
+
+    # Return the search path to the original state
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+
+
+
+@create_eeg_task
+def artifact_detection(config,eeg_task):
+    """
+
+    Call the ETL functions to standardize
+
+    """
+
+    # Add the ETL functions to the path
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    from aimind.etl.preprocess.artifact_detection import artifact_detection as etl_artifact_detection
+
+    # Standardize
+    result = etl_artifact_detection(config,eeg_task)
+
+    # Some output
+    print(result['metrics'])
+    pprint(result['metadata']['detail'])
+    print('')
+
+    # Return the search path to the original state
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+
+
+
+@create_eeg_task
+def final_qa(config,eeg_task):
+    """
+
+    Call the ETL functions to standardize
+
+    """
+
+    # Add the ETL functions to the path
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    from aimind.etl.qc.final_quality_assessment import final_quality_assessment_eeg_meg
+
+    # Standardize
+    result = final_quality_assessment_eeg_meg(config,eeg_task)
+
+    # Some output
+    print(result['metrics'])
+    pprint(result['metadata']['detail'])
+    print('')
+
+    # Return the search path to the original state
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+
+
+@create_eeg_task
+def export_clean(config,eeg_task):
+    """
+
+    For each recording, check if it past the quality_check and then export it clean
+
+    """
+
+    for file_data in eeg_task['eegmetadata']:
+
+        # Only for eeg
+        if file_data["eeg_type_id"] == "cnt":
+
+            # Curated folder
+            base_root = os.path.join(config["data_root"],config['dw_folder'],config['dw_curated_folder'])
+
+            # Create the bids_path
+            current_bids_path = bids.build_bids(config,eeg_task['session_id'],file_data,base_root)
+
+            # Check if it is in Curated folder
+            if os.path.exists(current_bids_path.fpath):
+
+                # Load the recording
+                epoch_definition = {'length':4,'overlap':0,'padding':0}
+                raw = aimind_mne.prepare_raw(current_bids_path, preload=True,
+                                             badchannels_to_metadata=True, exclude_badchannels=True,
+                                             set_annotations=True, epoch=epoch_definition)
+
+                # Create the output
+                output_path = os.path.abspath(os.path.join(
+                    'data',
+                    config['database'],
+                    'cleaned',
+                    current_bids_path.basename))[:-5]
+
+                output_fname = output_path + '_etl_clean.set'
+
+                # Export
+                export_mne_epochs(raw,output_fname)
