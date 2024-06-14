@@ -1,5 +1,6 @@
 # Ignore Pycharm
 .idea/
+*__pycache__
 
 # Ignore data of the project
 data/
