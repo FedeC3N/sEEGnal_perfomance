@@ -1,0 +1,9 @@
+# Ignore Pycharm
+.idea/
+
+# Ignore data of the project
+data/
+
+# Ignore all the documents
+docs/
+excels/
