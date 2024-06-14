@@ -5,6 +5,7 @@
 # Ignore data of the project
 data/
 EEG_experts_preprocessing_scripts.zip
+*.mat
 
 # Ignore all the documents
 docs/
