@@ -230,6 +230,23 @@ def export_clean(config,eeg_task):
                                              badchannels_to_metadata=True, exclude_badchannels=True,
                                              set_annotations=True, epoch=epoch_definition)
 
+                # Apply the clean components
+                # Read the ICA information
+                sobi = bids.read_sobi(current_bids_path, 'sobi')
+
+                # Keep brain and other components
+                components_to_include = []
+                if 'brain' in sobi.labels_.keys():
+                    components_to_include.append(sobi.labels_['brain'])
+                if 'other' in sobi.labels_.keys():
+                    components_to_include.append(sobi.labels_['other'])
+                components_to_include = sum(components_to_include, [])
+
+                # If desired components, apply them.
+                if len(components_to_include) > 0:
+                    # Remove the eog components
+                    sobi.apply(raw, include=components_to_include)
+
                 # Create the output
                 output_path = os.path.abspath(os.path.join(
                     'data',
