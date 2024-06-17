@@ -23,6 +23,8 @@ for ifile = 1 : numel(files)
     % Get the metadata
     expression = 'sub-(\w*)_ses-(\w*)_task-(\w*)_eeg_(\w*)_clean.set';
     dummy = regexp(current_file.name,expression,'tokens');
+
+    % For the EEG experts, use 'eeg_expert'
     dataset(dataset_index).origin = dummy{1}{4};
     dataset(dataset_index).sub = dummy{1}{1};
     dataset(dataset_index).ses = dummy{1}{2};

@@ -3,21 +3,22 @@ clc
 restoredefaultpath
 
 % Paths
-config.path.dataset = '../../../../data/SRM_database/dataset';
-config.path.stats = '../../../../data/SRM_database/stats';
+config.path.dataset = '../../../../data/AI_Mind_database/dataset';
+config.path.stats = '../../../../data/AI_Mind_database/stats';
 
 % Create output path
 if ~exist(config.path.stats), mkdir(config.path.stats), end
 
 % Load the whole dataset
-load(sprintf('%s/SRM_dataset.mat',config.path.dataset));
+load(sprintf('%s/AI_Mind_dataset.mat',config.path.dataset));
 
 % To define later the pow matrix
-complete_channel_labels = {'Fp1';'AF7';'AF3';'F1';'F3';'F5';'F7';'FT7';'FC5';'FC3';'FC1';'C1';'C3';'C5';'T7';'TP7';'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9';'PO7';'PO3';'O1';'Iz';'Oz';'POz';'Pz';'CPz';'Fpz';'Fp2';'AF8';'AF4';'AFz';'Fz';'F2';'F4';'F6';'F8';'FT8';'FC6';'FC4';'FC2';'FCz';'Cz';'C2';'C4';'C6';'T8';'TP8';'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10';'PO8';'PO4';'O2'};
+complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'M1', 'T7', 'C3', 'Cz', 'C4', 'T8', 'M2', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3', 'Pz', 'P4', 'P8', 'POz', 'O1', 'O2', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FC3', 'FCz', 'FC4', 'C5', 'C1', 'C2', 'C6', 'CP3', 'CP4', 'P5', 'P1', 'P2', 'P6', 'F9', 'PO3', 'PO4', 'F10', 'FT7', 'FT8', 'TP7', 'TP8', 'PO7', 'PO8', 'FT9', 'FT10', 'TPP9h', 'TPP10h', 'PO9', 'PO10', 'P9', 'P10', 'AFF1', 'AFz', 'AFF2', 'FFC5h', 'FFC3h', 'FFC4h', 'FFC6h', 'FCC5h', 'FCC3h', 'FCC4h', 'FCC6h', 'CCP5h', 'CCP3h', 'CCP4h', 'CCP6h', 'CPP5h', 'CPP3h', 'CPP4h', 'CPP6h', 'PPO1', 'PPO2', 'I1', 'Iz', 'I2', 'AFp3h', 'AFp4h', 'AFF5h', 'AFF6h', 'FFT7h', 'FFC1h', 'FFC2h', 'FFT8h', 'FTT9h', 'FTT7h', 'FCC1h', 'FCC2h', 'FTT8h', 'FTT10h', 'TTP7h', 'CCP1h', 'CCP2h', 'TTP8h', 'TPP7h', 'CPP1h', 'CPP2h', 'TPP8h', 'PPO9h', 'PPO5h', 'PPO6h', 'PPO10h', 'POO9h', 'POO3h', 'POO4h', 'POO10h', 'OI1h', 'OI2h'}';
 
 % Load the power
-[pow_SRM_dataset_norm,~,channels_SRM] = read_pow_dataset(dataset,'SRM_database');
-[pow_ETL_dataset_norm,f,channels_ETL] = read_pow_dataset(dataset,'ETL_database');
+[pow_ETL_dataset_norm,f,channels_ETL] = read_pow_dataset(dataset,'etl');
+[pow_eeg_expert_dataset_norm,f,channels_eeg_expert] = read_pow_user_dataset(dataset);
+
 
 % Per band and area
 % Define the frequency bands
@@ -40,7 +41,7 @@ areas_info(7).channel = complete_channel_labels;
 results = [];
 
 for iband = 1 : numel(bands_info)
-   
+    
     % Obtain the current freqencies of interest
     current_band = bands_info(iband).name;
     current_band_f_limits = bands_info(iband).f_limits;
@@ -52,25 +53,27 @@ for iband = 1 : numel(bands_info)
     for iarea = 1 : numel (areas_info)
         
         % Save space for the comparison
-        avg_band_pow_SRM = nan(1,size(pow_SRM_dataset_norm,3));
+        avg_band_pow_eeg_expert = nan(1,size(pow_eeg_expert_dataset_norm,3));
         avg_band_pow_ETL = nan(1,size(pow_ETL_dataset_norm,3));
         
         % Selects the channel for the current subject
+        desired_channels = areas_info(iarea).channel;
+        desired_channels_index = ismember(complete_channel_labels, desired_channels);
+        
         % and estimate the average power
-        for isubject = 1 : size(pow_SRM_dataset_norm,3)
+        for isubject = 1 : size(pow_eeg_expert_dataset_norm,3)
             
-            % Channels of interest
-            desired_channels = areas_info(iarea).channel;
-            desired_channels_index = ismember(complete_channel_labels, desired_channels);
-
-            % SRM dataset
-            current_channels = desired_channels_index & channels_SRM(isubject).channels_included_index;
-            current_pow_norm = pow_SRM_dataset_norm(current_channels,current_f,isubject);
+            % EEG experts dataset
+            current_channels = desired_channels_index & channels_eeg_expert(isubject).channels_included_index;
+            current_pow_norm = pow_eeg_expert_dataset_norm(current_channels,current_f,isubject);
             current_pow_norm = mean(mean(current_pow_norm,1),2);
             
-            avg_band_pow_SRM(isubject) = current_pow_norm;
+            avg_band_pow_eeg_expert(isubject) = current_pow_norm;
+        end
+        
+        % ETL dataset
+        for isubject = 1 : size(pow_ETL_dataset_norm,3)
             
-            % ETL dataset
             current_channels = desired_channels_index & channels_ETL(isubject).channels_included_index;
             current_pow_norm = pow_ETL_dataset_norm(current_channels,current_f,isubject);
             current_pow_norm = mean(mean(current_pow_norm,1),2);
@@ -80,35 +83,35 @@ for iband = 1 : numel(bands_info)
         end
         
         % There are subjects without valid channels. Remove them
-        valid = ~isnan(avg_band_pow_SRM) & ~isnan(avg_band_pow_ETL);
-        avg_band_pow_SRM = avg_band_pow_SRM(valid);
+        valid = ~isnan(avg_band_pow_eeg_expert) & ~isnan(avg_band_pow_ETL);
+        avg_band_pow_eeg_expert = avg_band_pow_eeg_expert(valid);
         avg_band_pow_ETL = avg_band_pow_ETL(valid);
         
         % ttest for the current_area - band
-        [~,p,~,current_stats] = ttest(avg_band_pow_SRM,avg_band_pow_ETL);
+        [~,p,~,current_stats] = ttest(avg_band_pow_eeg_expert,avg_band_pow_ETL);
         
         % Estimate the Effect Size (Cohen's d)
-        diff = abs(avg_band_pow_SRM - avg_band_pow_ETL);
+        diff = abs(avg_band_pow_eeg_expert - avg_band_pow_ETL);
         d = mean(diff)/std(diff);
         
         % mean and stderror
-        mean_SRM = mean(avg_band_pow_SRM);
-        std_mean_error_SRM = std(avg_band_pow_SRM)/numel(avg_band_pow_SRM);
+        mean_eeg_expert = mean(avg_band_pow_eeg_expert);
+        std_mean_error_eeg_expert = std(avg_band_pow_eeg_expert)/numel(avg_band_pow_eeg_expert);
         mean_ETL = mean(avg_band_pow_ETL);
         std_mean_error_ETL = std(avg_band_pow_ETL)/numel(avg_band_pow_ETL);
-               
+        
         % Save
         results.stats.(current_band).(areas_info(iarea).name).test = 'Paired ttest';
         results.stats.(current_band).(areas_info(iarea).name).p = p;
         results.stats.(current_band).(areas_info(iarea).name).stats = current_stats;
         results.stats.(current_band).(areas_info(iarea).name).effect_size_name = 'Cohen d';
         results.stats.(current_band).(areas_info(iarea).name).effect_size = d;
-        results.stats.(current_band).(areas_info(iarea).name).mean_SRM = mean_SRM;
-        results.stats.(current_band).(areas_info(iarea).name).std_mean_error_SRM = std_mean_error_SRM;
+        results.stats.(current_band).(areas_info(iarea).name).mean_eeg_expert = mean_eeg_expert;
+        results.stats.(current_band).(areas_info(iarea).name).std_mean_error_eeg_expert = std_mean_error_eeg_expert;
         results.stats.(current_band).(areas_info(iarea).name).mean_ETL = mean_ETL;
         results.stats.(current_band).(areas_info(iarea).name).std_mean_error_ETL = std_mean_error_ETL;
     end
-        
+    
     
 end
 
@@ -126,7 +129,7 @@ save(outfile,'-struct','results');
 function [pow_dataset_norm,f,channels] = read_pow_dataset(dataset, desired_dataset)
 
 % subject of interest
-current_dataset_index = ismember({dataset.database},desired_dataset);
+current_dataset_index = ismember({dataset.origin},desired_dataset);
 current_dataset = dataset(current_dataset_index);
 
 for icurrent = 1 : numel(current_dataset)
@@ -153,7 +156,28 @@ for icurrent = 1 : numel(current_dataset)
     pow_dataset_norm(1:size(current_pow_norm,1),:,icurrent) = current_pow_norm;
     channels(icurrent).channels_included = pow.channels_included;
     channels(icurrent).channels_included_index = pow.channels_included_index;
-   
+    
 end
+
+end
+
+
+function [pow_eeg_expert_dataset_norm,f,channels_eeg_expert] = read_pow_user_dataset(dataset)
+
+users = {dataset.origin};
+users = unique(users(~ismember(users,'etl')));
+for iuser = 1 : numel(users)
+    
+    [current_pow_eeg_expert_dataset_norm,f,channels_eeg_expert] = ...
+        read_pow_dataset(dataset,users{iuser});
+    
+    if iuser == 1
+        pow_eeg_expert_dataset_norm = nan([size(current_pow_eeg_expert_dataset_norm),numel(users)]);
+    end
+    pow_eeg_expert_dataset_norm(:,:,:,iuser) = current_pow_eeg_expert_dataset_norm;
+    
+end
+
+pow_eeg_expert_dataset_norm = nanmean(pow_eeg_expert_dataset_norm,4);
 
 end

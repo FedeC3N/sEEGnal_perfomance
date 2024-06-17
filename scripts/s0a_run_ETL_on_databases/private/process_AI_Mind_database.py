@@ -226,8 +226,9 @@ def export_clean(config,eeg_task):
 
                 # Load the recording
                 epoch_definition = {'length':4,'overlap':0,'padding':0}
+                channels_to_exclude = ['CLAV','VEOGL','EMG1','EMG2']
                 raw = aimind_mne.prepare_raw(current_bids_path, preload=True,
-                                             badchannels_to_metadata=True, exclude_badchannels=True,
+                                             badchannels_to_metadata=True, exclude_badchannels=True, channels_to_exclude=channels_to_exclude,
                                              set_annotations=True, epoch=epoch_definition)
 
                 # Apply the clean components

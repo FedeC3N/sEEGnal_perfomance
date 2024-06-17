@@ -3,7 +3,7 @@ clc
 restoredefaultpath
 
 % Paths
-config.path.stats = '../../../../data/SRM_database/stats';
+config.path.stats = '../../../../data/AI_Mind_database/stats';
 
 % Load the results
 load(sprintf('%s/pow_stats.mat',config.path.stats));
@@ -29,7 +29,7 @@ for iband = 1 : numel(bands_info)
     	current_area = areas_info(iarea).name;
         
         % Stats
-        current_mean_SRM = sprintf('%10e (%10e)',stats.(current_band).(current_area).mean_SRM,stats.(current_band).(current_area).std_mean_error_SRM);
+        current_mean_eeg_expert = sprintf('%10e (%10e)',stats.(current_band).(current_area).mean_eeg_expert,stats.(current_band).(current_area).std_mean_error_eeg_expert);
         current_mean_ETL = sprintf('%10e (%10ef)',stats.(current_band).(current_area).mean_ETL,stats.(current_band).(current_area).std_mean_error_ETL); 
         current_p = stats.(current_band).(current_area).p;
         current_t = stats.(current_band).(current_area).stats.tstat;
@@ -38,10 +38,10 @@ for iband = 1 : numel(bands_info)
         % Add to table
         if iarea == 1
             results_table(counter,:) = {current_band, current_area,...
-                current_mean_SRM,current_mean_ETL,current_t,current_p, current_d};
+                current_mean_eeg_expert,current_mean_ETL,current_t,current_p, current_d};
         else
             results_table(counter,:) = {'', current_area,...
-                current_mean_SRM,current_mean_ETL,current_t,current_p, current_d};
+                current_mean_eeg_expert,current_mean_ETL,current_t,current_p, current_d};
         end
         counter = counter + 1;
         
