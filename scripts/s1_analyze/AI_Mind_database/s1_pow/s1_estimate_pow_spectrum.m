@@ -27,28 +27,36 @@ for ifile = 1 : numel(dataset)
     [~,data] = evalc( 'process_subject(dataset(ifile))' );
     data_matrix = cat(3,data.trial{:});
     
-    % Force to have 4 seconds (4096 samples)
+    % Force to have 4 seconds
     n = 1:4*data.hdr.Fs;
     data_matrix = data_matrix(:,n,:);
-    
-    % Index to the included channels
-    channels_included = data.label;
-    channels_included_index = ismember(complete_channel_labels,channels_included);
+
+    % Define the parameters for power spectrum estimation
+    windows_size = size(data_matrix,2);
+    noverlap = windows_size/2;
+    nfft = size(data_matrix,2)-1;
+    fs = data.hdr.Fs;
+    pow_spectrum = nan(numel(complete_channel_labels),windows_size/2,size(data_matrix,3));
     
     % Estimate the pow spectrum in each trial
-    pow_spectrum = nan(numel(complete_channel_labels),numel(n),size(data_matrix,3));
-    pow_spectrum_norm = nan(numel(complete_channel_labels),numel(n),size(data_matrix,3));
     for itrial = 1 : size(data_matrix,3)
        
         % Matlab works column-wise
         current_trial = data_matrix(:,:,itrial)';
         
         % Estimate the power spectrum (one-sided)
-        [current_pow_spectrum,f] = pspectrum(current_trial,data.hdr.Fs);
+        [current_pow_spectrum,f] = pwelch(current_trial,windows_size,noverlap,nfft,fs,'onesided','power');
         
-        % Save
-        pow_spectrum(channels_included_index,:,itrial) = current_pow_spectrum';
-        
+        % Save in the correct position according to complete channels
+        for ichannel = 1 : numel(data.label)
+            
+            current_channel_index = find(ismember(complete_channel_labels,...
+                data.label{ichannel}));
+            
+            if ~isempty(current_channel_index)
+                pow_spectrum(current_channel_index,:,itrial) = current_pow_spectrum(:,ichannel)';
+            end
+        end
     end
     
     % Keep only frequencies between 2-45 Hz
@@ -60,14 +68,13 @@ for ifile = 1 : numel(dataset)
     pow = [];    
     pow.f = f;
     pow.complete_channel_labels = complete_channel_labels;
-    pow.channels_included = channels_included;
-    pow.channels_included_index = channels_included_index;
+    pow.channels_included = data.label;
     pow.pow_spectrum = pow_spectrum;
     
     % Save the file
     outfile = sprintf('%s/sub-%s_ses-%s_task-%s_%s_pow', config.path.pow,...
         dataset(ifile).sub,dataset(ifile).ses,dataset(ifile).task,...
-        dataset(ifile).database);
+        dataset(ifile).origin);
     save(outfile,'-struct','pow')
     
     % Save the metadata in the dataset
@@ -75,7 +82,7 @@ for ifile = 1 : numel(dataset)
     pow.path = config.path.pow;
     pow.file = sprintf('sub-%s_ses-%s_task-%s_%s_pow',...
         dataset(ifile).sub,dataset(ifile).ses,dataset(ifile).task,...
-        dataset(ifile).database);
+        dataset(ifile).origin);
     dataset(ifile).pow = pow;
     
 end
