@@ -88,6 +88,6 @@ for ifile = 1 : numel(dataset)
 end
 
 % Save
-outfile = sprintf('%s/SRM_dataset.mat',config.path.dataset);
+outfile = sprintf('%s/AI_Mind_dataset.mat',config.path.dataset);
 save('-v7.3',outfile,'dataset')
 
