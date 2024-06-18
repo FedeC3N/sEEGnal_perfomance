@@ -30,7 +30,7 @@ for ifile = 1 : numel(files)
     dataset(dataset_index).ses = dummy{1}{2};
     dataset(dataset_index).task = dummy{1}{3};
     dataset(dataset_index).file = current_file.name;
-    dataset(dataset_index).path = current_file.folder;
+    dataset(dataset_index).path = config.path.clean_data;
     
     % Update the struct index
     dataset_index = dataset_index + 1;
