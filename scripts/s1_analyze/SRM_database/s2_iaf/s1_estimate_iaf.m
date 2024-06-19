@@ -84,7 +84,7 @@ for ifile = 1 : numel(dataset)
     % Save the file
     outfile = sprintf('%s/sub-%s_ses-%s_task-%s_%s_iaf', config.path.iaf,...
         dataset(ifile).sub,dataset(ifile).ses,dataset(ifile).task,...
-        dataset(ifile).database);
+        dataset(ifile).origin);
     save(outfile,'-struct','iaf')
     
     % Save the metadata in the dataset
@@ -92,7 +92,7 @@ for ifile = 1 : numel(dataset)
     iaf.path = config.path.iaf;
     iaf.file = sprintf('sub-%s_ses-%s_task-%s_%s_iaf',...
         dataset(ifile).sub,dataset(ifile).ses,dataset(ifile).task,...
-        dataset(ifile).database);
+        dataset(ifile).origin);
     dataset(ifile).iaf = iaf;
     
 end

@@ -67,7 +67,7 @@ save(outfile,'-struct','results');
 function iaf_dataset = read_iaf_dataset(dataset, desired_dataset)
 
 % subject of interest
-current_dataset_index = ismember({dataset.database},desired_dataset);
+current_dataset_index = ismember({dataset.origin},desired_dataset);
 current_dataset = dataset(current_dataset_index);
 
 for icurrent = 1 : numel(current_dataset)
