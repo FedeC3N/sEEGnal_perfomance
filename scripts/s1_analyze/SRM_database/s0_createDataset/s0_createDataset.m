@@ -31,7 +31,7 @@ for isub = 1 : numel(sub_folders)
         current_ses = ses_folders{ises};
         
         % Find SRM files
-        dataset(dataset_index).database = 'SRM_database';
+        dataset(dataset_index).origin = 'SRM_database';
         current_file = dir(sprintf('%s/%s/%s/eeg/*desc-epochs_eeg.set',...
             config.path.clean_data,current_sub,current_ses));
         dataset(dataset_index).sub = current_sub(5:end);
@@ -45,7 +45,7 @@ for isub = 1 : numel(sub_folders)
         dataset_index = dataset_index + 1;
         
         % Find ETL files
-        dataset(dataset_index).database = 'ETL_database';
+        dataset(dataset_index).origin = 'ETL_database';
         current_file = dir(sprintf('%s/%s/%s/eeg/*etl_clean.set',...
             config.path.clean_data,current_sub,current_ses));
         dataset(dataset_index).sub = current_sub(5:end);

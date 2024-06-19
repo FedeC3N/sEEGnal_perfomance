@@ -55,7 +55,7 @@ plot_pow_spectrum_norm_all_areas(to_plot,pow_SRM_dataset,pow_ETL_dataset);
 function [pow_dataset_norm,f,channels] = read_pow_dataset(dataset, desired_dataset)
 
 % subject of interest
-current_dataset_index = ismember({dataset.database},desired_dataset);
+current_dataset_index = ismember({dataset.origin},desired_dataset);
 current_dataset = dataset(current_dataset_index);
 
 for icurrent = 1 : numel(current_dataset)
@@ -81,7 +81,7 @@ for icurrent = 1 : numel(current_dataset)
     end
     pow_dataset_norm(1:size(current_pow_norm,1),:,icurrent) = current_pow_norm;
     channels(icurrent).channels_included = pow.channels_included;
-    channels(icurrent).channels_included_index = pow.channels_included_index;
+    channels(icurrent).channels_included_index = ismember(pow.complete_channel_labels,pow.channels_included);
    
 end
 
