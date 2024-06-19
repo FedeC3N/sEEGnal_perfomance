@@ -13,7 +13,7 @@ sub_folders = dir(sprintf('%s/sub*',config.path.clean_data));
 sub_folders = {sub_folders.name};
 
 % Structs for the files
-dataset = struct('database',[],'sub',[],'ses',[],'task',[],'path',[],'file',[]);
+dataset = struct('origin',[],'sub',[],'ses',[],'task',[],'path',[],'file',[]);
 dataset_index = 1;
 
 for isub = 1 : numel(sub_folders)
