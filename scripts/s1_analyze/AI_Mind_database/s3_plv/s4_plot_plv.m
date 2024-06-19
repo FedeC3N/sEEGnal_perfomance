@@ -14,7 +14,7 @@ config.path.stats = '../../../../data/AI_Mind_database/stats';
 load(sprintf('%s/AI_Mind_dataset.mat',config.path.dataset));
 
 % Load the power
-[plv_eeg_expert_dataset, ~, channels_SRM] = read_plv_user_dataset(dataset);
+[plv_eeg_expert_dataset, ~, channels_eeg_expert] = read_plv_user_dataset(dataset);
 [plv_ETL_dataset, bands_info, channels_ETL] = read_plv_dataset(dataset,'etl');
 
 % Plot difference in channels
@@ -24,7 +24,7 @@ plot_diff_channels(plv_eeg_expert_dataset,plv_ETL_dataset,bands_info)
 plot_corr_channels(plv_eeg_expert_dataset,plv_ETL_dataset,bands_info, channels_ETL)
 
 % Plot correlation of PLV matrix for each subject
-plot_corr_plv_subjects(plv_eeg_expert_dataset,plv_ETL_dataset,bands_info, channels_SRM,channels_ETL)
+plot_corr_plv_subjects(plv_eeg_expert_dataset,plv_ETL_dataset,bands_info, channels_eeg_expert,channels_ETL)
 
 % Aux functions
 function [plv_dataset,bands_info,channels] = read_plv_dataset(dataset, desired_dataset)
@@ -96,7 +96,7 @@ end
 
 
 
-function plot_diff_channels(plv_SRM_dataset,plv_ETL_dataset,bands_info)
+function plot_diff_channels(plv_eeg_expert_dataset,plv_ETL_dataset,bands_info)
 
 figure('WindowState', 'maximized');
 hold on
@@ -105,11 +105,11 @@ hold on
 for iband = 1 : numel(bands_info)
     
     % Select the band data
-    current_plv_global_SRM = squeeze(plv_SRM_dataset(:,:,iband,:));
+    current_plv_global_eeg_expert = squeeze(plv_eeg_expert_dataset(:,:,iband,:));
     current_plv_global_ETL = squeeze(plv_ETL_dataset(:,:,iband,:));
     
     % Get the difference of each channel and average all the differences
-    plv_diff = current_plv_global_SRM - current_plv_global_ETL;
+    plv_diff = current_plv_global_eeg_expert - current_plv_global_ETL;
     plv_diff_avg = nanmean(plv_diff,3);
     
     % Symmetrical. Get only upper matrix
@@ -117,9 +117,12 @@ for iband = 1 : numel(bands_info)
     plv_diff_vector = plv_diff_avg(plv_diff_vector);
     x_vector = iband * ones(numel(plv_diff_vector),1);
     
+    % Express the difference as percentage
+    plv_diff_vector_perc = (abs(plv_diff_vector)/2)*100;
+    
     % Plot
-    sw = swarmchart(x_vector,plv_diff_vector,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
-    bx = boxchart(x_vector,plv_diff_vector,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
+    sw = swarmchart(x_vector,plv_diff_vector_perc,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
+    bx = boxchart(x_vector,plv_diff_vector_perc,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
         'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
     
     
@@ -128,8 +131,9 @@ end
 xlim([0 numel(bands_info) + 1])
 xticks(1:numel(bands_info))
 xticklabels({bands_info.name})
-title('Average PLV difference for each channel')
-ylabel('SRM_PLV - ETL_PLV','Interpreter','none')
+ylim([-1 15])
+title('Average PLV difference (in %) for each channel')
+ylabel('% Variation','Interpreter','none')
 set(gca,'TickLabelInterpreter','none')
 
 
@@ -137,7 +141,7 @@ set(gca,'TickLabelInterpreter','none')
 end
 
 
-function plot_corr_channels(plv_SRM_dataset,plv_ETL_dataset,bands_info, channels)
+function plot_corr_channels(plv_eeg_expert_dataset,plv_ETL_dataset,bands_info, channels)
 
 figure('WindowState', 'maximized');
 hold on
@@ -146,34 +150,34 @@ hold on
 for iband = 1 : numel(bands_info)
     
     % Select the band data
-    current_plv_global_SRM = squeeze(plv_SRM_dataset(:,:,iband,:));
+    current_plv_global_eeg_expert = squeeze(plv_eeg_expert_dataset(:,:,iband,:));
     current_plv_global_ETL = squeeze(plv_ETL_dataset(:,:,iband,:));
-    plv_vector_SRM = reshape(current_plv_global_SRM,[],size(current_plv_global_SRM,3));
+    plv_vector_eeg_expert = reshape(current_plv_global_eeg_expert,[],size(current_plv_global_eeg_expert,3));
     plv_vector_ETL = reshape(current_plv_global_ETL,[],size(current_plv_global_ETL,3));
     
     % Get the upper matrix
     dummy = ones(size(current_plv_global_ETL(:,:,1)));
     upper_index = abs(triu(dummy,1)) > 0 ;
     upper_index = upper_index(:);
-    plv_vector_SRM =  plv_vector_SRM(upper_index,:);
+    plv_vector_eeg_expert =  plv_vector_eeg_expert(upper_index,:);
     plv_vector_ETL = plv_vector_ETL(upper_index,:);
     
     % Estimate correlation for each channel
-    plv_vector_SRM = plv_vector_SRM';
+    plv_vector_eeg_expert = plv_vector_eeg_expert';
     plv_vector_ETL = plv_vector_ETL';
     rho = nan(1,size(plv_vector_ETL,2));
     x_vector = iband * ones(1,size(plv_vector_ETL,2));
     for ichannel = 1 : size(plv_vector_ETL,2)
         
         % Remove nans
-        current_channel_SRM = plv_vector_SRM(:,ichannel);
+        current_channel_eeg_expert = plv_vector_eeg_expert(:,ichannel);
         current_channel_ETL = plv_vector_ETL(:,ichannel);
-        nan_index = isnan(current_channel_SRM) | isnan(current_channel_ETL);
-        current_channel_SRM = current_channel_SRM(~nan_index);
+        nan_index = isnan(current_channel_eeg_expert) | isnan(current_channel_ETL);
+        current_channel_eeg_expert = current_channel_eeg_expert(~nan_index);
         current_channel_ETL = current_channel_ETL(~nan_index);
         
         
-        rho(ichannel) = corr(current_channel_SRM,current_channel_ETL);
+        rho(ichannel) = corr(current_channel_eeg_expert,current_channel_ETL);
         
     end
     
@@ -197,7 +201,7 @@ set(gca,'TickLabelInterpreter','none')
 end
 
 
-function plot_corr_plv_subjects(plv_SRM_dataset,plv_ETL_dataset,bands_info, channels_SRM,channels_ETL)
+function plot_corr_plv_subjects(plv_eeg_expert_dataset,plv_ETL_dataset,bands_info, channels_eeg_expert,channels_ETL)
 
 figure('WindowState', 'maximized');
 hold on
@@ -206,29 +210,29 @@ hold on
 for iband = 1 : numel(bands_info)
     
     % Create the rho empty and the plot axis
-    rho = nan(1,size(plv_SRM_dataset,4));
+    rho = nan(1,size(plv_eeg_expert_dataset,4));
     x_vector = iband * ones(1,size(rho,2));
     for irho = 1 :numel(rho)
         
         % Get the current plv matrix
-        current_plv_SRM = plv_SRM_dataset(:,:,iband,irho);
+        current_plv_eeg_expert = plv_eeg_expert_dataset(:,:,iband,irho);
         current_plv_ETL = plv_ETL_dataset(:,:,iband,irho);
         
         % Create an index of valid channels
-        valid = channels_SRM(irho).channels_included_index & channels_ETL(irho).channels_included_index;
+        valid = channels_eeg_expert(irho).channels_included_index & channels_ETL(irho).channels_included_index;
         
         % Remove badchannels
-        current_plv_SRM = current_plv_SRM(valid,valid);
+        current_plv_eeg_expert = current_plv_eeg_expert(valid,valid);
         current_plv_ETL = current_plv_ETL(valid,valid);
         
         % Get the upper matrix in vector format
         dummy = ones(size(current_plv_ETL));
         upper_index = abs(triu(dummy,1)) > 0 ;
-        current_plv_SRM = current_plv_SRM(upper_index);
+        current_plv_eeg_expert = current_plv_eeg_expert(upper_index);
         current_plv_ETL = current_plv_ETL(upper_index);
         
         % Correlation
-        rho(irho) = corr(current_plv_SRM,current_plv_ETL);
+        rho(irho) = corr(current_plv_eeg_expert,current_plv_ETL);
         
     end
     

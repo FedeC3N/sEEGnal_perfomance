@@ -7,17 +7,17 @@ restoredefaultpath
 addpath('../shared/')
 
 % Paths
-config.path.dataset = '../../../../data/SRM_database/dataset';
-config.path.iaf = '../../../../data/SRM_database/iaf';
+config.path.dataset = '../../../../data/AI_Mind_database/dataset';
+config.path.iaf = '../../../../data/AI_Mind_database/iaf';
 
 if ~exist(config.path.iaf), mkdir(config.path.iaf), end
 
 % To define later the pow matrix
-complete_channel_labels = {'Fp1';'AF7';'AF3';'F1';'F3';'F5';'F7';'FT7';'FC5';'FC3';'FC1';'C1';'C3';'C5';'T7';'TP7';'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9';'PO7';'PO3';'O1';'Iz';'Oz';'POz';'Pz';'CPz';'Fpz';'Fp2';'AF8';'AF4';'AFz';'Fz';'F2';'F4';'F6';'F8';'FT8';'FC6';'FC4';'FC2';'FCz';'Cz';'C2';'C4';'C6';'T8';'TP8';'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10';'PO8';'PO4';'O2'};
-occipital_channels = {'O1';'Iz';'Oz';'O9';'O2';'O10'};
+complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'M1', 'T7', 'C3', 'Cz', 'C4', 'T8', 'M2', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3', 'Pz', 'P4', 'P8', 'POz', 'O1', 'O2', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FC3', 'FCz', 'FC4', 'C5', 'C1', 'C2', 'C6', 'CP3', 'CP4', 'P5', 'P1', 'P2', 'P6', 'F9', 'PO3', 'PO4', 'F10', 'FT7', 'FT8', 'TP7', 'TP8', 'PO7', 'PO8', 'FT9', 'FT10', 'TPP9h', 'TPP10h', 'PO9', 'PO10', 'P9', 'P10', 'AFF1', 'AFz', 'AFF2', 'FFC5h', 'FFC3h', 'FFC4h', 'FFC6h', 'FCC5h', 'FCC3h', 'FCC4h', 'FCC6h', 'CCP5h', 'CCP3h', 'CCP4h', 'CCP6h', 'CPP5h', 'CPP3h', 'CPP4h', 'CPP6h', 'PPO1', 'PPO2', 'I1', 'Iz', 'I2', 'AFp3h', 'AFp4h', 'AFF5h', 'AFF6h', 'FFT7h', 'FFC1h', 'FFC2h', 'FFT8h', 'FTT9h', 'FTT7h', 'FCC1h', 'FCC2h', 'FTT8h', 'FTT10h', 'TTP7h', 'CCP1h', 'CCP2h', 'TTP8h', 'TPP7h', 'CPP1h', 'CPP2h', 'TPP8h', 'PPO9h', 'PPO5h', 'PPO6h', 'PPO10h', 'POO9h', 'POO3h', 'POO4h', 'POO10h', 'OI1h', 'OI2h'}';
+occipital_channels = {'O1', 'Oz', 'O2','I1', 'Iz', 'I2','OI1h', 'OI2h'}';
 
 % Load the whole dataset
-load(sprintf('%s/SRM_dataset.mat',config.path.dataset));
+load(sprintf('%s/AI_Mind_dataset.mat',config.path.dataset));
 
 
 for ifile = 1 : numel(dataset)
@@ -54,10 +54,10 @@ for ifile = 1 : numel(dataset)
         
         % Search the alpha peak
         f = pow.f';
-        foi = f(f > 4 & f < 15)';
+        foi = f(f > 6 & f < 15)';
         foi = double(foi);
         options = optimset('Display','off');
-        fitrange = [4 15]; % search_1peak would search within these frequencies.
+        fitrange = [6 15]; % search_1peak would search within these frequencies.
         peak = search_alpha_peak(double(f),double(current_pow_norm),...
             double(fitrange),options);
         
@@ -82,23 +82,22 @@ for ifile = 1 : numel(dataset)
     iaf.iaf_amp = peak.iaf_amp;
     
     % Save the file
-    outfile = sprintf('%s/sub-%s_ses-%s_task-%s_%s_iaf', config.path.iaf,...
+    outfile_name = sprintf('sub-%s_ses-%s_task-%s_%s_iaf',...
         dataset(ifile).sub,dataset(ifile).ses,dataset(ifile).task,...
-        dataset(ifile).database);
+        dataset(ifile).origin);
+    outfile = sprintf('%s/%s',config.path.iaf,outfile_name);
     save(outfile,'-struct','iaf')
     
     % Save the metadata in the dataset
     iaf = [];
     iaf.path = config.path.iaf;
-    iaf.file = sprintf('sub-%s_ses-%s_task-%s_%s_iaf',...
-        dataset(ifile).sub,dataset(ifile).ses,dataset(ifile).task,...
-        dataset(ifile).database);
+    iaf.file = outfile_name;
     dataset(ifile).iaf = iaf;
     
 end
 
 % Save
-outfile = sprintf('%s/SRM_dataset.mat',config.path.dataset);
+outfile = sprintf('%s/AI_Mind_dataset.mat',config.path.dataset);
 save('-v7.3',outfile,'dataset')
 
 
