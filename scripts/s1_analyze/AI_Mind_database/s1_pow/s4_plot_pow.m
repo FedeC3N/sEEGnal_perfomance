@@ -4,19 +4,19 @@ close all
 restoredefaultpath
 
 % Paths
-config.path.dataset = '../../../../data/SRM_database/dataset';
-config.path.stats = '../../../../data/SRM_database/stats';
+config.path.dataset = '../../../../data/AI_Mind_database/dataset';
+config.path.stats = '../../../../data/AI_Mind_database/stats';
 
 % Create output path
 if ~exist(config.path.stats), mkdir(config.path.stats), end
 
 % Load the whole dataset and the stats
-load(sprintf('%s/SRM_dataset.mat',config.path.dataset));
+load(sprintf('%s/AI_Mind_dataset.mat',config.path.dataset));
 load(sprintf('%s/pow_stats.mat',config.path.stats));
 
 % Load the power
-[pow_SRM_dataset,~,channels_SRM] = read_pow_dataset(dataset,'SRM_database');
-[pow_ETL_dataset,f,channels_ETL] = read_pow_dataset(dataset,'ETL_database');
+[pow_eeg_expert_dataset,~,channels_eeg_expert] = read_pow_user_dataset(dataset);
+[pow_ETL_dataset,f,channels_ETL] = read_pow_dataset(dataset,'etl');
 
 %%%%%%%%%%%%%%%
 % PLOTS
@@ -30,7 +30,7 @@ to_plot.area_of_interest = {'whole_head'};
 to_plot.areas_info = areas_info;
 to_plot.bands_info = bands_info;
 
-plot_pow_spectrum_norm_band_area(to_plot,pow_SRM_dataset,pow_ETL_dataset);
+plot_pow_spectrum_norm_band_area(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset);
 
 % Error bars in each area
 % Prepare the pow_spectrum
@@ -39,7 +39,7 @@ to_plot.band_of_interest = {'broadband'};
 to_plot.areas_info = areas_info;
 to_plot.bands_info = bands_info;
 
-plot_areas_errorbar(to_plot,pow_SRM_dataset,pow_ETL_dataset);
+plot_areas_errorbar(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset);
 
 % Normalized pow spectrum for all areas in broadband
 % Prepare the pow_spectrum
@@ -47,7 +47,7 @@ to_plot = [];
 to_plot.areas_info = areas_info;
 to_plot.bands_info = bands_info;
 
-plot_pow_spectrum_norm_all_areas(to_plot,pow_SRM_dataset,pow_ETL_dataset);
+plot_pow_spectrum_norm_all_areas(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset);
 
 
 
@@ -55,7 +55,7 @@ plot_pow_spectrum_norm_all_areas(to_plot,pow_SRM_dataset,pow_ETL_dataset);
 function [pow_dataset_norm,f,channels] = read_pow_dataset(dataset, desired_dataset)
 
 % subject of interest
-current_dataset_index = ismember({dataset.database},desired_dataset);
+current_dataset_index = ismember({dataset.origin},desired_dataset);
 current_dataset = dataset(current_dataset_index);
 
 for icurrent = 1 : numel(current_dataset)
@@ -88,7 +88,28 @@ end
 end
 
 
-function plot_pow_spectrum_norm_band_area(to_plot,pow_SRM_dataset,pow_ETL_dataset)
+function [pow_eeg_expert_dataset_norm,f,channels_eeg_expert] = read_pow_user_dataset(dataset)
+
+users = {dataset.origin};
+users = unique(users(~ismember(users,'etl')));
+for iuser = 1 : numel(users)
+    
+    [current_pow_eeg_expert_dataset_norm,f,channels_eeg_expert] = ...
+        read_pow_dataset(dataset,users{iuser});
+    
+    if iuser == 1
+        pow_eeg_expert_dataset_norm = nan([size(current_pow_eeg_expert_dataset_norm),numel(users)]);
+    end
+    pow_eeg_expert_dataset_norm(:,:,:,iuser) = current_pow_eeg_expert_dataset_norm;
+    
+end
+
+pow_eeg_expert_dataset_norm = nanmean(pow_eeg_expert_dataset_norm,4);
+
+end
+
+
+function plot_pow_spectrum_norm_band_area(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset)
 
 % All channels
 complete_channel_labels = {'Fp1';'AF7';'AF3';'F1';'F3';'F5';'F7';'FT7';'FC5';'FC3';'FC1';'C1';'C3';'C5';'T7';'TP7';'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9';'PO7';'PO3';'O1';'Iz';'Oz';'POz';'Pz';'CPz';'Fpz';'Fp2';'AF8';'AF4';'AFz';'Fz';'F2';'F4';'F6';'F8';'FT8';'FC6';'FC4';'FC2';'FCz';'Cz';'C2';'C4';'C6';'T8';'TP8';'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10';'PO8';'PO4';'O2'};
@@ -107,15 +128,15 @@ f_of_interest = to_plot.bands_info(band_index).f_original;
 f_of_interest = f_of_interest(f_index);
 
 % Update pow matrix to plot
-pow_SRM_dataset = pow_SRM_dataset(channels_index,f_index,:);
+pow_eeg_expert_dataset = pow_eeg_expert_dataset(channels_index,f_index,:);
 pow_ETL_dataset = pow_ETL_dataset(channels_index,f_index,:);
 
 % Average across electrodes
-SRM_average = squeeze(nanmean(nanmean(pow_SRM_dataset,1),3));
+SRM_average = squeeze(nanmean(nanmean(pow_eeg_expert_dataset,1),3));
 ETL_average = squeeze(nanmean(nanmean(pow_ETL_dataset,1),3));
 
 % Estimate mean error
-SRM_std_error = nanstd(squeeze(nanmean(pow_SRM_dataset,1)),1,2)/sqrt(size(pow_SRM_dataset,3));
+SRM_std_error = nanstd(squeeze(nanmean(pow_eeg_expert_dataset,1)),1,2)/sqrt(size(pow_eeg_expert_dataset,3));
 ETL_std_error = nanstd(squeeze(nanmean(pow_ETL_dataset,1)),1,2)/sqrt(size(pow_ETL_dataset,3));
 
 % Color
@@ -135,14 +156,14 @@ patch([f_of_interest,fliplr(f_of_interest)], ...
 plot(f_of_interest,ETL_average,'b','LineWidth',2)
 
 % Enhance the plot
-legend({'SRM database', 'ETL database'});
+legend({'EEG experts database', 'ETL database'});
 title(sprintf('Power in %s and %s area', to_plot.band_of_interest{1}, to_plot.area_of_interest{1}),...
     'Interpreter','none')
 
 end
 
 
-function plot_areas_errorbar(to_plot,pow_SRM_dataset,pow_ETL_dataset)
+function plot_areas_errorbar(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset)
 
 % All channels
 complete_channel_labels = {'Fp1';'AF7';'AF3';'F1';'F3';'F5';'F7';'FT7';'FC5';'FC3';'FC1';'C1';'C3';'C5';'T7';'TP7';'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9';'PO7';'PO3';'O1';'Iz';'Oz';'POz';'Pz';'CPz';'Fpz';'Fp2';'AF8';'AF4';'AFz';'Fz';'F2';'F4';'F6';'F8';'FT8';'FC6';'FC4';'FC2';'FCz';'Cz';'C2';'C4';'C6';'T8';'TP8';'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10';'PO8';'PO4';'O2'};
@@ -157,7 +178,7 @@ for iarea = 1 : numel(to_plot.areas_info)
     channels_index = ismember(complete_channel_labels,areas_of_interest);
     
     % Get pow matrix to plot
-    current_pow_SRM_dataset = pow_SRM_dataset(channels_index,:,:);
+    current_pow_SRM_dataset = pow_eeg_expert_dataset(channels_index,:,:);
     current_pow_ETL_dataset = pow_ETL_dataset(channels_index,:,:);
     
     % Average across electrodes and subjects
@@ -201,7 +222,7 @@ for igroup = 1:size(avg_pow,2)
 end
 
 % Enhance the plot
-legend({'SRM database', 'ETL database'});
+legend({'EEG expert database', 'ETL database'});
 xticklabels({to_plot.areas_info.name})
 set(gca,'TickLabelInterpreter','none')
 title('Average power per area across')
@@ -211,7 +232,7 @@ title('Average power per area across')
 end
 
 
-function plot_pow_spectrum_norm_all_areas(to_plot,pow_SRM_dataset,pow_ETL_dataset)
+function plot_pow_spectrum_norm_all_areas(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset)
 
 % All channels
 complete_channel_labels = {'Fp1';'AF7';'AF3';'F1';'F3';'F5';'F7';'FT7';'FC5';'FC3';'FC1';'C1';'C3';'C5';'T7';'TP7';'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9';'PO7';'PO3';'O1';'Iz';'Oz';'POz';'Pz';'CPz';'Fpz';'Fp2';'AF8';'AF4';'AFz';'Fz';'F2';'F4';'F6';'F8';'FT8';'FC6';'FC4';'FC2';'FCz';'Cz';'C2';'C4';'C6';'T8';'TP8';'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10';'PO8';'PO4';'O2'};
@@ -232,7 +253,7 @@ for iarea = 1 : numel(to_plot.areas_info)
     f_of_interest = f_of_interest(f_index);
     
     % Update pow matrix to plot
-    current_pow_SRM_dataset = pow_SRM_dataset(channels_index,f_index,:);
+    current_pow_SRM_dataset = pow_eeg_expert_dataset(channels_index,f_index,:);
     current_pow_ETL_dataset = pow_ETL_dataset(channels_index,f_index,:);
     
     % Average across electrodes
@@ -261,7 +282,7 @@ for iarea = 1 : numel(to_plot.areas_info)
     ylim([0 0.0008])
     
     % Enhance the plot
-    legend({'SRM database', 'ETL database'});
+    legend({'EEG expert database', 'ETL database'});
     title(sprintf('Power in BroadBand and %s area',  to_plot.areas_info(iarea).name),...
         'Interpreter','none')
     

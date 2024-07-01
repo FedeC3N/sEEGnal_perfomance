@@ -6,14 +6,14 @@ restoredefaultpath
 config.path.stats = '../../../../data/AI_Mind_database/stats';
 
 % Load the results
-load(sprintf('%s/pow_stats.mat',config.path.stats));
+load(sprintf('%s/plv_stats.mat',config.path.stats));
 
 % To export the result
-txt_file = sprintf('%s/pow_significant_results.txt',config.path.stats);
+txt_file = sprintf('%s/plv_significant_results.txt',config.path.stats);
 if exist(txt_file), delete(txt_file), end
 
 % Table to excel
-varNames = {'Band','Area','mean_SRM (std_mean_err)','mean_ETL (std_mean_error)',...
+varNames = {'Band','Area','mean_eeg_expert (std_mean_err)','mean_ETL (std_mean_error)',...
     't','p','Cohen d'};
 varTypes = {'string','string','string','string','double','double','double'};
 results_table = table('Size',[1,7],'VariableNames',varNames,'VariableTypes',varTypes);
@@ -49,7 +49,7 @@ for iband = 1 : numel(bands_info)
         if current_p < 0.05
             
             
-            line = sprintf('%s - %s : p = %.2f\n', current_band, current_area,current_p);
+            line = sprintf('%s - %s : p = %.5f\n', current_band, current_area,current_p);
             
             % To screen
             fprintf(1,line);
@@ -65,11 +65,11 @@ for iband = 1 : numel(bands_info)
     
     fprintf('\n')
     
-    
 end
 
 % Write the table to Excel
-excel_file = sprintf('%s/pow_significant_results.xlsx',config.path.stats);
+excel_file = sprintf('%s/plv_significant_results.xlsx',config.path.stats);
 if exist(excel_file), delete(excel_file),end
 writetable(results_table,excel_file,'Sheet',1,'Range','A1')
+
 
