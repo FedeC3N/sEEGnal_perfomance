@@ -99,6 +99,7 @@ end
 xlim([0 numel(bands_info) + 1])
 xticks(1:numel(bands_info))
 xticklabels({bands_info.name})
+line(xlim,[0 0],'Color','black','LineStyle','--')
 title('Average PLV difference for each channel')
 ylim([-0.1 0.1])
 ylabel('SRM_PLV - ETL_PLV','Interpreter','none')
