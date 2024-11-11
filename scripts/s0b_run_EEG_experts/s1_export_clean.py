@@ -16,7 +16,7 @@ import mne
 import numpy
 import scipy.io as sio
 
-import aimind.meeg.tools.mne as aimind_mne
+import aimind.meeg.tools.mnetools as aimind_mne
 from eeglabio.utils import export_mne_epochs
 
 
@@ -41,7 +41,10 @@ f.close()
 # Remove the return
 users = [line.strip() for line in all_lines]
 
+print()
 for current_user in users:
+
+    print(f'Currently working on user {current_user}')
 
     # Read the files processed by the user
     trl_path = os.path.join(
@@ -55,10 +58,29 @@ for current_user in users:
         current_user,
         '*.mat'))
 
+    # Check if the user has any file to process
+    if len(files) == 0:
+        print('   No files for current user.')
+        continue
+
     # Go through each file
     for current_file in files:
 
+        # Load the metadata
         current_trl = sio.loadmat(current_file)
+
+        # Create the output name to check if already exists (avoid overwrite)
+        output_path = os.path.abspath(os.path.join(
+            'data',
+            'AI_Mind_database',
+            'cleaned',
+            current_trl['fileinfo'][0]['file'][0][0]))[:-4]
+
+        output_fname = output_path + f"_{current_user}_clean.set"
+
+        if os.path.exists(output_fname):
+            print(f'   Already processed file {current_file[-36:]}')
+            continue
 
         # Read the raw file
         header_file = glob.glob(os.path.join(
@@ -136,15 +158,6 @@ for current_user in users:
         # Create epochs
         raw = aimind_mne.get_epochs(raw,annot=raw.annotations,length=epoch['length'],overlap=epoch['overlap'],
                          padding=epoch['padding'],preload=True)
-
-        # Create the output
-        output_path = os.path.abspath(os.path.join(
-            'data',
-            'AI_Mind_database',
-            'cleaned',
-            current_trl['fileinfo'][0]['file'][0][0]))[:-4]
-
-        output_fname = output_path + f"_{current_user}_clean.set"
 
         # Export
         export_mne_epochs(raw,output_fname)
