@@ -4,7 +4,7 @@ restoredefaultpath
 
 % Add functions to the path
 addpath('../shared/')
-addpath('../../../../../../SharedFunctions/fieldtrip-20220626/')
+addpath('../../../../../SharedFunctions/fieldtrip-20220626/')
 ft_defaults
 
 % Paths
