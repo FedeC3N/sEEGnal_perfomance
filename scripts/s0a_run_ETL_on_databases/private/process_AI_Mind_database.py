@@ -12,12 +12,15 @@ Created on Mon 20/05/2024
 import os
 import re
 import sys
+import time
+import tracemalloc
 
 from pprint import pprint
 
 import aimind.meeg.io.bids as bids
-import aimind.meeg.tools.mne as aimind_mne
+import aimind.meeg.tools.mnetools as aimind_mne
 from eeglabio.utils import export_mne_epochs
+from scripts.s0a_run_ETL_on_databases.private.export_execution_results import export_execution_results
 
 
 
@@ -43,7 +46,6 @@ def create_eeg_task(func):
             'eegmetadata':[]}
 
         # Find all the eeg recordings
-        pattern = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(1-EO|2-EC|3-EO|4-EC)_.*"
         current_path = os.path.join(config['dw_folder'],config['dw_raw_folder'],
                                     config['prospective_folder'],'eeg',current_session_id,current_session_id)
         current_subject_files = os.listdir(os.path.join(config['data_root'],current_path))
@@ -54,7 +56,7 @@ def create_eeg_task(func):
             current_file = current_subject_files[ifile]
             type_id = current_file[-3:]
 
-            dummy = re.findall(pattern,current_file)
+            dummy = re.findall(config['pattern'],current_file)
             if len(dummy) == 0:
                 continue
 
@@ -116,7 +118,18 @@ def standardize(config,eeg_task):
     from aimind.etl.standardize.standardize import standardize_eeg_meg
 
     # Standardize
+    # Trace memory and time
+    start = time.time()
+    tracemalloc.start()
     result = standardize_eeg_meg(config,eeg_task)
+    end = time.time()
+    base,peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    elapsed_time = end - start
+    mem_usage = peak - base
+
+    # Export the ETL performance results
+    export_execution_results(config,eeg_task,elapsed_time,mem_usage,'standardization')
 
     # Some output
     print(result['metrics'])
@@ -140,8 +153,19 @@ def badchannel_detection(config,eeg_task):
     sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
     from aimind.etl.preprocess.badchannel_detection import badchannel_detection as etl_badchannel_detection
 
-    # Standardize
+    # Badchannel detection
+    # Trace memory and time
+    start = time.time()
+    tracemalloc.start()
     result = etl_badchannel_detection(config,eeg_task)
+    end = time.time()
+    base,peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    elapsed_time = end - start
+    mem_usage = peak - base
+
+    # Export the ETL performance results
+    export_execution_results(config,eeg_task,elapsed_time,mem_usage,'badchannel_detection')
 
     # Some output
     print(result['metrics'])
@@ -166,7 +190,18 @@ def artifact_detection(config,eeg_task):
     from aimind.etl.preprocess.artifact_detection import artifact_detection as etl_artifact_detection
 
     # Standardize
+    # Trace memory and time
+    start = time.time()
+    tracemalloc.start()
     result = etl_artifact_detection(config,eeg_task)
+    end = time.time()
+    base,peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    elapsed_time = end - start
+    mem_usage = peak - base
+
+    # Export the ETL performance results
+    export_execution_results(config,eeg_task,elapsed_time,mem_usage,'artifact_detection')
 
     # Some output
     print(result['metrics'])
@@ -191,7 +226,18 @@ def final_qa(config,eeg_task):
     from aimind.etl.qc.final_quality_assessment import final_quality_assessment_eeg_meg
 
     # Standardize
+    # Trace memory and time
+    start = time.time()
+    tracemalloc.start()
     result = final_quality_assessment_eeg_meg(config,eeg_task)
+    end = time.time()
+    base,peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    elapsed_time = end - start
+    mem_usage = peak - base
+
+    # Export the ETL performance results
+    export_execution_results(config,eeg_task,elapsed_time,mem_usage,'final_qa')
 
     # Some output
     print(result['metrics'])
@@ -200,6 +246,7 @@ def final_qa(config,eeg_task):
 
     # Return the search path to the original state
     sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+
 
 
 @create_eeg_task
