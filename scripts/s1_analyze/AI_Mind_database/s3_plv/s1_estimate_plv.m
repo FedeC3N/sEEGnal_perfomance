@@ -8,7 +8,7 @@ addpath('../../../../../SharedFunctions/fieldtrip-20220626/')
 ft_defaults
 
 % Paths
-config.path.dataset = '../../../../data/AI_Mind_database/dataset';
+config.path.dataset = '../../../../metadata/AI_Mind_database/dataset';
 config.path.plv = '../../../../data/AI_Mind_database/plv';
 
 if ~exist(config.path.plv), mkdir(config.path.plv), end
@@ -24,7 +24,7 @@ complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'F
 % Load the whole dataset
 load(sprintf('%s/AI_Mind_dataset.mat',config.path.dataset));
 
-for ifile = 1 : numel(dataset)
+for ifile = 56 : numel(dataset)
     
     fprintf('Working on %s\n', dataset(ifile).file)
     

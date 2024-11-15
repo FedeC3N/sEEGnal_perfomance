@@ -4,7 +4,7 @@ restoredefaultpath
 
 % Paths
 config.path.clean_data = '../../../../data/AI_Mind_database/cleaned';
-config.path.dataset = '../../../../data/AI_Mind_database/dataset';
+config.path.dataset = '../../../../metadatadata/AI_Mind_database/dataset';
 
 if ~exist(config.path.dataset), mkdir(config.path.dataset),end
 

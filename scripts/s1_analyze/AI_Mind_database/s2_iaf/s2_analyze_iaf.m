@@ -3,7 +3,7 @@ clc
 restoredefaultpath
 
 % Paths
-config.path.dataset = '../../../../data/AI_Mind_database/dataset';
+config.path.dataset = '../../../../metadata/AI_Mind_database/dataset';
 config.path.stats = '../../../../data/AI_Mind_database/stats';
 
 % Create output path

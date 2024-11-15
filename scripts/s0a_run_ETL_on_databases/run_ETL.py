@@ -33,11 +33,10 @@ config['database'] = selected_database
 
 # Init the database
 subjects_id, sessions_id = init.init_database(config)
-subjects_id = subjects_id[0:2]
 
 # Select the desired type of file
 #config.pattern = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(1-EO|2-EC|3-EO|4-EC)_.*"
-config['pattern'] = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(.*-EO)_.*"
+config['pattern'] = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(.*-EC)_.*"
 
 # List of subjects with errors
 errors = []

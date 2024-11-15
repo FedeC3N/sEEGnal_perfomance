@@ -7,7 +7,7 @@ restoredefaultpath
 addpath('../shared/')
 
 % Paths
-config.path.dataset = '../../../../data/AI_Mind_database/dataset';
+config.path.dataset = '../../../../metadata/AI_Mind_database/dataset';
 config.path.iaf = '../../../../data/AI_Mind_database/iaf';
 
 if ~exist(config.path.iaf), mkdir(config.path.iaf), end

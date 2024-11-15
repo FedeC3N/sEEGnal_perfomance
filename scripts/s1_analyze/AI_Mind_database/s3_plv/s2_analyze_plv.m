@@ -6,7 +6,7 @@ restoredefaultpath
 addpath('../shared/')
 
 % Paths
-config.path.dataset = '../../../../data/AI_Mind_database/dataset';
+config.path.dataset = '../../../../metadata/AI_Mind_database/dataset';
 config.path.stats = '../../../../data/AI_Mind_database/stats';
 
 % Load the whole dataset

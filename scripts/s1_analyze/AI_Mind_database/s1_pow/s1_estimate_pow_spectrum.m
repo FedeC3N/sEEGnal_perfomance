@@ -8,7 +8,7 @@ addpath('../../../../../SharedFunctions/fieldtrip-20220626/')
 ft_defaults
 
 % Paths
-config.path.dataset = '../../../../data/AI_Mind_database/dataset';
+config.path.dataset = '../../../../metadata/AI_Mind_database/dataset';
 config.path.pow = '../../../../data/AI_Mind_database/pow';
 
 if ~exist(config.path.pow), mkdir(config.path.pow), end
