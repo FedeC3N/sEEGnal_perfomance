@@ -4,7 +4,7 @@ restoredefaultpath
 
 % Paths
 config.path.dataset = '../../../../metadata/AI_Mind_database/dataset';
-config.path.stats = '../../../../data/AI_Mind_database/stats';
+config.path.stats = '../../../../results';
 
 % Create output path
 if ~exist(config.path.stats), mkdir(config.path.stats), end

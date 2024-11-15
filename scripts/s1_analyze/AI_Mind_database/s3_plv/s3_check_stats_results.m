@@ -3,7 +3,7 @@ clc
 restoredefaultpath
 
 % Paths
-config.path.stats = '../../../../data/AI_Mind_database/stats';
+config.path.stats = '../../../../results';
 
 % Load the results
 load(sprintf('%s/plv_stats.mat',config.path.stats));

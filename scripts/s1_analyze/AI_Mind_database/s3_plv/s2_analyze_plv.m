@@ -7,7 +7,7 @@ addpath('../shared/')
 
 % Paths
 config.path.dataset = '../../../../metadata/AI_Mind_database/dataset';
-config.path.stats = '../../../../data/AI_Mind_database/stats';
+config.path.stats = '../../../../results';
 
 % Load the whole dataset
 load(sprintf('%s/AI_Mind_dataset.mat',config.path.dataset));
