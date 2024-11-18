@@ -14,7 +14,7 @@ import sys
 
 import scripts.s0a_run_ETL_on_databases.private.init as init
 import scripts.s0a_run_ETL_on_databases.private.create_subject as create_subject
-from scripts.s0a_run_ETL_on_databases.private.etl_wrapper import standardize,badchannel_detection,artifact_detection,final_qa,export_clean
+from scripts.s0a_run_ETL_on_databases.private.etl_wrapper import standardize,badchannel_detection,artifact_detection,final_qa
 
 
 # Add the path
@@ -24,8 +24,8 @@ sys.path.append(os.path.join('..','TSD','aimind.etl'))
 # Select the database
 selected_database = 'AI_Mind_database'
 
-# What step to run: standardize, badchannel, artifact, final_qa, export_clean
-run = [1,1,1,1,1]
+# What step to run: standardize, badchannel, artifact, final_qa
+run = [0,0,0,1]
 
 # Init Lurtis configuration
 config = init.init_lurtis()
@@ -36,7 +36,7 @@ subjects_id, sessions_id = init.init_database(config)
 
 # Select the desired type of file
 #config.pattern = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(1-EO|2-EC|3-EO|4-EC)_.*"
-config['pattern'] = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(.*-EC)_.*"
+config['pattern'] = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(.*-EO)_.*"
 
 # List of subjects with errors
 errors = []
@@ -80,9 +80,6 @@ for current_subject_id in subjects_id:
                 final_qa(config,bids_path)
                 print('')
 
-            if run[4]:
-                print('   Export Clean')
-                export_clean(config,bids_path)
 
         except:
             print('ERROR')

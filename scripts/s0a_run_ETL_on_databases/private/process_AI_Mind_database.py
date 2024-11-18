@@ -105,6 +105,65 @@ def create_curated_bids_path(func):
 
 
 
+def export_clean(config,eeg_task):
+    """
+
+    For each recording, check if it past the quality_check and then export it clean
+
+    """
+
+    for file_data in eeg_task['eegmetadata']:
+
+        # Only for eeg
+        if file_data["eeg_type_id"] == "cnt":
+
+            # Curated folder
+            base_root = os.path.join(config["data_root"],config['dw_folder'],config['dw_curated_folder'])
+
+            # Create the bids_path
+            current_bids_path = bids.build_bids(config,eeg_task['session_id'],file_data,base_root)
+
+            # Check if it is in Curated folder
+            if os.path.exists(current_bids_path.fpath):
+
+                # Load the recording
+                epoch_definition = {'length':4,'overlap':0,'padding':0}
+                channels_to_exclude = ['CLAV','VEOGL','EMG1','EMG2']
+                raw = aimind_mne.prepare_raw(current_bids_path, preload=True,
+                                             badchannels_to_metadata=True, exclude_badchannels=True, channels_to_exclude=channels_to_exclude,
+                                             set_annotations=True, epoch=epoch_definition)
+
+                # Apply the clean components
+                # Read the ICA information
+                sobi = bids.read_sobi(current_bids_path, 'sobi')
+
+                # Keep brain and other components
+                components_to_include = []
+                if 'brain' in sobi.labels_.keys():
+                    components_to_include.append(sobi.labels_['brain'])
+                if 'other' in sobi.labels_.keys():
+                    components_to_include.append(sobi.labels_['other'])
+                components_to_include = sum(components_to_include, [])
+
+                # If desired components, apply them.
+                if len(components_to_include) > 0:
+                    # Remove the eog components
+                    sobi.apply(raw, include=components_to_include)
+
+                # Create the output
+                output_path = os.path.abspath(os.path.join(
+                    'data',
+                    config['database'],
+                    'cleaned',
+                    current_bids_path.basename))[:-5]
+
+                output_fname = output_path + '_etl_clean.set'
+
+                # Export
+                export_mne_epochs(raw,output_fname)
+
+
+
 @create_eeg_task
 def standardize(config,eeg_task):
     """
@@ -239,6 +298,10 @@ def final_qa(config,eeg_task):
     # Export the ETL performance results
     export_execution_results(config,eeg_task,elapsed_time,mem_usage,'final_qa')
 
+    # Only export the valid ones
+    if result['metrics']['result'] == 'ok':
+        export_clean(config,eeg_task)
+
     # Some output
     print(result['metrics'])
     pprint(result['metadata']['detail'])
@@ -248,61 +311,3 @@ def final_qa(config,eeg_task):
     sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
 
 
-
-@create_eeg_task
-def export_clean(config,eeg_task):
-    """
-
-    For each recording, check if it past the quality_check and then export it clean
-
-    """
-
-    for file_data in eeg_task['eegmetadata']:
-
-        # Only for eeg
-        if file_data["eeg_type_id"] == "cnt":
-
-            # Curated folder
-            base_root = os.path.join(config["data_root"],config['dw_folder'],config['dw_curated_folder'])
-
-            # Create the bids_path
-            current_bids_path = bids.build_bids(config,eeg_task['session_id'],file_data,base_root)
-
-            # Check if it is in Curated folder
-            if os.path.exists(current_bids_path.fpath):
-
-                # Load the recording
-                epoch_definition = {'length':4,'overlap':0,'padding':0}
-                channels_to_exclude = ['CLAV','VEOGL','EMG1','EMG2']
-                raw = aimind_mne.prepare_raw(current_bids_path, preload=True,
-                                             badchannels_to_metadata=True, exclude_badchannels=True, channels_to_exclude=channels_to_exclude,
-                                             set_annotations=True, epoch=epoch_definition)
-
-                # Apply the clean components
-                # Read the ICA information
-                sobi = bids.read_sobi(current_bids_path, 'sobi')
-
-                # Keep brain and other components
-                components_to_include = []
-                if 'brain' in sobi.labels_.keys():
-                    components_to_include.append(sobi.labels_['brain'])
-                if 'other' in sobi.labels_.keys():
-                    components_to_include.append(sobi.labels_['other'])
-                components_to_include = sum(components_to_include, [])
-
-                # If desired components, apply them.
-                if len(components_to_include) > 0:
-                    # Remove the eog components
-                    sobi.apply(raw, include=components_to_include)
-
-                # Create the output
-                output_path = os.path.abspath(os.path.join(
-                    'data',
-                    config['database'],
-                    'cleaned',
-                    current_bids_path.basename))[:-5]
-
-                output_fname = output_path + '_etl_clean.set'
-
-                # Export
-                export_mne_epochs(raw,output_fname)

@@ -100,26 +100,3 @@ def final_qa(config,bids_path):
     dummy_module.final_qa(config, bids_path)
 
 
-
-def export_clean(config,bids_path):
-    """
-
-    Call the correct init function
-
-    """
-
-    # Load the module
-    file_to_call = f"process_{config['database']}.py"
-    file_path = os.path.abspath(os.path.join('.', 'scripts', 's0a_run_ETL_on_databases',
-                                             'private', file_to_call))
-    loader = importlib.machinery.SourceFileLoader(file_to_call, file_path)
-    spec = importlib.util.spec_from_file_location(file_to_call, file_path)
-    dummy_module = importlib.util.module_from_spec(spec)
-    loader.exec_module(dummy_module)
-
-    # Call the module and the specific function
-    dummy_module.export_clean(config, bids_path)
-
-
-
-
