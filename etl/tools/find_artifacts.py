@@ -12,8 +12,8 @@ import mne
 import numpy as np
 from scipy.signal import find_peaks
 
-import aimind.meeg.io.bids as bids
-import aimind.meeg.tools.mnetools as aimind_mne
+import etl.io.bids as bids
+import etl.tools.mnetools as aimind_mne
 
 
 
@@ -37,12 +37,14 @@ def EOG_detection(config,bids_path,channels_to_include,frontal_channels='all'):
 
     # Parameters for loading EEG or MEG recordings
     channels = sobi.ch_names
-    freq_limits = [config['artifact_detection_eog_low_freq'],config['artifact_detection_eog_high_freq']]
-    crop_seconds = [config['crop_seconds']]
-    resample_frequency = config['resampled_frequency_estimate_component']
+    freq_limits = [config['artifact_detection']['artifact_detection_eog_low_freq'],
+                   config['artifact_detection']['artifact_detection_eog_high_freq']]
+    crop_seconds = [config['artifact_detection']['crop_seconds']]
+    resample_frequency = config['artifact_detection']['resampled_frequency_estimate_component']
 
     # Load the raw data
     raw = aimind_mne.prepare_raw(
+        config,
         bids_path,
         preload=True,
         channels_to_include=channels,
@@ -150,33 +152,17 @@ def muscle_detection(config,bids_path,channels_to_include):
     # Read the ICA information
     sobi = bids.read_sobi(bids_path,'sobi_artifacts')
 
-    # Parameters for loading EEG or MEG recordings
+    # Parameters for loading EEG recordings
     channels = sobi.ch_names
-    freq_limits = [config['artifact_detection_muscle_low_freq'],config['artifact_detection_muscle_high_freq']]
-    crop_seconds = [config['crop_seconds']]
-    resample_frequency = config['resampled_frequency_estimate_component']
-
-    # Specific EEG parameters
-    if bids_path.datatype == 'eeg':
-        if config['eeg_channels_to_exclude'] == 'None':
-            channels_to_exclude = None
-        else:
-            dummy = config['eeg_channels_to_exclude']
-            channels_to_exclude = dummy.split()
-
-    # Specific MEG parameters
-    elif bids_path.datatype == 'meg':
-        if config['meg_channels_to_exclude'] == 'None':
-            channels_to_exclude = None
-        else:
-            channels_to_exclude = config['meg_channels_to_exclude']
-
-    # Otherwise, not supported type
-    else:
-        raise ValueError(f"Data type {bids_path.datatype} not supported for artifact detection.")
+    freq_limits = [config['artifact_detection']['artifact_detection_muscle_low_freq'],
+                   config['artifact_detection']['artifact_detection_muscle_high_freq']]
+    crop_seconds = [config['artifact_detection']['crop_seconds']]
+    resample_frequency = config['artifact_detection']['resampled_frequency_estimate_component']
+    channels_to_exclude = config['artifact_detection']["channels_to_exclude"]
 
     # Load raw EEG
     raw = aimind_mne.prepare_raw(
+        config,
         bids_path,
         preload=True,
         channels_to_include=channels,
@@ -233,7 +219,7 @@ def muscle_detection(config,bids_path,channels_to_include):
         current_std = muscle_components_time_courses_std[ichannel]
         current_peaks,_ = find_peaks(
             abs(current_channel),
-            height=config['artifact_detection_muscle_threshold'] * current_std)
+            height=config['artifact_detection']['artifact_detection_muscle_threshold'] * current_std)
 
         # If any, add to list
         if len(current_peaks) > 0:
@@ -273,31 +259,15 @@ def sensor_detection(config,bids_path, channels_to_include):
 
     # Parameters for loading EEG or MEG recordings
     channels = sobi.ch_names
-    freq_limits = [config['artifact_detection_sensor_low_freq'],config['artifact_detection_sensor_high_freq']]
-    crop_seconds = [config['crop_seconds']]
-    resample_frequency = config['resampled_frequency_estimate_component']
-
-    # Specific EEG parameters
-    if bids_path.datatype == 'eeg':
-        if config['eeg_channels_to_exclude'] == 'None':
-            channels_to_exclude = None
-        else:
-            dummy = config['eeg_channels_to_exclude']
-            channels_to_exclude = dummy.split()
-
-    # Specific MEG parameters
-    elif bids_path.datatype == 'meg':
-        if config['meg_channels_to_exclude'] == 'None':
-            channels_to_exclude = None
-        else:
-            channels_to_exclude = config['meg_channels_to_exclude']
-
-    # Otherwise, not supported type
-    else:
-        raise ValueError(f"Data type {bids_path.datatype} not supported for artifact detection.")
+    freq_limits = [config['artifact_detection']['artifact_detection_sensor_low_freq'],
+                   config['artifact_detection']['artifact_detection_sensor_high_freq']]
+    crop_seconds = [config['artifact_detection']['crop_seconds']]
+    resample_frequency = config['artifact_detection']['resampled_frequency_estimate_component']
+    channels_to_exclude = config['artifact_detection']["channels_to_exclude"]
 
     # Load the raw data
     raw = aimind_mne.prepare_raw(
+        config,
         bids_path,
         preload=True,
         channels_to_include=channels,

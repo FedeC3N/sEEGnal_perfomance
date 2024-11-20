@@ -10,7 +10,6 @@ Created on Thu 17/05/2024
 
 
 
-
 # Imports
 import os
 import re
@@ -57,6 +56,7 @@ def init_AI_Mind_database(config):
     config['badchannel_detection']["channels_to_exclude"] = ['EMG1', 'EMG2', 'CLAV', 'VEOGL']
     config['artifact_detection']["channels_to_include"] = 'eeg'
     config['artifact_detection']["channels_to_exclude"] = ['EMG1', 'EMG2', 'CLAV', 'VEOGL']
+    config['artifact_detection']["frontal_channels"] = ['Fp1','Fpz','Fp2','AF7','AF8']
 
     # Filter the subjects of interest
     files = glob.glob(os.path.join(config['path']['sourcedata'],'*.cnt'))
