@@ -4,6 +4,7 @@
 
 # Ignore data of the project
 data/
+databases/
 metadata/
 results/
 EEG_experts_preprocessing_scripts.zip

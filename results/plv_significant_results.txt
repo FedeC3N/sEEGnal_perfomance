@@ -1,8 +1,0 @@
-delta - frontal : p = 0.04966
-delta - temporal_l : p = 0.03177
-delta - temporal_r : p = 0.02074
-delta - occipital : p = 0.03515
-theta - temporal_r : p = 0.00755
-alpha - temporal_l : p = 0.02162
-alpha - temporal_r : p = 0.00880
-alpha - occipital : p = 0.04898
