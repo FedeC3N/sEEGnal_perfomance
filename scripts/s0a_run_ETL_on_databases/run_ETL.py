@@ -9,65 +9,49 @@ Created on Thu 17/05/2024
 """
 
 # Imports
-import os
-import sys
-
-import scripts.s0a_run_ETL_on_databases.private.init as init
-import scripts.s0a_run_ETL_on_databases.private.create_subject as create_subject
-from scripts.s0a_run_ETL_on_databases.private.etl_wrapper import standardize,badchannel_detection,artifact_detection,final_qa
-
-
-# Add the path
-sys.path.append(os.path.join('..','TSD','aimind.etl'))
+import etl.init.init as init
+from etl.init.create_bids_path import create_bids_path
+from etl.standardize.standardize import standardize
+from etl.preprocess.badchannel_detection import badchannel_detection
 
 #### PARAMETERS
 # Select the database
-selected_database = 'AI_Mind_database'
+database = 'AI_Mind_database'
 
 # What step to run: standardize, badchannel, artifact, final_qa
-run = [0,0,0,1]
-
-# Init Lurtis configuration
-config = init.init_lurtis()
-config['database'] = selected_database
+run = [1,1,0,0]
 
 # Init the database
-subjects_id, sessions_id = init.init_database(config)
-
-# Select the desired type of file
-#config.pattern = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(1-EO|2-EC|3-EO|4-EC)_.*"
-config['pattern'] = "[0-9]-[0-9]{3}-[0-9]-[A-Z]_(.*-EO)_.*"
+config, files, sub, ses, task = init.init_database(database)
 
 # List of subjects with errors
 errors = []
 
 # Go through each subject
-for current_subject_id in subjects_id:
+for current_index in range(len(files)):
 
-    # Go through each session
-    for current_session_id in sessions_id:
+        # current info
+        current_file = files[current_index]
+        current_sub = sub[current_index]
+        current_ses = ses[current_index]
+        current_task = task[current_index]
 
         # Create the subjects following AI-Mind protocol
-        bids_path = create_subject.create_bids_path(config,current_subject_id,current_session_id)
+        bids_path = create_bids_path(config,current_file,current_sub,current_ses,current_task)
 
-        # If the file does not exist, pass
-        if not(str(bids_path.__class__) =="<class 'mne_bids.path.BIDSPath'>"):
-            if len(bids_path) == 0:
-                continue
-
-        print('Work with ' + current_subject_id + ' - ' + current_session_id)
+        print('Working with sub ' + current_sub + ' ses ' + current_ses + ' task ' + current_task)
 
         try:
 
             # Run the selected processes
             if run[0]:
                 print('   Standardize')
-                standardize(config, bids_path)
+                results = standardize(config,current_file,bids_path)
                 print('')
 
             if run[1]:
                 print('   Badchannel detection')
-                badchannel_detection(config,bids_path)
+                results = badchannel_detection(config,bids_path)
                 print('')
 
             if run[2]:
@@ -83,7 +67,7 @@ for current_subject_id in subjects_id:
 
         except:
             print('ERROR')
-            errors.append(current_subject_id + ' - ' + current_session_id)
+            errors.append(current_file)
 
 
         print()
