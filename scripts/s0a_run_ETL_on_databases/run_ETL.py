@@ -9,20 +9,22 @@ Created on Thu 17/05/2024
 """
 
 # Imports
-import etl.init.init as init
-from etl.init.create_bids_path import create_bids_path
+from etl.io.init_databases import init_database
+from etl.io.bids import create_bids_path
 from etl.standardize.standardize import standardize
 from etl.preprocess.badchannel_detection import badchannel_detection
+from etl.preprocess.artifact_detection import artifact_detection
+from etl.io.export_clean import export_clean
 
 #### PARAMETERS
 # Select the database
 database = 'AI_Mind_database'
 
-# What step to run: standardize, badchannel, artifact, final_qa
-run = [1,1,0,0]
+# What step to run: standardize, badchannel, artifact, export_clean
+run = [1,1,1,1]
 
 # Init the database
-config, files, sub, ses, task = init.init_database(database)
+config, files, sub, ses, task = init_database(database)
 
 # List of subjects with errors
 errors = []
@@ -47,22 +49,18 @@ for current_index in range(len(files)):
             if run[0]:
                 print('   Standardize')
                 results = standardize(config,current_file,bids_path)
-                print('')
 
             if run[1]:
                 print('   Badchannel detection')
                 results = badchannel_detection(config,bids_path)
-                print('')
 
             if run[2]:
                 print('   Artifact Detection')
-                artifact_detection(config,bids_path)
-                print('')
+                results = artifact_detection(config,bids_path)
 
             if run[3]:
-                print('   Final QA')
-                final_qa(config,bids_path)
-                print('')
+                print('   Export clean')
+                export_clean(config,bids_path)
 
 
         except:
