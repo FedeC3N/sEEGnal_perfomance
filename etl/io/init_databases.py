@@ -8,8 +8,6 @@ Created on Thu 17/05/2024
 @author: Fede
 """
 
-
-
 # Imports
 import os
 import re
@@ -22,7 +20,7 @@ import json
 def init_database(database):
     """
 
-    Call the correct init function
+    Call the correct databases function
 
     """
 

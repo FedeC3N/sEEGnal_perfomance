@@ -20,7 +20,7 @@ import mne_bids
 def create_bids_path(config,current_subject_id,current_session_id,current_task):
     """
 
-    Call the correct init function
+    Call the correct databases function
 
     """
 

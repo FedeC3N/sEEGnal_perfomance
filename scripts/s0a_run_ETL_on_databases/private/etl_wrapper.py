@@ -20,7 +20,7 @@ import importlib.machinery
 def standardize(config, bids_path):
     """
 
-    Call the correct init function
+    Call the correct databases function
 
     """
 
@@ -41,7 +41,7 @@ def standardize(config, bids_path):
 def badchannel_detection(config,bids_path):
     """
 
-    Call the correct init function
+    Call the correct databases function
 
     """
 
@@ -62,7 +62,7 @@ def badchannel_detection(config,bids_path):
 def artifact_detection(config,bids_path):
     """
 
-    Call the correct init function
+    Call the correct databases function
 
     """
 
@@ -83,7 +83,7 @@ def artifact_detection(config,bids_path):
 def final_qa(config,bids_path):
     """
 
-    Call the correct init function
+    Call the correct databases function
 
     """
 

@@ -41,7 +41,7 @@ def init_lurtis():
 def init_database(config):
     """
 
-    Call the correct init function
+    Call the correct databases function
 
     """
 
