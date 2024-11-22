@@ -637,3 +637,20 @@ def create_AI_Mind_database(config,current_file,current_sub,current_ses,current_
         extension='.vhdr')
 
     return bids_path
+
+
+
+def create_LEMON_database(config,current_file,current_sub,current_ses,current_task):
+
+    # Builds the BIDS path from the metadata.
+    bids_path = mne_bids.BIDSPath(
+        subject=current_sub,
+        datatype='eeg',
+        session=current_ses,
+        task=current_task,
+        root=config['path']['data_root'],
+        suffix = 'eeg',
+        extension='.vhdr')
+
+    return bids_path
+

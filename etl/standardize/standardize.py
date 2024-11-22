@@ -19,6 +19,7 @@ import mne_bids
 
 import etl.io.eep as eep
 from etl.tools.measure_performance import measure_performance
+from etl.io.read_source_files import read_source_files
 
 
 
@@ -103,7 +104,7 @@ def standardize_eeg_file(config, current_file, bids_path):
 
     # Reads the data as an MNE object.
     source_filepath = os.path.join(config['path']['sourcedata'],current_file)
-    mnedata = eep.read_mne(source_filepath)
+    mnedata = read_source_files(config,source_filepath)
 
     # Adds some project-specific information.
     mnedata.info['line_freq'] = 50

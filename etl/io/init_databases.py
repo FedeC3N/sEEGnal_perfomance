@@ -102,3 +102,29 @@ def init_AI_Mind_database(config):
     task = [match[0][2] for match in matches]
 
     return config, files, sub, ses, task
+
+
+
+def init_LEMON_database(config):
+
+    # Resting state conditions
+    config['rs_EC_code'] = 210
+    config['rs_EO_code'] = 200
+
+    # Folders to find the subjects
+    config['path'] = {}
+    config['path']['data_root'] = os.path.join('databases','LEMON_database')
+    config['path']['sourcedata'] = os.path.join(config['path']['data_root'],'sourcedata')
+
+    # Filter the subjects of interest
+    files = glob.glob(os.path.join(config['path']['sourcedata'],'*.vhdr'))
+    files = [os.path.basename(file) for file in files]
+
+    # Extract the info
+    pattern = "sub-([0-9]{6})*"
+    matches = [re.findall(pattern,file) for file in files]
+    sub = [match[0] for match in matches]
+    ses = ['1' for match in matches]
+    task = ['resting' for match in matches]
+
+    return config, files, sub, ses, task
