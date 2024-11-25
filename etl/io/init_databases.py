@@ -107,24 +107,31 @@ def init_AI_Mind_database(config):
 
 def init_LEMON_database(config):
 
-    # Resting state conditions
-    config['rs_EC_code'] = 210
-    config['rs_EO_code'] = 200
 
     # Folders to find the subjects
     config['path'] = {}
     config['path']['data_root'] = os.path.join('databases','LEMON_database')
     config['path']['sourcedata'] = os.path.join(config['path']['data_root'],'sourcedata')
 
+    # Channels
+    config['component_estimation']["channels_to_include"] = [
+        'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3',
+        'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'AFz', 'P7', 'P3', 'Pz', 'P4',
+        'P8', 'PO9', 'O1', 'Oz', 'O2', 'PO10', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2',
+        'F6', 'FT7', 'FC3', 'FC4', 'FT8', 'C5', 'C1', 'C2', 'C6', 'TP7', 'CP3', 'CPz', 'CP4',
+        'TP8', 'P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8']
+    config['component_estimation']["channels_to_exclude"] = ['VEOG']
+
     # Filter the subjects of interest
-    files = glob.glob(os.path.join(config['path']['sourcedata'],'*.vhdr'))
+    files = glob.glob(os.path.join(config['path']['sourcedata'],'*.set'))
     files = [os.path.basename(file) for file in files]
 
     # Extract the info
-    pattern = "sub-([0-9]{6})*"
-    matches = [re.findall(pattern,file) for file in files]
-    sub = [match[0] for match in matches]
-    ses = ['1' for match in matches]
-    task = ['resting' for match in matches]
+    pattern = "sub-([0-9]{6})_ses-([0-9]{1})_task-(EO|EC)_eeg.set"
+    matches = [re.findall(pattern, file) for file in files]
+    matches, files = zip(*[(match, file) for match, file in zip(matches, files) if match])
+    sub = [match[0][0] for match in matches]
+    ses = [match[0][1] for match in matches]
+    task = [match[0][2] for match in matches]
 
     return config, files, sub, ses, task

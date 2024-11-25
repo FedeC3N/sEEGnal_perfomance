@@ -8,6 +8,7 @@ Created on Thu 21/11/2024
 """
 
 # Imports
+import numpy as np
 import mne
 import etl.io.eep as eep
 
@@ -30,6 +31,27 @@ def read_source_files(config,source_filepath):
 
         # Read the data using Ricardo's function
         mnedata = eep.read_mne(source_filepath)
+
+    elif extension == 'set':
+
+        # Read the file
+        dummy_mnedata = mne.io.read_epochs_eeglab(source_filepath)
+
+        # Transform to Raw object
+        pseudodata = dummy_mnedata.get_data()
+        pseudodata = np.hstack(pseudodata)
+        mnedata = mne.io.RawArray(pseudodata, dummy_mnedata.info)
+        mnedata.drop_channels('VEOG')
+
+        # Get the montage
+        desired_montage = mne.channels.make_standard_montage('easycap-M10')
+        ch_names = mnedata.ch_names
+        desired_montage.ch_names = ch_names
+        mnedata.set_montage(desired_montage)
+
+    else:
+
+        mnedata = []
 
 
     return mnedata
