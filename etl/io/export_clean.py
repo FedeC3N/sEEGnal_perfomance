@@ -25,15 +25,15 @@ def export_clean(config,bids_path):
     if bids_path.datatype == 'eeg':
 
         # Create the derivatives bids_path
-        outfile_path = bids.build_derivative(bids_path,'desc-etl_clean_eeg.set')
+        out_filepath = bids.build_derivative(bids_path,'desc-etl_clean_eeg.set')
 
         # Check the folder
-        if not os.path.exists(os.path.dirname(outfile_path)):
-            os.makedirs(os.path.dirname(outfile_path))
+        if not os.path.exists(os.path.dirname(out_filepath)):
+            os.makedirs(os.path.dirname(out_filepath))
 
         # Load the recording
         epoch_definition = config['artifact_detection']['epoch_definition']
-        channels_to_exclude = ['CLAV','VEOGL','EMG1','EMG2']
+        channels_to_exclude = config['component_estimation']["channels_to_exclude"]
         raw = aimind_mne.prepare_raw(
             config,
             bids_path,
@@ -63,4 +63,4 @@ def export_clean(config,bids_path):
 
 
         # Export
-        export_mne_epochs(raw,str(outfile_path))
+        export_mne_epochs(raw,str(out_filepath))

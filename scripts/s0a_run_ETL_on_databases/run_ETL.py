@@ -18,7 +18,7 @@ from etl.io.export_clean import export_clean
 
 #### PARAMETERS
 # Select the database
-database = 'AI_Mind_database'
+database = 'LEMON_database'
 
 # What step to run: standardize, badchannel, artifact, export_clean
 run = [1,1,1,1]
@@ -47,16 +47,19 @@ for current_index in range(len(files)):
 
             # Run the selected processes
             if run[0]:
-                print('   Standardize')
+                print('   Standardize', end='. ')
                 results = standardize(config,current_file,bids_path)
+                print(' Result ' + results['result'])
 
             if run[1]:
-                print('   Badchannel detection')
+                print('   Badchannel detection', end='. ')
                 results = badchannel_detection(config,bids_path)
+                print(' Result ' + results['result'])
 
             if run[2]:
-                print('   Artifact Detection')
-                results = artifact_detection(config,bids_path)
+                print('   Artifact Detection', end='. ')
+                results = artifact_detection(config, bids_path)
+                print(' Result ' + results['result'])
 
             if run[3]:
                 print('   Export clean')
