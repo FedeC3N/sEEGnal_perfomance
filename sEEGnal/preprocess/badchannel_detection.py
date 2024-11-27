@@ -113,28 +113,34 @@ def eeg_badchannel_detection(config,bids_path):
 
     # Create an empty list to append badchannels
     badchannels = []
+    badchannels_description = []
 
     # Find channels with high impedance
     high_impedance_badchannels = find_badchannels.high_impedance_detection(config,bids_path)
     badchannels.extend(high_impedance_badchannels)
+    current_badchannel_description = ['bad_high_impedance' for i in range(len(high_impedance_badchannels))]
+    badchannels_description.extend(current_badchannel_description)
 
     # Find channels with high variance
-    high_variance_badchannels_eeg = find_badchannels.high_variance_detection(config,bids_path)
-    badchannels.extend(high_variance_badchannels_eeg)
+    high_variance_badchannels = find_badchannels.high_variance_detection(config,bids_path)
+    badchannels.extend(high_variance_badchannels)
+    current_badchannel_description = ['bad_high_variance' for i in range(len(high_variance_badchannels))]
+    badchannels_description.extend(current_badchannel_description)
 
     # Find abnormal power spectrum
-    power_spectrum_badchannels_eeg = find_badchannels.power_spectrum_detection(config,bids_path)
-    badchannels.extend(power_spectrum_badchannels_eeg)
+    power_spectrum_badchannels = find_badchannels.power_spectrum_detection(config,bids_path)
+    badchannels.extend(power_spectrum_badchannels)
+    current_badchannel_description = ['bad_power_spectrum' for i in range(len(power_spectrum_badchannels))]
+    badchannels_description.extend(current_badchannel_description)
 
     # Find channels with gel bridge
     gel_bridge_badchannels = find_badchannels.gel_bridge_detection(config,bids_path)
     badchannels.extend(gel_bridge_badchannels)
-
-    # Remove duplicates (if any)
-    badchannels = list(set(badchannels))
+    current_badchannel_description = ['bad_gel_bridge' for i in range(len(gel_bridge_badchannels))]
+    badchannels_description.extend(current_badchannel_description)
 
     # Save the results
-    bids.update_badchans (bids_path, badchannels)
+    bids.update_badchans (bids_path, badchannels, badchannels_description)
     return badchannels
 
 

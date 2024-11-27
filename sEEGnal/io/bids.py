@@ -138,22 +138,34 @@ def read_chan ( bids_path ):
 
 
 
-def update_badchans ( bids_path, badchans = None ):
+def update_badchans (bids_path,badchannels = None, badchannels_description = None):
 
     # Builds the path to the file.
     tsv_file = build_derivative ( bids_path, 'channels.tsv' )
 
     # Reads the contents of the raw file.
-    tsv_data = read_tsv ( tsv_file )
+    tsv_data = mne_bids.tsv_handler._from_tsv(tsv_file)
 
     # Identifies the bad channels.
-    badindex = tools.find_matches ( badchans, tsv_data.name )
+    badindex = tools.find_matches (badchannels,tsv_data['name'])
 
-    # Marks the bad channels.
-    tsv_data.loc [ badindex, 'status' ] = 'bad'
+    # Update the values
+    for ibad in range(len(badindex)):
+
+        # Update the status
+        tsv_data['status'][badindex[ibad]] = 'bad'
+
+        # If it is the first change in description, change it. If not, append it.
+        current_status = tsv_data['status_description'][badindex[ibad]]
+        if current_status == 'n/a':
+            tsv_data['status_description'][badindex[ibad]] = badchannels_description[ibad]
+        else:
+            current_status = current_status + ',' + badchannels_description[ibad]
+            tsv_data['status_description'][badindex[ibad]] = current_status
+
 
     # Saves the TSV file.
-    write_tsv ( tsv_data, tsv_file )
+    mne_bids.tsv_handler._to_tsv(tsv_data,tsv_file)
 
 
 
