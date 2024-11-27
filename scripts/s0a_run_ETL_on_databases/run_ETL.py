@@ -21,7 +21,7 @@ from sEEGnal.io.export_clean import export_clean
 database = 'LEMON_database'
 
 # What step to run: standardize, badchannel, artifact, export_clean
-run = [1,1,0,0]
+run = [1,1,1,1]
 
 # Init the database
 config, files, sub, ses, task = init_database(database)

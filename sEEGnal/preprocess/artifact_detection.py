@@ -21,7 +21,7 @@ import mne_icalabel as iclabel
 
 import sEEGnal.tools.find_artifacts as find_artifacts
 import sEEGnal.io.bids as bids
-import sEEGnal.tools.mnetools as aimind_mne
+import sEEGnal.tools.mnetools as mnetools
 from sEEGnal.tools.measure_performance import measure_performance
 
 
@@ -193,7 +193,7 @@ def estimate_artifact_components(config,bids_path,derivatives_label):
         set_annotations = True
 
     # Load raw EEG
-    raw = aimind_mne.prepare_raw(
+    raw = mnetools.prepare_raw(
         config,
         bids_path,
         preload=True,
@@ -207,7 +207,7 @@ def estimate_artifact_components(config,bids_path,derivatives_label):
         epoch=epoch_definition)
 
     # Run SOBI
-    sobi = aimind_mne.sobi(raw)
+    sobi = mnetools.sobi(raw)
 
     # Label de ICs
     _ = iclabel.label_components(raw, sobi, method='iclabel')

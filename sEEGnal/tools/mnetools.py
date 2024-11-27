@@ -14,11 +14,11 @@ import mne
 import numpy
 import scipy.signal
 
-import aimind.meeg.io.bids as bids
-import aimind.meeg.tools.bss as bss
-import aimind.meeg.tools.tools as tools
-import aimind.meeg.tools.signal as signal
-import aimind.meeg.tools.spheres as spheres
+import sEEGnal.io.bids as bids
+import sEEGnal.tools.bss as bss
+import sEEGnal.tools.tools as tools
+import sEEGnal.tools.signal as signal
+import sEEGnal.tools.spheres as spheres
 
 
 # Lists the valid MNE objects.

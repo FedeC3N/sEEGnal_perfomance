@@ -22,14 +22,14 @@ config['rs_EC_code'] = 'Stimulus/S210'
 # Filter the subjects of interest
 config['database'] = 'LEMON_database'
 config['path'] = {'sub': os.path.join('databases','LEMON_database')}
-sub = glob.glob(os.path.join(config['path']['sub'],'sub*'))
+sub = glob.glob(os.path.join(config['path']['sub'],'sub-*37'))
 sub = [os.path.basename(current_sub) for current_sub in sub]
 
 # Go through each sub
 for current_sub in sub:
 
     # Find the files
-    files = glob.glob(os.path.join(config['path']['sub'],current_sub,'eeg','*vhdr'))
+    files = glob.glob(os.path.join(config['path']['sub'],current_sub,'RSEEG','*vhdr'))
 
     for current_file in files:
 
