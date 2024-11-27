@@ -11,7 +11,7 @@ Created on Wed 22/05/2024
 # Imports
 import os
 import sys
-sys.path.append(os.path.join('..','TSD','aimind.etl'))
+sys.path.append(os.path.join('..','TSD','aimind.sEEGnal'))
 
 import scripts.miscellaneous.private.init as init
 import scripts.miscellaneous.private.create_subject as create_subject

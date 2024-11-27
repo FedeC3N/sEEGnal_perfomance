@@ -15,8 +15,8 @@ Created on March 26 2024
 import scipy
 import numpy as np
 
-import etl.io.bids as bids
-import etl.tools.mnetools as aimind_mne
+import sEEGnal.io.bids as bids
+import sEEGnal.tools.mnetools as aimind_mne
 
 
 

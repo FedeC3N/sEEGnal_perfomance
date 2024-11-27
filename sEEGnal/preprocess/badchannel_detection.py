@@ -17,10 +17,10 @@ from datetime import datetime as dt, timezone
 import mne
 import mne_icalabel as iclabel
 
-import etl.io.bids as bids
-import etl.tools.mnetools as aimind_mne
-import etl.tools.find_badchannels as find_badchannels
-from etl.tools.measure_performance import measure_performance
+import sEEGnal.io.bids as bids
+import sEEGnal.tools.mnetools as aimind_mne
+import sEEGnal.tools.find_badchannels as find_badchannels
+from sEEGnal.tools.measure_performance import measure_performance
 
 
 

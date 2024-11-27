@@ -19,10 +19,10 @@ from datetime import datetime as dt, timezone
 import mne
 import mne_icalabel as iclabel
 
-import etl.tools.find_artifacts as find_artifacts
-import etl.io.bids as bids
-import etl.tools.mnetools as aimind_mne
-from etl.tools.measure_performance import measure_performance
+import sEEGnal.tools.find_artifacts as find_artifacts
+import sEEGnal.io.bids as bids
+import sEEGnal.tools.mnetools as aimind_mne
+from sEEGnal.tools.measure_performance import measure_performance
 
 
 

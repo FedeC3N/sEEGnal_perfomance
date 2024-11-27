@@ -10,7 +10,7 @@ def export_execution_results(config,eeg_task,elapsed_time,mem_usage,process_name
     bids_basename = current_bids_path.basename[:-5]
 
     # Create the metadata filename
-    metadata_path = os.path.join('metadata','AI_Mind_database','trl','etl')
+    metadata_path = os.path.join('metadata','AI_Mind_database','trl','sEEGnal')
     metadata_filename = os.path.join(metadata_path,bids_basename + '.mat')
     if not(os.path.exists(metadata_path)):
         os.mkdir(metadata_path)

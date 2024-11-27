@@ -11,8 +11,8 @@ Created on Thu 20/11/2024
 # Imports
 import os
 
-import etl.tools.mnetools as aimind_mne
-import etl.io.bids as bids
+import sEEGnal.tools.mnetools as aimind_mne
+import sEEGnal.io.bids as bids
 from eeglabio.utils import export_mne_epochs
 
 def export_clean(config,bids_path):

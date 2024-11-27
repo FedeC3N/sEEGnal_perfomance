@@ -15,7 +15,7 @@ import time
 import tracemalloc
 from datetime import datetime as dt, timezone
 
-import etl.io.bids as bids
+import sEEGnal.io.bids as bids
 
 
 def export_execution_results(config,bids_path,elapsed_time,mem_usage,process_name):

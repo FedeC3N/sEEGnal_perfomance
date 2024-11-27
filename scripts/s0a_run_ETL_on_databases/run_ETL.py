@@ -9,12 +9,12 @@ Created on Thu 17/05/2024
 """
 
 # Imports
-from etl.io.init_databases import init_database
-from etl.io.bids import create_bids_path
-from etl.standardize.standardize import standardize
-from etl.preprocess.badchannel_detection import badchannel_detection
-from etl.preprocess.artifact_detection import artifact_detection
-from etl.io.export_clean import export_clean
+from sEEGnal.io.init_databases import init_database
+from sEEGnal.io.bids import create_bids_path
+from sEEGnal.standardize.standardize import standardize
+from sEEGnal.preprocess.badchannel_detection import badchannel_detection
+from sEEGnal.preprocess.artifact_detection import artifact_detection
+from sEEGnal.io.export_clean import export_clean
 
 #### PARAMETERS
 # Select the database

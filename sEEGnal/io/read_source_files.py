@@ -10,7 +10,7 @@ Created on Thu 21/11/2024
 # Imports
 import numpy as np
 import mne
-import etl.io.eep as eep
+import sEEGnal.io.eep as eep
 
 def read_source_files(config,source_filepath):
 

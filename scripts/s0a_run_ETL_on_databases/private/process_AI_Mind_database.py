@@ -173,7 +173,7 @@ def standardize(config,eeg_task):
     """
 
     # Add the ETL functions to the path
-    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
     from aimind.etl.standardize.standardize import standardize_eeg_meg
 
     # Standardize
@@ -196,7 +196,7 @@ def standardize(config,eeg_task):
     print('')
 
     # Return the search path to the original state
-    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
 
 
 
@@ -209,7 +209,7 @@ def badchannel_detection(config,eeg_task):
     """
 
     # Add the ETL functions to the path
-    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
     from aimind.etl.preprocess.badchannel_detection import badchannel_detection as etl_badchannel_detection
 
     # Badchannel detection
@@ -232,7 +232,7 @@ def badchannel_detection(config,eeg_task):
     print('')
 
     # Return the search path to the original state
-    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
 
 
 
@@ -245,7 +245,7 @@ def artifact_detection(config,eeg_task):
     """
 
     # Add the ETL functions to the path
-    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
     from aimind.etl.preprocess.artifact_detection import artifact_detection as etl_artifact_detection
 
     # Standardize
@@ -268,7 +268,7 @@ def artifact_detection(config,eeg_task):
     print('')
 
     # Return the search path to the original state
-    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
 
 
 
@@ -281,7 +281,7 @@ def final_qa(config,eeg_task):
     """
 
     # Add the ETL functions to the path
-    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
     from aimind.etl.qc.final_quality_assessment import final_quality_assessment_eeg_meg
 
     # Standardize
@@ -308,6 +308,6 @@ def final_qa(config,eeg_task):
     print('')
 
     # Return the search path to the original state
-    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
 
 

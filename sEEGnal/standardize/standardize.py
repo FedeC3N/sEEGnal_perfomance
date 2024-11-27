@@ -17,9 +17,9 @@ import mne
 import numpy
 import mne_bids
 
-import etl.io.eep as eep
-from etl.tools.measure_performance import measure_performance
-from etl.io.read_source_files import read_source_files
+import sEEGnal.io.eep as eep
+from sEEGnal.tools.measure_performance import measure_performance
+from sEEGnal.io.read_source_files import read_source_files
 
 
 

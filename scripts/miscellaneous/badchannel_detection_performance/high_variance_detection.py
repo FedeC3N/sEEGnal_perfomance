@@ -17,14 +17,14 @@ import random
 from aimind.etl.preprocess.badchannel_detection import high_variance_detection
 
 # Para importar desde el terminal
-# py.exe 'C:\Users\feder\AppData\Local\Programs\Python\Python39\Scripts\import_config.py' https://pms.lurtis.com 'C:\Users\feder\OneDrive - Universidad Complutense de Madrid (UCM)\Mi Unidad\Proyectos - Programación\AI-Mind\TSD\aimind.etl\config\etl_configuration.yaml' ETL etluser '80Mind80@'
+# py.exe 'C:\Users\feder\AppData\Local\Programs\Python\Python39\Scripts\import_config.py' https://pms.lurtis.com 'C:\Users\feder\OneDrive - Universidad Complutense de Madrid (UCM)\Mi Unidad\Proyectos - Programación\AI-Mind\TSD\aimind.sEEGnal\config\etl_configuration.yaml' ETL etluser '80Mind80@'
 
 
 os.environ['AI_MIND_CONNECTION_ENDPOINT'] = 'https://pms.lurtis.com'
 os.environ['AI_MIND_API_CREDENTIALS'] = '{"username": "etluser","password": "80Mind80@"}'
 
 SUBSYSTEM = "ETL"
-APP_NAME = "etl-meeg-test"
+APP_NAME = "sEEGnal-meeg-test"
 
 app_config = AIMindAppConfigClient(APP_NAME, SUBSYSTEM, logging=False)
 config = app_config.get_current_configuration()

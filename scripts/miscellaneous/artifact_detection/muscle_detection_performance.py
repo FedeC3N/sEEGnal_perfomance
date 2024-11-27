@@ -62,7 +62,7 @@ def init_params():
     os.environ['AI_MIND_CONNECTION_ENDPOINT'] = 'https://pms.lurtis.com'
     os.environ['AI_MIND_API_CREDENTIALS'] = '{"username": "etluser","password": "80Mind80@"}'
     SUBSYSTEM = "ETL"
-    APP_NAME = "etl-meeg-test"
+    APP_NAME = "sEEGnal-meeg-test"
     app_config = AIMindAppConfigClient(APP_NAME,SUBSYSTEM,logging=False)
     config = app_config.get_current_configuration()
 

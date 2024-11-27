@@ -85,7 +85,7 @@ def badchannel_detection(config,bids_path):
     """
 
     # Add the ETL functions to the path
-    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
 
     from aimind.etl.preprocess.badchannel_detection import estimate_badchannel_component
     import aimind.etl.tools.find_badchannels as find_badchannels
@@ -115,7 +115,7 @@ def badchannel_detection(config,bids_path):
     bids.update_badchans(bids_path,badchannels)
 
     # Return the search path to the original state
-    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
 
 
 
@@ -127,7 +127,7 @@ def artifact_detection(config,bids_path):
 
     """
     # Add the ETL functions to the path
-    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.append(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
 
     from aimind.etl.preprocess.artifact_detection import estimate_artifact_components,muscle_detection, sensor_detection, EOG_detection
 
@@ -190,7 +190,7 @@ def artifact_detection(config,bids_path):
     _ = bids.write_annot(bids_path,annotations)
 
     # Return the search path to the original state
-    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.etl'))
+    sys.path.remove(os.path.join('..','..','..','..','TSD','aimind.sEEGnal'))
 
 
 
