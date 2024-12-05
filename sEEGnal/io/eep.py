@@ -13,9 +13,9 @@ import re
 import pandas
 import numpy
 
-import aimind.meeg.io.riff as riff
+import sEEGnal.io.riff as riff
 import aimind.meeg.io.raweep as raweep
-import aimind.meeg.tools.mnetools as mnetools
+import sEEGnal.tools.mnetools as mnetools
 
 
 """

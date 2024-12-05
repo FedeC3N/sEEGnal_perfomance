@@ -3,10 +3,9 @@ import os
 import re
 import random
 
-import aimind.meeg.io.bids as bids
-import aimind.meeg.tools.mne as aimind_mne
-from aimind.sdk.appconfig.client import AIMindAppConfigClient
-from aimind.etl.preprocess.artifact_detection import sensor_detection
+import sEEGnal.io.bids as bids
+import sEEGnal.tools.mne as aimind_mne
+from sEEGnal.preprocess.artifact_detection import sensor_detection
 
 
 def plot_jump_artifacts(config, bids_path):

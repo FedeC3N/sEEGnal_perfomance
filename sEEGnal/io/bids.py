@@ -13,8 +13,8 @@ import sys
 import mne
 import mne_bids
 
-import aimind.meeg.tools.mnetools as mnetools
-import aimind.meeg.tools.tools as tools
+import sEEGnal.tools.mnetools as mnetools
+import sEEGnal.tools.tools as tools
 
 
 

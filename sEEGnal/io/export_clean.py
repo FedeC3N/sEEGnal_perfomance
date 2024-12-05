@@ -25,7 +25,7 @@ def export_clean(config,bids_path):
     if bids_path.datatype == 'eeg':
 
         # Create the derivatives bids_path
-        out_filepath = bids.build_derivative(bids_path,'desc-etl_clean_eeg.set')
+        out_filepath = bids.build_derivative(bids_path,'desc-sEEGnal_clean_eeg.set')
 
         # Check the folder
         if not os.path.exists(os.path.dirname(out_filepath)):
