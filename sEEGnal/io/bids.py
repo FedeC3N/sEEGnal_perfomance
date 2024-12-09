@@ -606,7 +606,7 @@ def build_derivative ( bids_path, tail ):
 
     # Builds the complete path to the piece of data.
     path_rel = bids_path.directory.relative_to ( bids_path.root )
-    path_etl = bids_path.root.joinpath ( 'derivatives/sEEGnal' )
+    path_etl = bids_path.root.joinpath ( os.path.join('derivatives','sEEGnal','clean') )
     path_der = path_etl.joinpath ( path_rel ).joinpath ( file_der )
 
     # Returns the path to the piece of data.

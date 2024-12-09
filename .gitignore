@@ -9,6 +9,7 @@ metadata/
 results/
 EEG_experts_preprocessing_scripts.zip
 *.mat
+*.zip
 
 # Ignore all the documents
 docs/
