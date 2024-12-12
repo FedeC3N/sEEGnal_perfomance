@@ -16,6 +16,23 @@ testers = {'lemon','sEEGnal'};
 % Channels
 config.complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'AFz', 'P7', 'P3', 'Pz', 'P4', 'P8', 'PO9', 'O1', 'Oz', 'O2', 'PO10', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FT7', 'FC3', 'FC4', 'FT8', 'C5', 'C1', 'C2', 'C6', 'TP7', 'CP3', 'CPz', 'CP4', 'TP8', 'P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8'};
 
+% Areas
+areas_info = struct('name',{'frontal','temporal_l','temporal_r','parietal_l',...
+    'parietal_r','occipital','whole_head'},'channel',[]);
+areas_info(1).channel = {'Fp1';'AF7';'AF3'; 'Fpz';'Fp2';'AF8';'AF4';'AFz'};
+areas_info(2).channel = {'FT7';'FT9';'T7';'TP7';'TP9'};
+areas_info(3).channel = {'FT8';'FT10';'T8';'TP8';'TP10'};
+areas_info(4).channel = {'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9'};
+areas_info(5).channel = {'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10'};
+areas_info(6).channel = {'O1';'Iz';'Oz';'O9';'O2';'O10'};
+areas_info(7).channel = complete_channel_labels;
+
+% Define the frequency bands
+config.bands = {'delta', 'theta','alpha','beta','gamma', 'broadband'};
+
+% Define measures
+config.measures = {'NMSE', 'rho', 'tstat'};
+
 % Read the power spectrum
 [pow_lemon_dataset,~,channels_lemon_included] = read_pow_dataset(config,'lemon');
 [pow_sEEGnal_dataset,f,channels_sEEGnal_included] = read_pow_dataset(config,'sEEGnal');
@@ -23,6 +40,9 @@ config.complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'F
 %%%%%%%%%%%%%%%
 % PLOTS
 %%%%%%%%%%%%%%%
+
+% Topoplots of the stats
+plot_stats_in_head(config,stats)
 
 % Normalized pow spectrum for a specific band-area
 % Prepare the pow_spectrum
@@ -54,6 +74,65 @@ plot_pow_spectrum_norm_all_areas(config,to_plot,pow_lemon_dataset,pow_sEEGnal_da
 
 
 % Functions
+function plot_stats_in_head(config,stats)
+
+% Draw for each band and measure
+for iband = 1 : numel(config.bands)
+    
+    current_band = config.bands{iband};
+    
+    % Define figure
+    fig = figure('WindowState', 'maximized');
+    
+    for imeasure = 1 : numel(config.measures)
+        
+        current_measure = config.measures{imeasure};
+        
+        % Scatter the head
+        ax1 = subplot(2,2,imeasure);
+        [pos_elec, size_elec] = draw_head(config);
+        
+        % Scatter the values of interest
+        color_elec = nanmean(stats.(current_band).(current_measure),2);
+        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
+        c = colorbar;
+        
+        % Set limits to the colorbar
+        if min(color_elec) < 0 
+            caxis([min(color_elec), max(color_elec)]);
+        else
+            caxis([0, max(color_elec)]);
+        end
+          
+        % Set the colormap
+        gradient_1_neg = linspace(1,1,200);
+        gradient_2_neg = linspace(1,0.4,200);
+        gradient_3_neg = linspace(1,0.4,200);
+        gradient_1_pos = linspace(0.4,1,200);
+        gradient_2_pos = linspace(0.4,1,200);
+        gradient_3_pos = linspace(1,1,200);
+        clrmap = [[gradient_1_pos gradient_1_neg]',...
+            [gradient_2_pos gradient_2_neg]',...
+            [gradient_3_pos gradient_3_neg]'];
+        if min(color_elec) > 0 
+           clrmap = clrmap(200:end,:); 
+        end
+        colormap(ax1,clrmap)
+        
+        
+        
+        
+        % Details
+        title(sprintf('Band %s - Measure %s', current_band, current_measure))
+        
+        
+    end
+    
+    
+end
+
+end
+
 function [pow_dataset_norm,f,channels] = read_pow_dataset(config,dataset_name)
 
 % Load the datset
@@ -174,7 +253,7 @@ for iarea = 1 : numel(to_plot.areas_info)
     % Estimate the average and mean error
     lemon_std_error = nanstd(current_pow_lemon_dataset)/sqrt(numel(current_pow_lemon_dataset));
     sEEGnal_std_error = nanstd(current_pow_sEEGnal_dataset)/sqrt(numel(current_pow_sEEGnal_dataset));
-
+    
     % Save
     avg_pow(1,iarea) = nanmean(current_pow_lemon_dataset);
     avg_pow(2,iarea) = nanmean(current_pow_sEEGnal_dataset);
@@ -199,7 +278,7 @@ for igroup = 1:size(avg_pow,2)
     % get x positions per group
     xpos = hb(igroup).XData + hb(igroup).XOffset;
     % draw errorbar
-    errorbar(xpos, avg_pow(:,igroup), std_error_pow(:,igroup), 'LineStyle', 'none', ... 
+    errorbar(xpos, avg_pow(:,igroup), std_error_pow(:,igroup), 'LineStyle', 'none', ...
         'Color', 'k', 'LineWidth', 1);
 end
 
@@ -264,5 +343,73 @@ for iarea = 1 : numel(to_plot.areas_info)
         'Interpreter','none')
     
 end
+
+end
+
+function [pos_elec,size_elec] = draw_head(config)
+
+hold on;
+axis equal off
+
+% Head (big circle)
+theta = linspace(0, 2*pi, 100);
+r_head = 0.5; % radius of the head
+x_head = r_head * cos(theta);
+y_head = r_head * sin(theta);
+
+% Ears (two small circles)
+r_ear = 0.1; % radius of the ears
+x_ear = r_ear * cos(theta);
+y_ear = r_ear * sin(theta);
+
+% Left ear
+fill(x_ear - r_head/1.2, y_ear, [0.9 0.9 0.9]); % Slightly darker gray
+
+% Right ear
+fill(x_ear + r_head/1.2, y_ear, [0.9 0.9 0.9]);
+
+% Nose (triangle)
+x_nose = [-0.07, 0.07, 0]; % X-coordinates of the triangle
+y_nose = [0.49, 0.49, 0.55]; % Y-coordinates of the triangle
+fill(x_nose, y_nose, [0.9 0.9 0.9]); % Darker gray for nose
+
+% Plot the head at the end
+fill(x_head, y_head, [0.9 0.9 0.9]); % Light gray color
+
+% Plot the sensors
+% Save memory for the positions and colors
+pos_elec = nan(numel(config.complete_channel_labels),2);
+size_elec = 50*ones(numel(config.complete_channel_labels),1);
+
+% Read the channels position file
+lines = readlines('../shared/head_layouts/elec1005.lay');
+
+% Go through each line
+for iline = 1 : size(lines,1)
+    
+    % Get the channel position in the original "complete_channel_labels"
+    % for consistency
+    current_line = strsplit(lines(iline),' ');
+    
+    if size(current_line,2) > 1
+        current_channel = current_line(6);
+        current_channel_index = ismember(config.complete_channel_labels,current_channel);
+        
+        % If present, save the position and color
+        if sum(current_channel_index) == 1
+            
+            % Position
+            pos_elec(current_channel_index,1) = current_line(2);
+            pos_elec(current_channel_index,2) = current_line(3);
+            
+        end
+        
+    end
+    
+end
+
+scatter(pos_elec(:,1),pos_elec(:,2),size_elec,'MarkerEdgeColor',[0 0 0])
+pos_labels = [pos_elec(:,1)-0.015, pos_elec(:,2)+0.03];
+text(pos_labels(:,1),pos_labels(:,2),config.complete_channel_labels)
 
 end

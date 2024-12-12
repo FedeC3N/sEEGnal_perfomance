@@ -13,10 +13,9 @@ txt_file = sprintf('%s/pow_significant_results.txt',config.path.results);
 if exist(txt_file), delete(txt_file), end
 
 % Table to excel
-varNames = {'Band','Area','mean_lemon (std_mean_err)','mean_sEEGnal (std_mean_error)',...
-    't','p','Cohen d'};
-varTypes = {'string','string','string','string','double','double','double'};
-results_table = table('Size',[1,7],'VariableNames',varNames,'VariableTypes',varTypes);
+varNames = {'Band','Channel','t_mean','t_std','d_mean','d_std','p_mean','p_std'};
+varTypes = {'string','string','double', 'double','double', 'double','double', 'double'};
+results_table = table('Size',[1,8],'VariableNames',varNames,'VariableTypes',varTypes);
 counter = 1;
 
 % Print the significant results for posterior analysis
@@ -24,32 +23,35 @@ for iband = 1 : numel(bands_info)
    
     current_band = bands_info(iband).name;
     
-    for iarea = 1 : numel(areas_info)
+    for ichannel = 1 : numel(complete_channel_labels)
     
-    	current_area = areas_info(iarea).name;
+        current_channel = complete_channel_labels{ichannel};
         
         % Stats
-        current_mean_lemon = sprintf('%10e (%10e)',stats.(current_band).(current_area).mean_lemon,stats.(current_band).(current_area).std_mean_error_lemon);
-        current_mean_sEEGnal = sprintf('%10e (%10ef)',stats.(current_band).(current_area).mean_sEEGnal,stats.(current_band).(current_area).std_mean_error_sEEGnal); 
-        current_p = stats.(current_band).(current_area).p;
-        current_t = stats.(current_band).(current_area).stats.tstat;
-        current_d = stats.(current_band).(current_area).effect_size;
+        current_t_mean = nanmean(stats.(current_band).tstat(ichannel,:));
+        current_t_std = nanstd(stats.(current_band).tstat(ichannel,:));
+        current_d_mean = nanmean(stats.(current_band).cohen_d(ichannel,:));
+        current_d_std = nanstd(stats.(current_band).cohen_d(ichannel,:));
+        current_p_mean = nanmean(stats.(current_band).p(ichannel,:));
+        current_p_std = nanstd(stats.(current_band).p(ichannel,:));
             
         % Add to table
-        if iarea == 1
-            results_table(counter,:) = {current_band, current_area,...
-                current_mean_lemon,current_mean_sEEGnal,current_t,current_p, current_d};
+        if ichannel == 1
+            results_table(counter,:) = {current_band, current_channel,...
+                current_t_mean,current_t_std,current_d_mean,current_d_std,...
+                current_p_mean,current_p_std};
         else
-            results_table(counter,:) = {'', current_area,...
-                current_mean_lemon,current_mean_sEEGnal,current_t,current_p, current_d};
+            results_table(counter,:) = {current_band, current_channel,...
+                current_t_mean,current_t_std,current_d_mean,current_d_std,...
+                current_p_mean,current_p_std};
         end
         counter = counter + 1;
         
         % If significant, plot and save it in txt
-        if current_p < 0.05
+        if current_p_mean < 0.05
             
             
-            line = sprintf('%s - %s : p = %.2f\n', current_band, current_area,current_p);
+            line = sprintf('%s - %s : p = %.2f\n', current_band, current_channel,current_p_mean);
             
             % To screen
             fprintf(1,line);

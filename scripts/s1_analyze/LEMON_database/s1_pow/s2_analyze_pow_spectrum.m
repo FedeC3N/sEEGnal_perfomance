@@ -24,17 +24,6 @@ bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma', 'broadband'
     'f_limits',{[ 2 4] , [4 8] , [8 12] , [12 20] , [20 45] , [2 45]},...
     'f_limits_index',[],'f_original',f');
 
-% Areas
-areas_info = struct('name',{'frontal','temporal_l','temporal_r','parietal_l',...
-    'parietal_r','occipital','whole_head'},'channel',[]);
-areas_info(1).channel = {'Fp1';'AF7';'AF3'; 'Fpz';'Fp2';'AF8';'AF4';'AFz'};
-areas_info(2).channel = {'FT7';'FT9';'T7';'TP7';'TP9'};
-areas_info(3).channel = {'FT8';'FT10';'T8';'TP8';'TP10'};
-areas_info(4).channel = {'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9'};
-areas_info(5).channel = {'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10'};
-areas_info(6).channel = {'O1';'Iz';'Oz';'O9';'O2';'O10'};
-areas_info(7).channel = complete_channel_labels;
-
 % Variable for the stats
 results = [];
 
@@ -47,74 +36,64 @@ for iband = 1 : numel(bands_info)
     current_f = current_f';
     bands_info(iband).f_limits_index = current_f;
     
-    % For each area
-    for iarea = 1 : numel (areas_info)
+    % To do the mean and std of the statistics
+    stats = [];
+    stats.NMSE = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
+    stats.rho = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
+    stats.tstat = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
+    stats.cohen_d = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
+    stats.p = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
+    
+    % For each sensor
+    for ichannel = 1 : numel (complete_channel_labels)
         
-        % Save space for the comparison
-        avg_band_pow_lemon = nan(1,size(pow_lemon_dataset_norm,3));
-        avg_band_pow_sEEGnal = nan(1,size(pow_sEEGnal_dataset_norm,3));
+        % Get the info for the current comparison
+        current_band_pow = nan(sum(current_f),size(pow_lemon_dataset_norm,3),2);
+        current_band_pow(:,:,1) = pow_lemon_dataset_norm(ichannel,current_f,:);
+        current_band_pow(:,:,2) = pow_sEEGnal_dataset_norm(ichannel,current_f,:);
         
-        % Selects the channel for the current subject
-        desired_channels = areas_info(iarea).channel;
-        desired_channels_index = ismember(complete_channel_labels, desired_channels);
-        
-        % and estimate the average power
-        for isubject = 1 : size(pow_lemon_dataset_norm,3)
+        % For each subject, estimate the NMSE, corr, and t-test comparing
+        % the two pre-processing pipelines
+        for isubject = 1 : size(current_band_pow,2)
             
-            % EEG experts dataset
-            current_channels = desired_channels_index & channels_lemon_included(isubject).channels_included_index;
-            current_pow_norm = pow_lemon_dataset_norm(current_channels,current_f,isubject);
-            current_pow_norm = mean(mean(current_pow_norm,1),2);
+            % NMSE
+            lemon = current_band_pow(:,isubject,1);
+            sEEGnal = current_band_pow(:,isubject,2);
+            numerator = sum((lemon - sEEGnal).^2);
+            denominator = sum(lemon.^2);
+            NMSE = numerator / denominator;
+            stats.NMSE(ichannel,isubject) = NMSE;
             
-            avg_band_pow_lemon(isubject) = current_pow_norm;
+            % corr
+            [rho,~] = corrcoef(lemon,sEEGnal,'Rows','complete');
+            stats.rho(ichannel,isubject) = rho(1,2);
+            
+            % t-test and  Effect Size (Cohen's d)
+            diff = lemon - sEEGnal;
+            [~,p,~,t_stats] = ttest(diff);
+            diff = abs(lemon - sEEGnal);
+            d = mean(diff)/std(diff);
+            stats.tstat(ichannel,isubject) = t_stats.tstat;
+            stats.cohen_d(ichannel,isubject) = d;
+            stats.p(ichannel,isubject) = p;
+            
         end
         
-        % ETL dataset
-        for isubject = 1 : size(pow_sEEGnal_dataset_norm,3)
-            
-            current_channels = desired_channels_index & channels_sEEGnal_included(isubject).channels_included_index;
-            current_pow_norm = pow_sEEGnal_dataset_norm(current_channels,current_f,isubject);
-            current_pow_norm = mean(mean(current_pow_norm,1),2);
-            
-            avg_band_pow_sEEGnal(isubject) = current_pow_norm;
-            
-        end
         
-        % There are subjects without valid channels. Remove them
-        valid = ~isnan(avg_band_pow_lemon) & ~isnan(avg_band_pow_sEEGnal);
-        avg_band_pow_lemon = avg_band_pow_lemon(valid);
-        avg_band_pow_sEEGnal = avg_band_pow_sEEGnal(valid);
-        
-        % ttest for the current_area - band
-        [~,p,~,current_stats] = ttest(avg_band_pow_lemon,avg_band_pow_sEEGnal);
-        
-        % Estimate the Effect Size (Cohen's d)
-        diff = abs(avg_band_pow_lemon - avg_band_pow_sEEGnal);
-        d = mean(diff)/std(diff);
-        
-        % mean and stderror
-        mean_lemon = mean(avg_band_pow_lemon);
-        std_mean_error_lemon = std(avg_band_pow_lemon)/numel(avg_band_pow_lemon);
-        mean_sEEGnal = mean(avg_band_pow_sEEGnal);
-        std_mean_error_sEEGnal = std(avg_band_pow_sEEGnal)/numel(avg_band_pow_sEEGnal);
-        
-        % Save
-        results.stats.(current_band).(areas_info(iarea).name).test = 'Paired ttest';
-        results.stats.(current_band).(areas_info(iarea).name).p = p;
-        results.stats.(current_band).(areas_info(iarea).name).stats = current_stats;
-        results.stats.(current_band).(areas_info(iarea).name).effect_size_name = 'Cohen d';
-        results.stats.(current_band).(areas_info(iarea).name).effect_size = d;
-        results.stats.(current_band).(areas_info(iarea).name).mean_lemon = mean_lemon;
-        results.stats.(current_band).(areas_info(iarea).name).std_mean_error_lemon = std_mean_error_lemon;
-        results.stats.(current_band).(areas_info(iarea).name).mean_sEEGnal = mean_sEEGnal;
-        results.stats.(current_band).(areas_info(iarea).name).std_mean_error_sEEGnal = std_mean_error_sEEGnal;
     end
     
+    % Save
+    results.stats.(current_band).NMSE = stats.NMSE;
+    results.stats.(current_band).rho = stats.rho;
+    results.stats.(current_band).tstat = stats.tstat;
+    results.stats.(current_band).cohen_d = stats.cohen_d;
+    results.stats.(current_band).p = stats.p;
     
 end
 
 % Complete the information
-results.areas_info = areas_info;
+results.testers = testers;
+results.complete_channel_labels = complete_channel_labels;
 results.bands_info = bands_info;
 
 % Save the file
