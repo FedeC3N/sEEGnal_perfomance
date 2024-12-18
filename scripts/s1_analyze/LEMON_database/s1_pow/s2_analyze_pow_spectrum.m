@@ -57,11 +57,10 @@ for iband = 1 : numel(bands_info)
         for isubject = 1 : size(current_band_pow,2)
             
             % NMSE
-            lemon = current_band_pow(:,isubject,1);
+            lemon =  current_band_pow(:,isubject,1);
             sEEGnal = current_band_pow(:,isubject,2);
-            numerator = sum((lemon - sEEGnal).^2);
-            denominator = sum(lemon.^2);
-            NMSE = numerator / denominator;
+            MSE = nanmean((lemon - sEEGnal).^2);
+            NMSE = MSE / nanvar(lemon,1);
             stats.NMSE(ichannel,isubject) = NMSE;
             
             % corr
@@ -113,7 +112,7 @@ for icurrent = 1 : numel(dummy.dataset)
     
     % Load pow
     current_dataset = dummy.dataset(icurrent);
-    pow_file = sprintf('%s/%s',current_dataset.pow.path,...
+    pow_file = sprintf('../../../../%s/%s',current_dataset.pow.path,...
         current_dataset.pow.file);
     pow = load(pow_file);
     

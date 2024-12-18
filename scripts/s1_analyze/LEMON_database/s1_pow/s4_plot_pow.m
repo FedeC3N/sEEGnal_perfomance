@@ -44,6 +44,9 @@ config.measures = {'NMSE', 'rho', 'tstat'};
 % Topoplots of the stats
 plot_stats_in_head(config,stats)
 
+% Plot lines between lemon and sEEGnal
+plot_lines_linking_values(pow_lemon_dataset,pow_sEEGnal_dataset,bands_info)
+
 % Normalized pow spectrum for a specific band-area
 % Prepare the pow_spectrum
 to_plot = [];
@@ -74,65 +77,6 @@ plot_pow_spectrum_norm_all_areas(config,to_plot,pow_lemon_dataset,pow_sEEGnal_da
 
 
 % Functions
-function plot_stats_in_head(config,stats)
-
-% Draw for each band and measure
-for iband = 1 : numel(config.bands)
-    
-    current_band = config.bands{iband};
-    
-    % Define figure
-    fig = figure('WindowState', 'maximized');
-    
-    for imeasure = 1 : numel(config.measures)
-        
-        current_measure = config.measures{imeasure};
-        
-        % Scatter the head
-        ax1 = subplot(2,2,imeasure);
-        [pos_elec, size_elec] = draw_head(config);
-        
-        % Scatter the values of interest
-        color_elec = nanmean(stats.(current_band).(current_measure),2);
-        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
-        c = colorbar;
-        
-        % Set limits to the colorbar
-        if min(color_elec) < 0 
-            caxis([min(color_elec), max(color_elec)]);
-        else
-            caxis([0, max(color_elec)]);
-        end
-          
-        % Set the colormap
-        gradient_1_neg = linspace(1,1,200);
-        gradient_2_neg = linspace(1,0.4,200);
-        gradient_3_neg = linspace(1,0.4,200);
-        gradient_1_pos = linspace(0.4,1,200);
-        gradient_2_pos = linspace(0.4,1,200);
-        gradient_3_pos = linspace(1,1,200);
-        clrmap = [[gradient_1_pos gradient_1_neg]',...
-            [gradient_2_pos gradient_2_neg]',...
-            [gradient_3_pos gradient_3_neg]'];
-        if min(color_elec) > 0 
-           clrmap = clrmap(200:end,:); 
-        end
-        colormap(ax1,clrmap)
-        
-        
-        
-        
-        % Details
-        title(sprintf('Band %s - Measure %s', current_band, current_measure))
-        
-        
-    end
-    
-    
-end
-
-end
-
 function [pow_dataset_norm,f,channels] = read_pow_dataset(config,dataset_name)
 
 % Load the datset
@@ -144,7 +88,7 @@ for icurrent = 1 : numel(dummy.dataset)
     
     % Load pow
     current_dataset = dummy.dataset(icurrent);
-    pow_file = sprintf('%s/%s',current_dataset.pow.path,...
+    pow_file = sprintf('../../../../%s/%s',current_dataset.pow.path,...
         current_dataset.pow.file);
     pow = load(pow_file);
     
@@ -170,6 +114,97 @@ for icurrent = 1 : numel(dummy.dataset)
 end
 
 end
+
+
+function plot_stats_in_head(config,stats)
+
+% Draw for each band and measure
+for iband = 1 : numel(config.bands)
+    
+    current_band = config.bands{iband};
+    
+    % Define figure
+    fig = figure('WindowState', 'maximized');
+    
+    for imeasure = 1 : numel(config.measures)
+        
+        current_measure = config.measures{imeasure};
+        
+        % Scatter the head
+        ax1 = subplot(2,2,imeasure);
+        [pos_elec, size_elec] = draw_head(config);
+        
+        % Scatter the values of interest
+        color_elec = nanmean(stats.(current_band).(current_measure),2);
+        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
+        c = colorbar;
+        
+        % Set limits to the colorbar
+        if min(color_elec) < 0
+            caxis([min(color_elec), max(color_elec)]);
+        else
+            caxis([0, max(color_elec)]);
+        end
+        
+        % Set the colormap
+        gradient_1_neg = linspace(1,1,200);
+        gradient_2_neg = linspace(1,0.4,200);
+        gradient_3_neg = linspace(1,0.4,200);
+        gradient_1_pos = linspace(0.4,1,200);
+        gradient_2_pos = linspace(0.4,1,200);
+        gradient_3_pos = linspace(1,1,200);
+        clrmap = [[gradient_1_pos gradient_1_neg]',...
+            [gradient_2_pos gradient_2_neg]',...
+            [gradient_3_pos gradient_3_neg]'];
+        if min(color_elec) > 0
+            clrmap = clrmap(200:end,:);
+        end
+        colormap(ax1,clrmap)
+        
+        
+        
+        
+        % Details
+        title(sprintf('Band %s - Measure %s', current_band, current_measure))
+        
+        
+    end
+    
+    
+end
+
+end
+
+
+function plot_lines_linking_values(pow_lemon_dataset,pow_sEEGnal_dataset,bands_info)
+
+
+for iband = 1 : numel(bands_info)
+    
+    figure('WindowState', 'maximized');
+    hold on
+    
+    current_f = bands_info(iband).f_limits_index;
+    
+    current_lemon_pow = nanmean(nanmean(pow_lemon_dataset(:,current_f,:),3),2);
+    current_sEEGnal_pow = nanmean(nanmean(pow_sEEGnal_dataset(:,current_f,:),3),2);
+    
+    for ichannel = 1 : numel(current_lemon_pow)
+        
+        plot([1 2],[current_lemon_pow(ichannel) current_sEEGnal_pow(ichannel)],'-b')
+        
+    end
+    xlim([0.5 2.5])
+    
+    
+    
+    
+    
+end
+
+
+end
+
 
 function plot_pow_spectrum_norm_band_area(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset)
 
@@ -223,6 +258,7 @@ title(sprintf('Power in %s and %s area', to_plot.band_of_interest{1}, to_plot.ar
     'Interpreter','none')
 
 end
+
 
 function plot_areas_errorbar(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset)
 
@@ -292,6 +328,7 @@ title('Average power per area across')
 
 end
 
+
 function plot_pow_spectrum_norm_all_areas(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % All channels
@@ -345,6 +382,7 @@ for iarea = 1 : numel(to_plot.areas_info)
 end
 
 end
+
 
 function [pos_elec,size_elec] = draw_head(config)
 

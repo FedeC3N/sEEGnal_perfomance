@@ -1,10 +1,10 @@
 function data = process_subject(current_dataset)
     
-    dummy_complete_file = sprintf('%s/%s',current_dataset.path,...
-        current_dataset.file);
+    dummy_complete_file = fullfile('..','..','..','..',...
+        current_dataset.path, current_dataset.file);
     
-    cfg = []
-    cfg.dataset = dummy_complete_file
+    cfg = [];
+    cfg.dataset = dummy_complete_file;
     data = ft_preprocessing(cfg);
     
     
