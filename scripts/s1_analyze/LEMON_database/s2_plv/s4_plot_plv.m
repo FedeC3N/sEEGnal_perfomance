@@ -10,6 +10,9 @@ addpath('../shared/')
 config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
 config.path.results = '../../../../results/plv';
 
+% Load the results
+load(sprintf('%s/plv_results.mat',config.path.results));
+
 % Get the different testers
 testers = {'lemon','sEEGnal'};
 
@@ -20,6 +23,22 @@ testers = {'lemon','sEEGnal'};
 % Define the frequency bands
 bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
     'f_limits',{[ 2 4] , [4 8] , [8 12] , [12 20] , [20 45] });
+
+% Define the frequency bands
+config.bands = {'delta', 'theta','alpha','beta','gamma'};
+
+% Define measures
+config.measures = {'NMSE', 'rho', 'tstat'};
+
+% Channels
+config.complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'AFz', 'P7', 'P3', 'Pz', 'P4', 'P8', 'PO9', 'O1', 'Oz', 'O2', 'PO10', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FT7', 'FC3', 'FC4', 'FT8', 'C5', 'C1', 'C2', 'C6', 'TP7', 'CP3', 'CPz', 'CP4', 'TP8', 'P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8'};
+
+%%%%%%%%%%%%%%%
+% PLOTS
+%%%%%%%%%%%%%%%
+
+% Topoplots of the stats
+plot_stats_in_head(config,stats)
 
 % Plot difference in channels
 plot_diff_channels(plv_lemon_dataset,plv_sEEGnal_dataset,bands_info)
@@ -41,7 +60,7 @@ dummy = load(dataset_path);
 for icurrent = 1 : numel(dummy.dataset)
     
     % Load plv
-    plv = load(sprintf('%s/%s',dummy.dataset(icurrent).plv.path,...
+    plv = load(sprintf('../../../../%s/%s',dummy.dataset(icurrent).plv.path,...
         dummy.dataset(icurrent).plv.file));
     
     % Save bands_info
@@ -68,6 +87,66 @@ for icurrent = 1 : numel(dummy.dataset)
     % Save the channel information
     channels(icurrent).channels_included = plv.channels_included;
     channels(icurrent).channels_included_index = plv.channels_included_index;
+    
+end
+
+end
+
+
+function plot_stats_in_head(config,stats)
+
+% Draw for each band and measure
+for iband = 1 : numel(config.bands)
+    
+    current_band = config.bands{iband};
+    
+    % Define figure
+    fig = figure('WindowState', 'maximized');
+    
+    for imeasure = 1 : numel(config.measures)
+        
+        current_measure = config.measures{imeasure};
+        
+        % Scatter the head
+        ax1 = subplot(2,2,imeasure);
+        [pos_elec, size_elec] = draw_head(config);
+        
+        % Scatter the values of interest
+        color_elec = nanmean(stats.(current_band).(current_measure),2);
+        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
+        c = colorbar;
+        
+        % Set limits to the colorbar
+        if min(color_elec) < 0 
+            caxis([min(color_elec), max(color_elec)]);
+        else
+            caxis([0, max(color_elec)]);
+        end
+          
+        % Set the colormap
+        gradient_1_neg = linspace(1,1,200);
+        gradient_2_neg = linspace(1,0.4,200);
+        gradient_3_neg = linspace(1,0.4,200);
+        gradient_1_pos = linspace(0.4,1,200);
+        gradient_2_pos = linspace(0.4,1,200);
+        gradient_3_pos = linspace(1,1,200);
+        clrmap = [[gradient_1_pos gradient_1_neg]',...
+            [gradient_2_pos gradient_2_neg]',...
+            [gradient_3_pos gradient_3_neg]'];
+        if min(color_elec) > 0 
+           clrmap = clrmap(200:end,:); 
+        end
+        colormap(ax1,clrmap)
+        
+        
+        
+        
+        % Details
+        title(sprintf('Band %s - Measure %s', current_band, current_measure))
+        
+        
+    end
+    
     
 end
 
@@ -232,4 +311,70 @@ set(gca,'TickLabelInterpreter','none')
 
 end
 
+function [pos_elec,size_elec] = draw_head(config)
 
+hold on;
+axis equal off
+
+% Head (big circle)
+theta = linspace(0, 2*pi, 100);
+r_head = 0.5; % radius of the head
+x_head = r_head * cos(theta);
+y_head = r_head * sin(theta);
+
+% Ears (two small circles)
+r_ear = 0.1; % radius of the ears
+x_ear = r_ear * cos(theta);
+y_ear = r_ear * sin(theta);
+
+% Left ear
+fill(x_ear - r_head/1.2, y_ear, [0.9 0.9 0.9]); % Slightly darker gray
+
+% Right ear
+fill(x_ear + r_head/1.2, y_ear, [0.9 0.9 0.9]);
+
+% Nose (triangle)
+x_nose = [-0.07, 0.07, 0]; % X-coordinates of the triangle
+y_nose = [0.49, 0.49, 0.55]; % Y-coordinates of the triangle
+fill(x_nose, y_nose, [0.9 0.9 0.9]); % Darker gray for nose
+
+% Plot the head at the end
+fill(x_head, y_head, [0.9 0.9 0.9]); % Light gray color
+
+% Plot the sensors
+% Save memory for the positions and colors
+pos_elec = nan(numel(config.complete_channel_labels),2);
+size_elec = 50*ones(numel(config.complete_channel_labels),1);
+
+% Read the channels position file
+lines = readlines('../shared/head_layouts/elec1005.lay');
+
+% Go through each line
+for iline = 1 : size(lines,1)
+    
+    % Get the channel position in the original "complete_channel_labels"
+    % for consistency
+    current_line = strsplit(lines(iline),' ');
+    
+    if size(current_line,2) > 1
+        current_channel = current_line(6);
+        current_channel_index = ismember(config.complete_channel_labels,current_channel);
+        
+        % If present, save the position and color
+        if sum(current_channel_index) == 1
+            
+            % Position
+            pos_elec(current_channel_index,1) = current_line(2);
+            pos_elec(current_channel_index,2) = current_line(3);
+            
+        end
+        
+    end
+    
+end
+
+scatter(pos_elec(:,1),pos_elec(:,2),size_elec,'MarkerEdgeColor',[0 0 0])
+pos_labels = [pos_elec(:,1)-0.015, pos_elec(:,2)+0.03];
+text(pos_labels(:,1),pos_labels(:,2),config.complete_channel_labels)
+
+end

@@ -178,29 +178,52 @@ end
 
 function plot_lines_linking_values(pow_lemon_dataset,pow_sEEGnal_dataset,bands_info)
 
+figure('WindowState', 'maximized');
+hold on
+
+% Color
+plot_colors = [179,179,255;...
+    255,144,144;...
+    20,144,144;...
+    20,70,144;...
+    20,70,70;...
+    255,20,144]/255;
 
 for iband = 1 : numel(bands_info)
     
-    figure('WindowState', 'maximized');
-    hold on
     
+    
+    % Get the current band
     current_f = bands_info(iband).f_limits_index;
     
-    current_lemon_pow = nanmean(nanmean(pow_lemon_dataset(:,current_f,:),3),2);
-    current_sEEGnal_pow = nanmean(nanmean(pow_sEEGnal_dataset(:,current_f,:),3),2);
+    % Estimate the plots
+    lemon_average = nanmean(nanmean(pow_lemon_dataset(:,current_f,:),3),2);
+    lemon_average = normalize(lemon_average,'range');
+    lemon_average = nanmean(lemon_average);
+    sEEGnal_average = nanmean(nanmean(pow_sEEGnal_dataset(:,current_f,:),3),2);
+    sEEGnal_average = normalize(sEEGnal_average,'range');
+    sEEGnal_average = nanmean(sEEGnal_average);
+    lemon_std_error = nanmean(nanmean(pow_lemon_dataset,3),2);
+    lemon_std_error = normalize(lemon_std_error,'range');
+    lemon_std_error = lemon_std_error/sqrt(size(pow_lemon_dataset,1));
+    lemon_std_error = nanmean(lemon_std_error);
+    sEEGnal_std_error = nanmean(nanmean(pow_sEEGnal_dataset,3),2);
+    sEEGnal_std_error = normalize(sEEGnal_std_error,'range');
+    sEEGnal_std_error = sEEGnal_std_error/sqrt(size(pow_sEEGnal_dataset,1));
+    sEEGnal_std_error = nanmean(sEEGnal_std_error);    
     
-    for ichannel = 1 : numel(current_lemon_pow)
-        
-        plot([1 2],[current_lemon_pow(ichannel) current_sEEGnal_pow(ichannel)],'-b')
-        
-    end
-    xlim([0.5 2.5])
-    
-    
-    
-    
-    
+%     patch([[1,2],[2,1]], ...
+%         [[lemon_average + lemon_std_error, sEEGnal_average + sEEGnal_std_error],...
+%         [sEEGnal_average - sEEGnal_std_error, lemon_average - lemon_std_error]],...
+%         plot_colors(iband,:),'FaceAlpha',0.2,'HandleVisibility','off')
+    plot([1 2],[lemon_average, sEEGnal_average],'Color',plot_colors(iband,:),'LineWidth',2)    
+          
 end
+
+% Plot characteristics
+xlim([0.5 2.5])
+ylim([0 1])
+legend(bands_info.name)
 
 
 end
