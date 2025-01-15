@@ -18,7 +18,7 @@ bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
 complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'AFz', 'P7', 'P3', 'Pz', 'P4', 'P8', 'PO9', 'O1', 'Oz', 'O2', 'PO10', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FT7', 'FC3', 'FC4', 'FT8', 'C5', 'C1', 'C2', 'C6', 'TP7', 'CP3', 'CPz', 'CP4', 'TP8', 'P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8'};
 
 % Avoid overwrite
-config.overwrite = false;
+config.overwrite = true;
 
 % Get the different testers
 testers = dir(sprintf('%s/*',config.path.clean_data));
@@ -56,6 +56,10 @@ for itester = 1 : numel(testers)
             n = 1:4*data.hdr.Fs;
             data_matrix = data_matrix(:,n,:);
             
+            % Add padding
+            padding = size(data_matrix,2);
+            data_matrix_pad = padarray(data_matrix,[0 padding 0],'symmetric');
+            
             % Create an index of the channels position
             channels_included = data.label;
             channels_included_index = ismember(complete_channel_labels,channels_included);
@@ -74,7 +78,11 @@ for itester = 1 : numel(testers)
                 % Filters the data in the selected band.
                 band_order = 1800;
                 current_f_limits = bands_info(iband).f_limits;
-                current_banddata = myfiltfilt(data_matrix,band_order,current_f_limits,data.hdr.Fs);
+                current_banddata = myfiltfilt(data_matrix_pad,band_order,current_f_limits,data.hdr.Fs);
+                
+                % Remove the padding
+                padding_vector = padding+1:size(current_banddata,2)-padding;
+                current_banddata = current_banddata(:,padding_vector,:);
                 
                 % Gets the data dimensions.
                 nchans       = numel ( complete_channel_labels);
