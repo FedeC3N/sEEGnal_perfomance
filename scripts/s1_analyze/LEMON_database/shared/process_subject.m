@@ -5,6 +5,9 @@ function data = process_subject(current_dataset)
     
     cfg = [];
     cfg.dataset = dummy_complete_file;
+    cfg.reref = 'yes';
+    cfg.refmethod = 'avg';
+    cfg.refchannel = 'all';
     data = ft_preprocessing(cfg);
     
     
