@@ -31,7 +31,8 @@ areas_info(7).channel = complete_channel_labels;
 config.bands = {'delta', 'theta','alpha','beta','gamma', 'broadband'};
 
 % Define measures
-config.measures = {'NMSE', 'rho', 'tstat'};
+% config.measures = {'NRMSE', 'rho', 'tstat'};
+config.measures = {'NRMSE', 'rho'};
 
 % Read the power spectrum
 [pow_lemon_dataset,~,channels_lemon_included] = read_pow_dataset(config,'lemon');
@@ -42,29 +43,10 @@ config.measures = {'NMSE', 'rho', 'tstat'};
 %%%%%%%%%%%%%%%
 
 % Topoplots of the stats
-plot_stats_in_head(config,stats)
-
-% Plot lines between lemon and sEEGnal
-plot_lines_linking_values(pow_lemon_dataset,pow_sEEGnal_dataset,bands_info)
-
-% Normalized pow spectrum for a specific band-area
-% Prepare the pow_spectrum
-to_plot = [];
-to_plot.band_of_interest = {'broadband'};
-to_plot.area_of_interest = {'whole_head'};
-to_plot.areas_info = areas_info;
-to_plot.bands_info = bands_info;
-
-plot_pow_spectrum_norm_band_area(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset);
-
-% Error bars in each area
-% Prepare the pow_spectrum
-to_plot = [];
-to_plot.band_of_interest = {'broadband'};
-to_plot.areas_info = areas_info;
-to_plot.bands_info = bands_info;
-
-plot_areas_errorbar(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset);
+% to_plot = [];
+% to_plot.bands_info = bands_info;
+% 
+% plot_stats_in_head(config,to_plot,stats,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % Normalized pow spectrum for all areas in broadband
 % Prepare the pow_spectrum
@@ -72,7 +54,31 @@ to_plot = [];
 to_plot.areas_info = areas_info;
 to_plot.bands_info = bands_info;
 
-plot_pow_spectrum_norm_all_areas(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset);
+plot_pow_spectrum_norm_all_areas(config,to_plot,stats,pow_lemon_dataset,pow_sEEGnal_dataset);
+
+% Plot lines between lemon and sEEGnal
+% plot_lines_linking_values(pow_lemon_dataset,pow_sEEGnal_dataset,bands_info)
+
+% Normalized pow spectrum for a specific band-area
+% Prepare the pow_spectrum
+% to_plot = [];
+% to_plot.band_of_interest = {'broadband'};
+% to_plot.area_of_interest = {'whole_head'};
+% to_plot.areas_info = areas_info;
+% to_plot.bands_info = bands_info;
+% 
+% plot_pow_spectrum_norm_band_area(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset);
+
+% Error bars in each area
+% Prepare the pow_spectrum
+% to_plot = [];
+% to_plot.band_of_interest = {'broadband'};
+% to_plot.areas_info = areas_info;
+% to_plot.bands_info = bands_info;
+% 
+% plot_areas_errorbar(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset);
+
+
 
 
 
@@ -96,9 +102,9 @@ for icurrent = 1 : numel(dummy.dataset)
     f = pow.f;
     
     % Normalize
-    current_pow = mean(pow.pow_spectrum,3);
-    scaling_factor = 1./nansum(nansum(current_pow,2));
-    scaling_factor = repmat(scaling_factor,size(current_pow));
+    current_pow = nanmean(pow.pow_spectrum,3);
+    scaling_factor = 1./(nansum(current_pow,2));
+    scaling_factor = repmat(scaling_factor,[1 size(current_pow,2)]);
     current_pow_norm = scaling_factor .* current_pow;
     
     % Add to the all matrix
@@ -116,7 +122,7 @@ end
 end
 
 
-function plot_stats_in_head(config,stats)
+function plot_stats_in_head(config,to_plot,stats,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % Draw for each band and measure
 for iband = 1 : numel(config.bands)
@@ -140,24 +146,24 @@ for iband = 1 : numel(config.bands)
         c = colorbar;
         
         % Set limits to the colorbar
-        if min(color_elec) < 0
-            caxis([min(color_elec), max(color_elec)]);
-        else
-            caxis([0, max(color_elec)]);
-        end
+%         if min(color_elec) < 0
+%             caxis([min(color_elec), max(color_elec)]);
+%         else
+%             caxis([0, max(color_elec)]);
+%         end
         
         % Set the colormap
-        gradient_1_neg = linspace(1,1,200);
-        gradient_2_neg = linspace(1,0.4,200);
-        gradient_3_neg = linspace(1,0.4,200);
-        gradient_1_pos = linspace(0.4,1,200);
-        gradient_2_pos = linspace(0.4,1,200);
-        gradient_3_pos = linspace(1,1,200);
+        gradient_1_neg = linspace(1,1,2000);
+        gradient_2_neg = linspace(1,0.4,2000);
+        gradient_3_neg = linspace(1,0.4,2000);
+        gradient_1_pos = linspace(0.4,1,2000);
+        gradient_2_pos = linspace(0.4,1,2000);
+        gradient_3_pos = linspace(1,1,2000);
         clrmap = [[gradient_1_pos gradient_1_neg]',...
             [gradient_2_pos gradient_2_neg]',...
             [gradient_3_pos gradient_3_neg]'];
         if min(color_elec) > 0
-            clrmap = clrmap(200:end,:);
+            clrmap = clrmap(2000:end,:);
         end
         colormap(ax1,clrmap)
         
@@ -169,6 +175,44 @@ for iband = 1 : numel(config.bands)
         
         
     end
+ 
+    
+    % Select broadban frequencies
+    f_index = to_plot.bands_info(iband).f_limits_index;
+    f_of_interest = to_plot.bands_info(iband).f_original;
+    f_of_interest = f_of_interest(f_index);
+    
+    % Update pow matrix to plot
+    current_pow_lemon_dataset = pow_lemon_dataset(:,f_index,:);
+    current_pow_sEEGnal_dataset = pow_sEEGnal_dataset(:,f_index,:);
+    
+    % Average across electrodes
+    lemon_average = squeeze(nanmean(nanmean(current_pow_lemon_dataset,1),3));
+    sEEGnal_average = squeeze(nanmean(nanmean(current_pow_sEEGnal_dataset,1),3));
+    
+    % Estimate mean error
+    lemon_std_error = nanstd(squeeze(nanmean(current_pow_lemon_dataset,1)),1,2)/sqrt(size(current_pow_lemon_dataset,3));
+    sEEGnal_std_error = nanstd(squeeze(nanmean(current_pow_sEEGnal_dataset,1)),1,2)/sqrt(size(current_pow_sEEGnal_dataset,3));
+    
+    % Color
+    plot_color_lemon = [255,179,179]/255;
+    plot_color_sEEGnal = [179,179,255]/255;
+    
+    % Plot
+    ax1 = subplot(2,2,4);
+    patch([f_of_interest,fliplr(f_of_interest)], ...
+        [(lemon_average - lemon_std_error'),fliplr((lemon_average + lemon_std_error'))],...
+        plot_color_lemon,'FaceAlpha',0.2,'HandleVisibility','off')
+    hold on
+    plot(f_of_interest,lemon_average,'r','LineWidth',2)
+    patch([f_of_interest,fliplr(f_of_interest)], ...
+        [(sEEGnal_average - sEEGnal_std_error'),fliplr((sEEGnal_average + sEEGnal_std_error'))],...
+        plot_color_sEEGnal,'FaceAlpha',0.2,'HandleVisibility','off')
+    plot(f_of_interest,sEEGnal_average,'b','LineWidth',2)
+    
+    % Enhance the plot
+    legend({'Lemon database', 'sEEGnal database'});
+    title(sprintf('Power in band %s and the whole head',current_band),'Interpreter','none')
     
     
 end
@@ -352,7 +396,7 @@ title('Average power per area across')
 end
 
 
-function plot_pow_spectrum_norm_all_areas(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset)
+function plot_pow_spectrum_norm_all_areas(config,to_plot,stats,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % All channels
 complete_channel_labels = config.complete_channel_labels;
@@ -364,6 +408,47 @@ for iarea = 1 : numel(to_plot.areas_info)
     areas_of_interest = to_plot.areas_info(iarea).channel;
     channels_index = ismember(complete_channel_labels,areas_of_interest);
     
+    % Define figure
+    fig = figure('WindowState', 'maximized');
+    
+    for imeasure = 1 : numel(config.measures)
+        
+        current_measure = config.measures{imeasure};
+        
+        % Scatter the head
+        ax1 = subplot(1,2,imeasure);
+        [pos_elec, size_elec] = draw_head(config);
+        color_elec = nanmean(stats.broadband.(current_measure),2);
+        
+        % Keep the channels of interest
+        pos_elec = pos_elec(channels_index,:);
+        size_elec = size_elec(channels_index);
+        color_elec = color_elec(channels_index,:);
+        
+        % Scatter the values of interest
+        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
+        c = colorbar;
+        
+        % Set the colormap
+        gradient_1_neg = linspace(1,1,2000);
+        gradient_2_neg = linspace(1,0.4,2000);
+        gradient_3_neg = linspace(1,0.4,2000);
+        gradient_1_pos = linspace(0.4,1,2000);
+        gradient_2_pos = linspace(0.4,1,2000);
+        gradient_3_pos = linspace(1,1,2000);
+        clrmap = [[gradient_1_pos gradient_1_neg]',...
+            [gradient_2_pos gradient_2_neg]',...
+            [gradient_3_pos gradient_3_neg]'];
+        if min(color_elec) > 0
+            clrmap = clrmap(2000:end,:);
+        end
+        colormap(ax1,clrmap)
+    
+        % Details
+        title(sprintf('Broadband - Measure %s', current_measure))
+             
+    end
+        
     % Select broadban frequencies
     f_index = to_plot.bands_info(6).f_limits_index;
     f_of_interest = to_plot.bands_info(6).f_original;
@@ -372,7 +457,7 @@ for iarea = 1 : numel(to_plot.areas_info)
     % Update pow matrix to plot
     current_pow_lemon_dataset = pow_lemon_dataset(channels_index,f_index,:);
     current_pow_sEEGnal_dataset = pow_sEEGnal_dataset(channels_index,f_index,:);
-    
+
     % Average across electrodes
     lemon_average = squeeze(nanmean(nanmean(current_pow_lemon_dataset,1),3));
     sEEGnal_average = squeeze(nanmean(nanmean(current_pow_sEEGnal_dataset,1),3));
@@ -387,14 +472,19 @@ for iarea = 1 : numel(to_plot.areas_info)
     
     % Plot
     figure('WindowState','maximized')
-    patch([f_of_interest,fliplr(f_of_interest)], ...
-        [(lemon_average - lemon_std_error'),fliplr((lemon_average + lemon_std_error'))],...
-        plot_color_lemon,'FaceAlpha',0.2,'HandleVisibility','off')
+
     hold on
+    plot(f_of_interest,nanmean(current_pow_lemon_dataset,3),...
+        'Color',[1 0.6 0.6],'LineWidth',0.5)
+    plot(f_of_interest,nanmean(current_pow_sEEGnal_dataset,3),...
+        'Color',[0.6 0.6 1],'LineWidth',0.5)
+%     patch([f_of_interest,fliplr(f_of_interest)], ...
+%         [(lemon_average - lemon_std_error'),fliplr((lemon_average + lemon_std_error'))],...
+%         plot_color_lemon,'FaceAlpha',0.2,'HandleVisibility','off')
+%     patch([f_of_interest,fliplr(f_of_interest)], ...
+%         [(sEEGnal_average - sEEGnal_std_error'),fliplr((sEEGnal_average + sEEGnal_std_error'))],...
+%         plot_color_sEEGnal,'FaceAlpha',0.2,'HandleVisibility','off')
     plot(f_of_interest,lemon_average,'r','LineWidth',2)
-    patch([f_of_interest,fliplr(f_of_interest)], ...
-        [(sEEGnal_average - sEEGnal_std_error'),fliplr((sEEGnal_average + sEEGnal_std_error'))],...
-        plot_color_sEEGnal,'FaceAlpha',0.2,'HandleVisibility','off')
     plot(f_of_interest,sEEGnal_average,'b','LineWidth',2)
     
     % Enhance the plot

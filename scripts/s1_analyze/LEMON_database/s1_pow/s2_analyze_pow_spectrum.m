@@ -38,7 +38,7 @@ for iband = 1 : numel(bands_info)
     
     % To do the mean and std of the statistics
     stats = [];
-    stats.NMSE = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
+    stats.NRMSE = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
     stats.rho = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
     stats.tstat = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
     stats.cohen_d = nan(numel (complete_channel_labels),size(pow_lemon_dataset_norm,3));
@@ -56,12 +56,13 @@ for iband = 1 : numel(bands_info)
         % the two pre-processing pipelines
         for isubject = 1 : size(current_band_pow,2)
             
-            % NMSE
+            % NRMSE
             lemon =  current_band_pow(:,isubject,1);
             sEEGnal = current_band_pow(:,isubject,2);
             MSE = nanmean((lemon - sEEGnal).^2);
-            NMSE = MSE / nanvar(lemon,1);
-            stats.NMSE(ichannel,isubject) = NMSE;
+            RMSE = sqrt(MSE);
+            NRMSE = RMSE / nanmean(lemon,1);
+            stats.NRMSE(ichannel,isubject) = NRMSE;
             
             % corr
             [rho,~] = corrcoef(lemon,sEEGnal,'Rows','complete');
@@ -82,7 +83,7 @@ for iband = 1 : numel(bands_info)
     end
     
     % Save
-    results.stats.(current_band).NMSE = stats.NMSE;
+    results.stats.(current_band).NRMSE = stats.NRMSE;
     results.stats.(current_band).rho = stats.rho;
     results.stats.(current_band).tstat = stats.tstat;
     results.stats.(current_band).cohen_d = stats.cohen_d;
@@ -120,9 +121,9 @@ for icurrent = 1 : numel(dummy.dataset)
     f = pow.f;
     
     % Normalize
-    current_pow = mean(pow.pow_spectrum,3);
-    scaling_factor = 1./nansum(nansum(current_pow,2));
-    scaling_factor = repmat(scaling_factor,size(current_pow));
+    current_pow = nanmean(pow.pow_spectrum,3);
+    scaling_factor = 1./(nansum(current_pow,2));
+    scaling_factor = repmat(scaling_factor,[1 size(current_pow,2)]);
     current_pow_norm = scaling_factor .* current_pow;
     
     % Add to the all matrix
