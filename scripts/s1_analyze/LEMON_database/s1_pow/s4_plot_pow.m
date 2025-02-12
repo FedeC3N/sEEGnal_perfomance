@@ -19,12 +19,12 @@ config.complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'F
 % Areas
 areas_info = struct('name',{'frontal','temporal_l','temporal_r','parietal_l',...
     'parietal_r','occipital','whole_head'},'channel',[]);
-areas_info(1).channel = {'Fp1';'AF7';'AF3'; 'Fpz';'Fp2';'AF8';'AF4';'AFz'};
-areas_info(2).channel = {'FT7';'FT9';'T7';'TP7';'TP9'};
-areas_info(3).channel = {'FT8';'FT10';'T8';'TP8';'TP10'};
-areas_info(4).channel = {'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9'};
-areas_info(5).channel = {'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10'};
-areas_info(6).channel = {'O1';'Iz';'Oz';'O9';'O2';'O10'};
+areas_info(1).channel = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6'};
+areas_info(2).channel = {'T7', 'FT7', 'TP7'};
+areas_info(3).channel = {'T8', 'FT8', 'TP8'};
+areas_info(4).channel = {'CP5', 'CP1', 'P7', 'P3', 'TP7', 'CP3', 'P5', 'P1'};
+areas_info(5).channel = {'CP2', 'CP6', 'P4', 'P8', 'CP4', 'TP8', 'P2', 'P6'};
+areas_info(6).channel = {'PO9', 'O1', 'Oz', 'O2', 'PO10','PO7', 'PO3', 'POz', 'PO4', 'PO8'};
 areas_info(7).channel = complete_channel_labels;
 
 % Define the frequency bands
