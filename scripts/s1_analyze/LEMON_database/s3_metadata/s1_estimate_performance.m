@@ -98,12 +98,7 @@ for ifile = 1 : numel(dataset)
         % Read the file and extract the ICs
         metadata = tdfread(fullfile(current_file.folder, current_file.name),'tab');
         ICs_rejected = cellstr(metadata.channel);
-        ICs_rejected = ICs_rejected(2:end-1);
-        ICs_rejected_index = ~strcmp('n/a',ICs_rejected);
-        ICs_rejected = ICs_rejected(ICs_rejected_index);
         ICs_rejected_labels = cellstr(metadata.label);
-        ICs_rejected_labels = ICs_rejected_labels(2:end-1);
-        ICs_rejected_labels = ICs_rejected_labels(ICs_rejected_index);
         performance.ICs_rejected.IC = ICs_rejected;
         performance.ICs_rejected.label = ICs_rejected_labels;   
         

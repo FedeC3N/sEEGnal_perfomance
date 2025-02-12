@@ -78,7 +78,11 @@ for icurrent = 1 : numel(dummy.dataset)
     performance.artifacts(icurrent) = numel(current_performance.artifacts.label);
     
     % Count the number of rejected ICs and store it
-    dummy_count = strjoin(current_performance.ICs_rejected.IC,',');
+    current_ICs_rejected = current_performance.ICs_rejected.IC;
+    current_ICs_rejected = current_ICs_rejected(2:end-1);
+    ICs_rejected_index = strcmp(current_ICs_rejected,'n/a');
+    current_ICs_rejected = current_ICs_rejected(~ICs_rejected_index);
+    dummy_count = strjoin(current_ICs_rejected,',');
     dummy_count = strsplit(dummy_count,',');
     performance.ICs_rejected(icurrent) = numel(dummy_count);
     
