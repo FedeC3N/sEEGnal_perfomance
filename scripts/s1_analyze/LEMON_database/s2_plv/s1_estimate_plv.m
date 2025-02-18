@@ -18,7 +18,7 @@ bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
 complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'AFz', 'P7', 'P3', 'Pz', 'P4', 'P8', 'PO9', 'O1', 'Oz', 'O2', 'PO10', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FT7', 'FC3', 'FC4', 'FT8', 'C5', 'C1', 'C2', 'C6', 'TP7', 'CP3', 'CPz', 'CP4', 'TP8', 'P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8'};
 
 % Avoid overwrite
-config.overwrite = true;
+config.overwrite = false;
 
 % Get the different testers
 testers = dir(sprintf('%s/*',config.path.clean_data));
@@ -159,7 +159,7 @@ end
 
 
 % Functions
-function  band_data = myfiltfilt(original_data,band_order,f_limits,fs);
+function  band_data = myfiltfilt(original_data,band_order,f_limits,fs)
 
 % Creates the digital filter
 b = fir1 ( band_order, f_limits / ( fs / 2 ) );

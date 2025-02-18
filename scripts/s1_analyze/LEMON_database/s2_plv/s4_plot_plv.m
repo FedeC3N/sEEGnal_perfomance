@@ -24,6 +24,16 @@ testers = {'lemon','sEEGnal'};
 bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
     'f_limits',{[ 2 4] , [4 8] , [8 12] , [12 20] , [20 45] });
 
+% Areas
+areas_info = struct('name',{'frontal','temporal_l','temporal_r','parietal_l',...
+    'parietal_r','occipital'},'channel',[]);
+areas_info(1).channel = {'Fp1';'AF7';'AF3'; 'Fpz';'Fp2';'AF8';'AF4';'AFz'};
+areas_info(2).channel = {'FT7';'FT9';'T7';'TP7';'TP9'};
+areas_info(3).channel = {'FT8';'FT10';'T8';'TP8';'TP10'};
+areas_info(4).channel = {'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9'};
+areas_info(5).channel = {'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10'};
+areas_info(6).channel = {'O1';'Iz';'Oz';'O9';'O2';'O10'};
+
 % Define the frequency bands
 config.bands = {'delta', 'theta','alpha','beta','gamma'};
 
@@ -48,6 +58,9 @@ plot_corr_channels(plv_lemon_dataset,plv_sEEGnal_dataset,bands_info, channels_sE
 
 % Plot correlation of PLV matrix for each subject
 plot_corr_plv_subjects(plv_lemon_dataset,plv_sEEGnal_dataset,bands_info, channels_lemon_included,channels_sEEGnal_included)
+
+% Plot PLV correlation by areas
+plot_plv_corr_areas(config,plv_lemon_dataset,plv_sEEGnal_dataset,bands_info,areas_info)
 
 % Aux functions
 function [plv_dataset,bands_info,channels] = read_plv_dataset(config, dataset_name)
@@ -117,12 +130,12 @@ for iband = 1 : numel(config.bands)
         c = colorbar;
         
         % Set limits to the colorbar
-        if min(color_elec) < 0 
+        if min(color_elec) < 0
             caxis([min(color_elec), max(color_elec)]);
         else
             caxis([0, max(color_elec)]);
         end
-          
+        
         % Set the colormap
         gradient_1_neg = linspace(1,1,200);
         gradient_2_neg = linspace(1,0.4,200);
@@ -133,8 +146,8 @@ for iband = 1 : numel(config.bands)
         clrmap = [[gradient_1_pos gradient_1_neg]',...
             [gradient_2_pos gradient_2_neg]',...
             [gradient_3_pos gradient_3_neg]'];
-        if min(color_elec) > 0 
-           clrmap = clrmap(200:end,:); 
+        if min(color_elec) > 0
+            clrmap = clrmap(200:end,:);
         end
         colormap(ax1,clrmap)
         
@@ -311,6 +324,7 @@ set(gca,'TickLabelInterpreter','none')
 
 end
 
+
 function [pos_elec,size_elec] = draw_head(config)
 
 hold on;
@@ -376,5 +390,94 @@ end
 scatter(pos_elec(:,1),pos_elec(:,2),size_elec,'MarkerEdgeColor',[0 0 0])
 pos_labels = [pos_elec(:,1)-0.015, pos_elec(:,2)+0.03];
 text(pos_labels(:,1),pos_labels(:,2),config.complete_channel_labels)
+
+end
+
+
+function plot_plv_corr_areas(config,plv_lemon_dataset,plv_sEEGnal_dataset,bands_info,areas_info)
+
+% Define figure
+fig = figure('WindowState', 'maximized');
+
+% For each band
+for iband = 1 : numel (bands_info)
+    
+    % Select the matrix
+    current_plv_lemon = squeeze(plv_lemon_dataset(:,:,iband,:));
+    current_plv_sEEGnal = squeeze(plv_sEEGnal_dataset(:,:,iband,:));
+    
+    % For each area
+    corr_matrix = nan(numel(areas_info));
+    NRMSE_matrix = nan(numel(areas_info));
+    for iarea_1 = 1 : numel(areas_info)
+        
+        % Select the matrix
+        channels_mask = ismember(config.complete_channel_labels,areas_info(iarea_1).channel);
+        channel_index = find(channels_mask);
+        current_plv_lemon_area_1 = current_plv_lemon(:,channels_mask,:);
+        current_plv_sEEGnal_area_1 = current_plv_sEEGnal(:,channels_mask,:);
+        
+        for iarea_2 = 1 : numel(areas_info)
+            
+            % Select the matrix
+            channels_mask = ismember(config.complete_channel_labels,areas_info(iarea_2).channel);
+            channel_index = find(channels_mask);
+            current_plv_lemon_area_2 = current_plv_lemon_area_1(channels_mask,:,:);
+            current_plv_sEEGnal_area_2 = current_plv_sEEGnal_area_1(channels_mask,:,:);
+            
+            % Create a corr and NRMSE matrix
+            dummy_corr_matrix = nan(size(current_plv_lemon_area_2,2),size(current_plv_lemon_area_2,3));
+            dummy_NRMSE = nan(size(current_plv_lemon_area_2,2),size(current_plv_lemon_area_2,3));
+            
+            % For each channel
+            for ichannel = 1 : size(current_plv_lemon_area_2,2)
+                
+                % Get the current channel and the rest of the matrix
+                current_channel_lemon = squeeze(current_plv_lemon_area_2(:,ichannel,:));
+                current_channel_sEEGnal = squeeze(current_plv_sEEGnal_area_2(:,ichannel,:));
+                
+                % Estimate NRMSE and corr
+                for isubject = 1 : size(dummy_corr_matrix,2)
+                    
+                    dummy_corr_matrix(ichannel,isubject) = corr(current_channel_lemon(:,isubject),current_channel_sEEGnal(:,isubject),'Rows','complete');
+                    
+                end
+                
+            end
+            
+            % Average across subjects
+            dummy_corr_matrix = nanmean(dummy_corr_matrix,2);
+            
+            % Average across channels and save in the matrix
+            corr_matrix(iarea_1,iarea_2) = nanmean(dummy_corr_matrix);
+            
+        end
+        
+        
+    end
+    
+    % Plot
+    ax1 = subplot(1,numel(bands_info),iband);
+    imagesc(corr_matrix)
+    axis square
+    
+    % Set the colormap
+    gradient_1_neg = linspace(1,1,2000);
+    gradient_2_neg = linspace(1,0.4,2000);
+    gradient_3_neg = linspace(1,0.4,2000);
+    gradient_1_pos = linspace(0.4,1,2000);
+    gradient_2_pos = linspace(0.4,1,2000);
+    gradient_3_pos = linspace(1,1,2000);
+    clrmap = [[gradient_1_pos gradient_1_neg]',...
+        [gradient_2_pos gradient_2_neg]',...
+        [gradient_3_pos gradient_3_neg]'];
+    if min(corr_matrix(:)) > 0
+        clrmap = clrmap(2000:end,:);
+    end
+    colormap(ax1,clrmap)
+    colorbar
+    
+end
+
 
 end
