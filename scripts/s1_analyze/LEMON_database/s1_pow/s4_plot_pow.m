@@ -466,29 +466,25 @@ for iarea = 1 : numel(to_plot.areas_info)
     lemon_std_error = nanstd(squeeze(nanmean(current_pow_lemon_dataset,1)),1,2)/sqrt(size(current_pow_lemon_dataset,3));
     sEEGnal_std_error = nanstd(squeeze(nanmean(current_pow_sEEGnal_dataset,1)),1,2)/sqrt(size(current_pow_sEEGnal_dataset,3));
     
-    % Color
-    plot_color_lemon = [255,179,179]/255;
-    plot_color_sEEGnal = [179,179,255]/255;
-    
     % Plot
     figure('WindowState','maximized')
-
     hold on
     plot(f_of_interest,nanmean(current_pow_lemon_dataset,3),...
-        'Color',[1 0.6 0.6],'LineWidth',0.5)
+        'Color',[0.6980    0.8902    0.8902],'LineWidth',0.5)
     plot(f_of_interest,nanmean(current_pow_sEEGnal_dataset,3),...
-        'Color',[0.6 0.6 1],'LineWidth',0.5)
+        'Color',[1.0000    0.7725    0.6902],'LineWidth',0.5)
 %     patch([f_of_interest,fliplr(f_of_interest)], ...
 %         [(lemon_average - lemon_std_error'),fliplr((lemon_average + lemon_std_error'))],...
 %         plot_color_lemon,'FaceAlpha',0.2,'HandleVisibility','off')
 %     patch([f_of_interest,fliplr(f_of_interest)], ...
 %         [(sEEGnal_average - sEEGnal_std_error'),fliplr((sEEGnal_average + sEEGnal_std_error'))],...
 %         plot_color_sEEGnal,'FaceAlpha',0.2,'HandleVisibility','off')
-    plot(f_of_interest,lemon_average,'r','LineWidth',2)
-    plot(f_of_interest,sEEGnal_average,'b','LineWidth',2)
+    plot(f_of_interest,lemon_average,'Color',[0 0.5 0.5],'LineWidth',3)
+    plot(f_of_interest,sEEGnal_average,'Color',[1 0.498 0.314],'LineWidth',3)
     
     % Enhance the plot
-    legend({'Lemon database', 'sEEGnal database'});
+    lines = findobj(gca, 'Type', 'Line');
+    legend(lines(1:2), {'sEEGnal database', 'Lemon database'});
     title(sprintf('Power in BroadBand and %s area',  to_plot.areas_info(iarea).name),...
         'Interpreter','none')
     
