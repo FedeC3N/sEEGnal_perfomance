@@ -6,6 +6,7 @@ restoredefaultpath
 % Paths
 config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
 config.path.results = '../../../../results/pow';
+config.path.figures = '../../../../docs/manuscript/figures/pow_results';
 
 % Load the results
 load(sprintf('%s/pow_results.mat',config.path.results));
@@ -448,7 +449,13 @@ for iarea = 1 : numel(to_plot.areas_info)
         title(sprintf('Broadband - Measure %s', current_measure))
              
     end
-        
+    
+    % Save the figure
+    outfile = sprintf('%s/%s_head_measures.svg',config.path.figures,...
+        to_plot.areas_info(iarea).name);
+    saveas(fig,outfile);
+    close(fig);
+    
     % Select broadban frequencies
     f_index = to_plot.bands_info(6).f_limits_index;
     f_of_interest = to_plot.bands_info(6).f_original;
@@ -467,8 +474,8 @@ for iarea = 1 : numel(to_plot.areas_info)
     sEEGnal_std_error = nanstd(squeeze(nanmean(current_pow_sEEGnal_dataset,1)),1,2)/sqrt(size(current_pow_sEEGnal_dataset,3));
     
     % Plot
-    figure('WindowState','maximized')
-    hold on
+    fig = figure('WindowState','maximized');
+    hold on    
     plot(f_of_interest,nanmean(current_pow_lemon_dataset,3),...
         'Color',[0.6980    0.8902    0.8902],'LineWidth',0.5)
     plot(f_of_interest,nanmean(current_pow_sEEGnal_dataset,3),...
@@ -487,6 +494,12 @@ for iarea = 1 : numel(to_plot.areas_info)
     legend(lines(1:2), {'sEEGnal database', 'Lemon database'});
     title(sprintf('Power in BroadBand and %s area',  to_plot.areas_info(iarea).name),...
         'Interpreter','none')
+    
+    % Save the figure
+    outfile = sprintf('%s/%s_pow_spectrum.svg',config.path.figures,...
+        to_plot.areas_info(iarea).name);
+    saveas(fig,outfile);
+    close(fig);
     
 end
 

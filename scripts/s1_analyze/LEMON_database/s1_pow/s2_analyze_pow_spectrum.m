@@ -61,7 +61,7 @@ for iband = 1 : numel(bands_info)
             sEEGnal = current_band_pow(:,isubject,2);
             MSE = nanmean((lemon - sEEGnal).^2);
             RMSE = sqrt(MSE);
-            NRMSE = RMSE / nanmean(lemon,1);
+            NRMSE = RMSE / 1; % To normalize we use the range, in norm_pov [0 1]
             stats.NRMSE(ichannel,isubject) = NRMSE;
             
             % corr

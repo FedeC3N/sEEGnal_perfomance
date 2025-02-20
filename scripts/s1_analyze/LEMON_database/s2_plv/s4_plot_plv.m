@@ -9,6 +9,7 @@ addpath('../shared/')
 % Paths
 config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
 config.path.results = '../../../../results/plv';
+config.path.figures = '../../../../docs/manuscript/figures/plv_results';
 
 % Load the results
 load(sprintf('%s/plv_results.mat',config.path.results));
@@ -25,20 +26,26 @@ bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
     'f_limits',{[ 2 4] , [4 8] , [8 12] , [12 20] , [20 45] });
 
 % Areas
+% Areas
 areas_info = struct('name',{'frontal','temporal_l','temporal_r','parietal_l',...
-    'parietal_r','occipital'},'channel',[]);
-areas_info(1).channel = {'Fp1';'AF7';'AF3'; 'Fpz';'Fp2';'AF8';'AF4';'AFz'};
-areas_info(2).channel = {'FT7';'FT9';'T7';'TP7';'TP9'};
-areas_info(3).channel = {'FT8';'FT10';'T8';'TP8';'TP10'};
-areas_info(4).channel = {'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9'};
-areas_info(5).channel = {'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10'};
-areas_info(6).channel = {'O1';'Iz';'Oz';'O9';'O2';'O10'};
+    'parietal_r','occipital','sorted'},'channel',[]);
+areas_info(1).channel = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6'};
+areas_info(2).channel = {'T7', 'FT7', 'TP7'};
+areas_info(3).channel = {'T8', 'FT8', 'TP8'};
+areas_info(4).channel = {'CP5', 'CP1', 'P7', 'P3', 'TP7', 'CP3', 'P5', 'P1'};
+areas_info(5).channel = {'CP2', 'CP6', 'P4', 'P8', 'CP4', 'TP8', 'P2', 'P6'};
+areas_info(6).channel = {'PO9', 'O1', 'Oz', 'O2', 'PO10','PO7', 'PO3', 'POz', 'PO4', 'PO8'};
+areas_info(7).channel = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'AFz','AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FT7', 'FC3', 'FC4', 'FT8',...
+    'T7','T8','TP7','TP8',...
+    'C3', 'Cz', 'C4', 'CP5', 'CP1', 'CP2', 'CP6','C5', 'C1', 'C2', 'C6','CP3', 'CPz', 'CP4',...
+    'P7', 'P3', 'Pz', 'P4', 'P8', 'PO9','PO10','P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8',...
+    'O1', 'Oz', 'O2'};
 
 % Define the frequency bands
 config.bands = {'delta', 'theta','alpha','beta','gamma'};
 
 % Define measures
-config.measures = {'NMSE', 'rho', 'tstat'};
+config.measures = {'NRMSE', 'rho'};
 
 % Channels
 config.complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'AFz', 'P7', 'P3', 'Pz', 'P4', 'P8', 'PO9', 'O1', 'Oz', 'O2', 'PO10', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FT7', 'FC3', 'FC4', 'FT8', 'C5', 'C1', 'C2', 'C6', 'TP7', 'CP3', 'CPz', 'CP4', 'TP8', 'P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8'};
@@ -50,17 +57,20 @@ config.complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'F
 % Topoplots of the stats
 plot_stats_in_head(config,stats)
 
+% Plot differences in channels as measures by NRMSE
+plot_NRMSE_channels(config,stats,bands_info)
+
 % Plot difference in channels
-plot_diff_channels(plv_lemon_dataset,plv_sEEGnal_dataset,bands_info)
+% plot_diff_channels(plv_lemon_dataset,plv_sEEGnal_dataset,bands_info)
 
-% Plot correlation of each pair of channels
-plot_corr_channels(plv_lemon_dataset,plv_sEEGnal_dataset,bands_info, channels_sEEGnal_included)
+% % Plot correlation of each pair of channels
+% plot_corr_channels(config,plv_lemon_dataset,plv_sEEGnal_dataset,bands_info, areas_info)
 
-% Plot correlation of PLV matrix for each subject
-plot_corr_plv_subjects(plv_lemon_dataset,plv_sEEGnal_dataset,bands_info, channels_lemon_included,channels_sEEGnal_included)
+% % Plot correlation of PLV matrix for each subject
+% plot_corr_plv_subjects(plv_lemon_dataset,plv_sEEGnal_dataset,bands_info, channels_lemon_included,channels_sEEGnal_included)
 
-% Plot PLV correlation by areas
-plot_plv_corr_areas(config,plv_lemon_dataset,plv_sEEGnal_dataset,bands_info,areas_info)
+% % Plot PLV correlation by areas
+% plot_plv_corr_areas(config,plv_lemon_dataset,plv_sEEGnal_dataset,bands_info,areas_info)
 
 % Aux functions
 function [plv_dataset,bands_info,channels] = read_plv_dataset(config, dataset_name)
@@ -121,7 +131,7 @@ for iband = 1 : numel(config.bands)
         current_measure = config.measures{imeasure};
         
         % Scatter the head
-        ax1 = subplot(2,2,imeasure);
+        ax1 = subplot(1,2,imeasure);
         [pos_elec, size_elec] = draw_head(config);
         
         % Scatter the values of interest
@@ -130,11 +140,11 @@ for iband = 1 : numel(config.bands)
         c = colorbar;
         
         % Set limits to the colorbar
-        if min(color_elec) < 0
-            caxis([min(color_elec), max(color_elec)]);
-        else
-            caxis([0, max(color_elec)]);
-        end
+%         if min(color_elec) < 0
+%             caxis([min(color_elec), max(color_elec)]);
+%         else
+%             caxis([0, max(color_elec)]);
+%         end
         
         % Set the colormap
         gradient_1_neg = linspace(1,1,200);
@@ -150,15 +160,17 @@ for iband = 1 : numel(config.bands)
             clrmap = clrmap(200:end,:);
         end
         colormap(ax1,clrmap)
-        
-        
-        
-        
+      
         % Details
         title(sprintf('Band %s - Measure %s', current_band, current_measure))
-        
-        
+           
     end
+    
+    % Save the figure
+    outfile = sprintf('%s/%s_head_measures.svg',config.path.figures,...
+        current_band);
+    saveas(fig,outfile);
+    close(fig);
     
     
 end
@@ -187,22 +199,22 @@ for iband = 1 : numel(bands_info)
     plv_diff_vector = plv_diff_avg(plv_diff_vector);
     x_vector = iband * ones(numel(plv_diff_vector),1);
     
-    % Express the difference as percentage
-    plv_diff_vector_perc = (abs(plv_diff_vector)/2)*100;
-    
     % Plot
-    sw = swarmchart(x_vector,plv_diff_vector_perc,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
-    bx = boxchart(x_vector,plv_diff_vector_perc,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
+    sw = swarmchart(x_vector,plv_diff_vector,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
+    bx = boxchart(x_vector,plv_diff_vector,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
         'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
     
     
 end
 
+% Plot a line in 0
+line([0 numel(bands_info) + 1], [0 0], 'Color','k','LineStyle','--')
+
 xlim([0 numel(bands_info) + 1])
 xticks(1:numel(bands_info))
 xticklabels({bands_info.name})
-title('Average PLV difference (in %) for each channel')
-ylabel('% Variation','Interpreter','none')
+title('Average PLV difference for each channel')
+ylabel('Variation','Interpreter','none')
 set(gca,'TickLabelInterpreter','none')
 
 
@@ -210,10 +222,60 @@ set(gca,'TickLabelInterpreter','none')
 end
 
 
-function plot_corr_channels(plv_lemon_dataset,plv_sEEGnal_dataset,bands_info, channels)
+function plot_NRMSE_channels(config,stats,bands_info)
+
+fig = figure('WindowState', 'maximized');
+hold on
+
+% For each band
+for iband = 1 : numel(bands_info)
+    
+    current_band = bands_info(iband).name;
+    current_NRMSE = stats.(current_band).NRMSE(:);
+    
+    % X axis for plot
+    x_vector = iband * ones(numel(current_NRMSE),1);
+    
+    % Plot
+    sw = swarmchart(x_vector,current_NRMSE,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
+    bx = boxchart(x_vector,current_NRMSE,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
+        'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
+    
+    
+end
+
+% Plot a line in 0
+line([0 numel(bands_info) + 1], [0 0], 'Color','k','LineStyle','--')
+
+xlim([0 numel(bands_info) + 1])
+xticks(1:numel(bands_info))
+xticklabels({bands_info.name})
+title('NRMSE for each channel')
+ylabel('NRMSE','Interpreter','none')
+set(gca,'TickLabelInterpreter','none')
+
+% Save the figure
+outfile = sprintf('%s/NRMSE_violinplot.svg',config.path.figures);
+saveas(fig,outfile);
+close(fig);
+
+
+end
+
+
+function plot_corr_channels(config,plv_lemon_dataset,plv_sEEGnal_dataset,bands_info, areas_info)
 
 figure('WindowState', 'maximized');
 hold on
+
+% Sort the channels
+channels = areas_info(7).channel;
+sort_index = nan(1,numel(config.complete_channel_labels));
+for ichannel = 1 : numel(config.complete_channel_labels)
+    
+    sort_index(ichannel) = find(ismember(channels,config.complete_channel_labels{ichannel}));
+    
+end
 
 % For each band
 for iband = 1 : numel(bands_info)
@@ -221,15 +283,18 @@ for iband = 1 : numel(bands_info)
     % Select the band data
     current_plv_global_lemon = squeeze(plv_lemon_dataset(:,:,iband,:));
     current_plv_global_sEEGnal = squeeze(plv_sEEGnal_dataset(:,:,iband,:));
+    
+    % The diagonal equals to 1
+    index = repmat(logical(eye(61)),1,1,size(current_plv_global_lemon,3));
+    current_plv_global_lemon(index) = 1;
+    current_plv_global_sEEGnal(index) = 1;
+    
+    % Order the matrix
+    current_plv_global_lemon = current_plv_global_lemon(sort_index,sort_index,:);
+    current_plv_global_sEEGnal = current_plv_global_sEEGnal(sort_index,sort_index,:);
+    
     plv_vector_lemon = reshape(current_plv_global_lemon,[],size(current_plv_global_lemon,3));
     plv_vector_sEEGnal = reshape(current_plv_global_sEEGnal,[],size(current_plv_global_sEEGnal,3));
-    
-    % Get the upper matrix
-    dummy = ones(size(current_plv_global_sEEGnal(:,:,1)));
-    upper_index = abs(triu(dummy,1)) > 0 ;
-    upper_index = upper_index(:);
-    plv_vector_lemon =  plv_vector_lemon(upper_index,:);
-    plv_vector_sEEGnal = plv_vector_sEEGnal(upper_index,:);
     
     % Estimate correlation for each channel
     plv_vector_lemon = plv_vector_lemon';
@@ -250,10 +315,34 @@ for iband = 1 : numel(bands_info)
         
     end
     
-    % Plot
-    sw = swarmchart(x_vector,rho,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
-    bx = boxchart(x_vector,rho,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
-        'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
+    rho = reshape(rho,61,61);
+    rho(logical(eye(61))) = 1;
+    imagesc(rho,[-1 1])
+    axis off
+    axis square
+    clrbar = colorbar;
+    
+    % Set the colormap
+    gradient_1_neg = linspace(1,1,2000);
+    gradient_2_neg = linspace(1,0.4,2000);
+    gradient_3_neg = linspace(1,0.4,2000);
+    gradient_1_pos = linspace(0.4,1,2000);
+    gradient_2_pos = linspace(0.4,1,2000);
+    gradient_3_pos = linspace(1,1,2000);
+    clrmap = [[gradient_1_pos gradient_1_neg]',...
+        [gradient_2_pos gradient_2_neg]',...
+        [gradient_3_pos gradient_3_neg]'];
+    if min(rho(:)) > 0
+        clrmap = clrmap(2000:end,:);
+    end
+    colormap(clrmap)
+    
+    xticks(1 :61)
+    xticklabels(channels)
+    xtickangle(90)
+    yticks(1 :61)
+    yticklabels(channels)
+    ytickangle(0)
     
     
 end

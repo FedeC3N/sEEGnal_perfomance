@@ -62,8 +62,9 @@ for iband = 1 : numel(bands_info)
             lemon = current_band_plv_lemon(:,isubject);
             sEEGnal = current_band_plv_sEEGnal(:,isubject);
             MSE = nanmean((lemon - sEEGnal).^2);
-            NMSE = MSE / nanvar(lemon,1);
-            stats.NMSE(ichannel,isubject) = NMSE;
+            RMSE = sqrt(MSE);
+            NRMSE = RMSE / 2; % To normalize we use the range, in PLV [-1 1]
+            stats.NRMSE(ichannel,isubject) = NRMSE;
             
             % corr
             [rho,~] = corrcoef(lemon,sEEGnal,'Rows','complete');
@@ -84,7 +85,7 @@ for iband = 1 : numel(bands_info)
     end
     
     % Save
-    results.stats.(current_band).NMSE = stats.NMSE;
+    results.stats.(current_band).NRMSE = stats.NRMSE;
     results.stats.(current_band).rho = stats.rho;
     results.stats.(current_band).tstat = stats.tstat;
     results.stats.(current_band).cohen_d = stats.cohen_d;
