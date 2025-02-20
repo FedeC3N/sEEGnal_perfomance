@@ -3,13 +3,13 @@ clc
 restoredefaultpath
 
 % Paths
-config.path.results = '../../../../results/pow';
+config.path.results = '../../../../results/plv';
 
 % Load the results
-load(sprintf('%s/pow_results.mat',config.path.results));
+load(sprintf('%s/plv_results.mat',config.path.results));
 
 % To export the result
-txt_file = sprintf('%s/pow_significant_results.txt',config.path.results);
+txt_file = sprintf('%s/plv_significant_results.txt',config.path.results);
 if exist(txt_file), delete(txt_file), end
 
 % Table to excel
@@ -71,7 +71,7 @@ for iband = 1 : numel(bands_info)
 end
 
 % Write the table to Excel
-excel_file = sprintf('%s/pow_significant_results.xlsx',config.path.results);
+excel_file = sprintf('%s/plv_significant_results.xlsx',config.path.results);
 if exist(excel_file), delete(excel_file),end
 writetable(results_table,excel_file,'Sheet',1,'Range','A1')
 

@@ -4,42 +4,50 @@ close all
 restoredefaultpath
 
 % Paths
-config.path.dataset = '../../../../metadata/AI_Mind_database/dataset';
-config.path.stats = '../../../../results';
+config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
+config.path.results = '../../../../results/pow';
+config.path.figures = '../../../../docs/manuscript/figures/pow_results';
 
-% Create output path
-if ~exist(config.path.stats), mkdir(config.path.stats), end
+% Load the results
+load(sprintf('%s/pow_results.mat',config.path.results));
 
-% Load the whole dataset and the stats
-load(sprintf('%s/AI_Mind_dataset.mat',config.path.dataset));
-load(sprintf('%s/pow_stats.mat',config.path.stats));
+% Get the different testers
+testers = {'lemon','sEEGnal'};
 
-% Load the power
-[pow_eeg_expert_dataset,~,channels_eeg_expert] = read_pow_user_dataset(dataset);
-[pow_ETL_dataset,f,channels_ETL] = read_pow_dataset(dataset,'etl');
+% Channels
+config.complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'AFz', 'P7', 'P3', 'Pz', 'P4', 'P8', 'PO9', 'O1', 'Oz', 'O2', 'PO10', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FT7', 'FC3', 'FC4', 'FT8', 'C5', 'C1', 'C2', 'C6', 'TP7', 'CP3', 'CPz', 'CP4', 'TP8', 'P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8'};
+
+% Areas
+areas_info = struct('name',{'frontal','temporal_l','temporal_r','parietal_l',...
+    'parietal_r','occipital','whole_head'},'channel',[]);
+areas_info(1).channel = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6'};
+areas_info(2).channel = {'T7', 'FT7', 'TP7'};
+areas_info(3).channel = {'T8', 'FT8', 'TP8'};
+areas_info(4).channel = {'CP5', 'CP1', 'P7', 'P3', 'TP7', 'CP3', 'P5', 'P1'};
+areas_info(5).channel = {'CP2', 'CP6', 'P4', 'P8', 'CP4', 'TP8', 'P2', 'P6'};
+areas_info(6).channel = {'PO9', 'O1', 'Oz', 'O2', 'PO10','PO7', 'PO3', 'POz', 'PO4', 'PO8'};
+areas_info(7).channel = complete_channel_labels;
+
+% Define the frequency bands
+config.bands = {'delta', 'theta','alpha','beta','gamma', 'broadband'};
+
+% Define measures
+% config.measures = {'NRMSE', 'rho', 'tstat'};
+config.measures = {'NRMSE', 'rho'};
+
+% Read the power spectrum
+[pow_lemon_dataset,~,channels_lemon_included] = read_pow_dataset(config,'lemon');
+[pow_sEEGnal_dataset,f,channels_sEEGnal_included] = read_pow_dataset(config,'sEEGnal');
 
 %%%%%%%%%%%%%%%
 % PLOTS
 %%%%%%%%%%%%%%%
 
-% Normalized pow spectrum for a specific band-area
-% Prepare the pow_spectrum
-to_plot = [];
-to_plot.band_of_interest = {'broadband'};
-to_plot.area_of_interest = {'whole_head'};
-to_plot.areas_info = areas_info;
-to_plot.bands_info = bands_info;
-
-plot_pow_spectrum_norm_band_area(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset);
-
-% Error bars in each area
-% Prepare the pow_spectrum
-to_plot = [];
-to_plot.band_of_interest = {'broadband'};
-to_plot.areas_info = areas_info;
-to_plot.bands_info = bands_info;
-
-plot_areas_errorbar(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset);
+% Topoplots of the stats
+% to_plot = [];
+% to_plot.bands_info = bands_info;
+% 
+% plot_stats_in_head(config,to_plot,stats,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % Normalized pow spectrum for all areas in broadband
 % Prepare the pow_spectrum
@@ -47,72 +55,229 @@ to_plot = [];
 to_plot.areas_info = areas_info;
 to_plot.bands_info = bands_info;
 
-plot_pow_spectrum_norm_all_areas(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset);
+plot_pow_spectrum_norm_all_areas(config,to_plot,stats,pow_lemon_dataset,pow_sEEGnal_dataset);
+
+% Plot lines between lemon and sEEGnal
+% plot_lines_linking_values(pow_lemon_dataset,pow_sEEGnal_dataset,bands_info)
+
+% Normalized pow spectrum for a specific band-area
+% Prepare the pow_spectrum
+% to_plot = [];
+% to_plot.band_of_interest = {'broadband'};
+% to_plot.area_of_interest = {'whole_head'};
+% to_plot.areas_info = areas_info;
+% to_plot.bands_info = bands_info;
+% 
+% plot_pow_spectrum_norm_band_area(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset);
+
+% Error bars in each area
+% Prepare the pow_spectrum
+% to_plot = [];
+% to_plot.band_of_interest = {'broadband'};
+% to_plot.areas_info = areas_info;
+% to_plot.bands_info = bands_info;
+% 
+% plot_areas_errorbar(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset);
+
+
 
 
 
 % Functions
-function [pow_dataset_norm,f,channels] = read_pow_dataset(dataset, desired_dataset)
+function [pow_dataset_norm,f,channels] = read_pow_dataset(config,dataset_name)
 
-% subject of interest
-current_dataset_index = ismember({dataset.origin},desired_dataset);
-current_dataset = dataset(current_dataset_index);
+% Load the datset
+dataset_path = sprintf('%s/%s/%s_dataset.mat',config.path.clean_data,...
+    dataset_name,dataset_name);
+dummy = load(dataset_path);
 
-for icurrent = 1 : numel(current_dataset)
+for icurrent = 1 : numel(dummy.dataset)
     
     % Load pow
-    pow = load(sprintf('%s/%s',current_dataset(icurrent).pow.path,...
-        current_dataset(icurrent).pow.file));
+    current_dataset = dummy.dataset(icurrent);
+    pow_file = sprintf('../../../../%s/%s',current_dataset.pow.path,...
+        current_dataset.pow.file);
+    pow = load(pow_file);
     
     % Save f
     f = pow.f;
     
     % Normalize
-    current_pow = mean(pow.pow_spectrum,3);
-    scaling_factor = 1./nansum(nansum(current_pow,2));
-    scaling_factor = repmat(scaling_factor,size(current_pow));
+    current_pow = nanmean(pow.pow_spectrum,3);
+    scaling_factor = 1./(nansum(current_pow,2));
+    scaling_factor = repmat(scaling_factor,[1 size(current_pow,2)]);
     current_pow_norm = scaling_factor .* current_pow;
     
     % Add to the all matrix
     if icurrent == 1
-        pow_dataset_norm = nan(64,numel(f),numel(current_dataset));
+        pow_dataset_norm = nan(numel(pow.complete_channel_labels),numel(f),numel(dataset));
         channels = struct('channels_included',[],...
             'channels_included_index',[]);
     end
     pow_dataset_norm(1:size(current_pow_norm,1),:,icurrent) = current_pow_norm;
     channels(icurrent).channels_included = pow.channels_included;
     channels(icurrent).channels_included_index = pow.channels_included_index;
-   
+    
 end
 
 end
 
 
-function [pow_eeg_expert_dataset_norm,f,channels_eeg_expert] = read_pow_user_dataset(dataset)
+function plot_stats_in_head(config,to_plot,stats,pow_lemon_dataset,pow_sEEGnal_dataset)
 
-users = {dataset.origin};
-users = unique(users(~ismember(users,'etl')));
-for iuser = 1 : numel(users)
+% Draw for each band and measure
+for iband = 1 : numel(config.bands)
     
-    [current_pow_eeg_expert_dataset_norm,f,channels_eeg_expert] = ...
-        read_pow_dataset(dataset,users{iuser});
+    current_band = config.bands{iband};
     
-    if iuser == 1
-        pow_eeg_expert_dataset_norm = nan([size(current_pow_eeg_expert_dataset_norm),numel(users)]);
+    % Define figure
+    fig = figure('WindowState', 'maximized');
+    
+    for imeasure = 1 : numel(config.measures)
+        
+        current_measure = config.measures{imeasure};
+        
+        % Scatter the head
+        ax1 = subplot(2,2,imeasure);
+        [pos_elec, size_elec] = draw_head(config);
+        
+        % Scatter the values of interest
+        color_elec = nanmean(stats.(current_band).(current_measure),2);
+        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
+        c = colorbar;
+        
+        % Set limits to the colorbar
+%         if min(color_elec) < 0
+%             caxis([min(color_elec), max(color_elec)]);
+%         else
+%             caxis([0, max(color_elec)]);
+%         end
+        
+        % Set the colormap
+        gradient_1_neg = linspace(1,1,2000);
+        gradient_2_neg = linspace(1,0.4,2000);
+        gradient_3_neg = linspace(1,0.4,2000);
+        gradient_1_pos = linspace(0.4,1,2000);
+        gradient_2_pos = linspace(0.4,1,2000);
+        gradient_3_pos = linspace(1,1,2000);
+        clrmap = [[gradient_1_pos gradient_1_neg]',...
+            [gradient_2_pos gradient_2_neg]',...
+            [gradient_3_pos gradient_3_neg]'];
+        if min(color_elec) > 0
+            clrmap = clrmap(2000:end,:);
+        end
+        colormap(ax1,clrmap)
+        
+        
+        
+        
+        % Details
+        title(sprintf('Band %s - Measure %s', current_band, current_measure))
+        
+        
     end
-    pow_eeg_expert_dataset_norm(:,:,:,iuser) = current_pow_eeg_expert_dataset_norm;
+ 
+    
+    % Select broadban frequencies
+    f_index = to_plot.bands_info(iband).f_limits_index;
+    f_of_interest = to_plot.bands_info(iband).f_original;
+    f_of_interest = f_of_interest(f_index);
+    
+    % Update pow matrix to plot
+    current_pow_lemon_dataset = pow_lemon_dataset(:,f_index,:);
+    current_pow_sEEGnal_dataset = pow_sEEGnal_dataset(:,f_index,:);
+    
+    % Average across electrodes
+    lemon_average = squeeze(nanmean(nanmean(current_pow_lemon_dataset,1),3));
+    sEEGnal_average = squeeze(nanmean(nanmean(current_pow_sEEGnal_dataset,1),3));
+    
+    % Estimate mean error
+    lemon_std_error = nanstd(squeeze(nanmean(current_pow_lemon_dataset,1)),1,2)/sqrt(size(current_pow_lemon_dataset,3));
+    sEEGnal_std_error = nanstd(squeeze(nanmean(current_pow_sEEGnal_dataset,1)),1,2)/sqrt(size(current_pow_sEEGnal_dataset,3));
+    
+    % Color
+    plot_color_lemon = [255,179,179]/255;
+    plot_color_sEEGnal = [179,179,255]/255;
+    
+    % Plot
+    ax1 = subplot(2,2,4);
+    patch([f_of_interest,fliplr(f_of_interest)], ...
+        [(lemon_average - lemon_std_error'),fliplr((lemon_average + lemon_std_error'))],...
+        plot_color_lemon,'FaceAlpha',0.2,'HandleVisibility','off')
+    hold on
+    plot(f_of_interest,lemon_average,'r','LineWidth',2)
+    patch([f_of_interest,fliplr(f_of_interest)], ...
+        [(sEEGnal_average - sEEGnal_std_error'),fliplr((sEEGnal_average + sEEGnal_std_error'))],...
+        plot_color_sEEGnal,'FaceAlpha',0.2,'HandleVisibility','off')
+    plot(f_of_interest,sEEGnal_average,'b','LineWidth',2)
+    
+    % Enhance the plot
+    legend({'Lemon database', 'sEEGnal database'});
+    title(sprintf('Power in band %s and the whole head',current_band),'Interpreter','none')
+    
     
 end
 
-pow_eeg_expert_dataset_norm = nanmean(pow_eeg_expert_dataset_norm,4);
+end
+
+
+function plot_lines_linking_values(pow_lemon_dataset,pow_sEEGnal_dataset,bands_info)
+
+figure('WindowState', 'maximized');
+hold on
+
+% Color
+plot_colors = [179,179,255;...
+    255,144,144;...
+    20,144,144;...
+    20,70,144;...
+    20,70,70;...
+    255,20,144]/255;
+
+for iband = 1 : numel(bands_info)
+    
+    
+    
+    % Get the current band
+    current_f = bands_info(iband).f_limits_index;
+    
+    % Estimate the plots
+    lemon_average = nanmean(nanmean(pow_lemon_dataset(:,current_f,:),3),2);
+    lemon_average = normalize(lemon_average,'range');
+    lemon_average = nanmean(lemon_average);
+    sEEGnal_average = nanmean(nanmean(pow_sEEGnal_dataset(:,current_f,:),3),2);
+    sEEGnal_average = normalize(sEEGnal_average,'range');
+    sEEGnal_average = nanmean(sEEGnal_average);
+    lemon_std_error = nanmean(nanmean(pow_lemon_dataset,3),2);
+    lemon_std_error = normalize(lemon_std_error,'range');
+    lemon_std_error = lemon_std_error/sqrt(size(pow_lemon_dataset,1));
+    lemon_std_error = nanmean(lemon_std_error);
+    sEEGnal_std_error = nanmean(nanmean(pow_sEEGnal_dataset,3),2);
+    sEEGnal_std_error = normalize(sEEGnal_std_error,'range');
+    sEEGnal_std_error = sEEGnal_std_error/sqrt(size(pow_sEEGnal_dataset,1));
+    sEEGnal_std_error = nanmean(sEEGnal_std_error);    
+    
+%     patch([[1,2],[2,1]], ...
+%         [[lemon_average + lemon_std_error, sEEGnal_average + sEEGnal_std_error],...
+%         [sEEGnal_average - sEEGnal_std_error, lemon_average - lemon_std_error]],...
+%         plot_colors(iband,:),'FaceAlpha',0.2,'HandleVisibility','off')
+    plot([1 2],[lemon_average, sEEGnal_average],'Color',plot_colors(iband,:),'LineWidth',2)    
+          
+end
+
+% Plot characteristics
+xlim([0.5 2.5])
+ylim([0 1])
+legend(bands_info.name)
+
 
 end
 
 
-function plot_pow_spectrum_norm_band_area(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset)
+function plot_pow_spectrum_norm_band_area(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % All channels
-complete_channel_labels = {'Fp1';'AF7';'AF3';'F1';'F3';'F5';'F7';'FT7';'FC5';'FC3';'FC1';'C1';'C3';'C5';'T7';'TP7';'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9';'PO7';'PO3';'O1';'Iz';'Oz';'POz';'Pz';'CPz';'Fpz';'Fp2';'AF8';'AF4';'AFz';'Fz';'F2';'F4';'F6';'F8';'FT8';'FC6';'FC4';'FC2';'FCz';'Cz';'C2';'C4';'C6';'T8';'TP8';'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10';'PO8';'PO4';'O2'};
+complete_channel_labels = config.complete_channel_labels;
 
 % Find electrodes of interest
 areas_index = find(ismember({to_plot.areas_info.name},to_plot.area_of_interest));
@@ -128,45 +293,45 @@ f_of_interest = to_plot.bands_info(band_index).f_original;
 f_of_interest = f_of_interest(f_index);
 
 % Update pow matrix to plot
-pow_eeg_expert_dataset = pow_eeg_expert_dataset(channels_index,f_index,:);
-pow_ETL_dataset = pow_ETL_dataset(channels_index,f_index,:);
+pow_lemon_dataset = pow_lemon_dataset(channels_index,f_index,:);
+pow_sEEGnal_dataset = pow_sEEGnal_dataset(channels_index,f_index,:);
 
 % Average across electrodes
-SRM_average = squeeze(nanmean(nanmean(pow_eeg_expert_dataset,1),3));
-ETL_average = squeeze(nanmean(nanmean(pow_ETL_dataset,1),3));
+lemon_average = squeeze(nanmean(nanmean(pow_lemon_dataset,1),3));
+sEEGnal_average = squeeze(nanmean(nanmean(pow_sEEGnal_dataset,1),3));
 
 % Estimate mean error
-SRM_std_error = nanstd(squeeze(nanmean(pow_eeg_expert_dataset,1)),1,2)/sqrt(size(pow_eeg_expert_dataset,3));
-ETL_std_error = nanstd(squeeze(nanmean(pow_ETL_dataset,1)),1,2)/sqrt(size(pow_ETL_dataset,3));
+lemon_std_error = nanstd(squeeze(nanmean(pow_lemon_dataset,1)),1,2)/sqrt(size(pow_lemon_dataset,3));
+sEEGnal_std_error = nanstd(squeeze(nanmean(pow_sEEGnal_dataset,1)),1,2)/sqrt(size(pow_sEEGnal_dataset,3));
 
 % Color
-plot_color_SRM = [255,179,179]/255;
-plot_color_ETL = [179,179,255]/255;
+plot_color_lemon = [255,179,179]/255;
+plot_color_sEEGnal = [179,179,255]/255;
 
 % Plot
-figure
+figure('WindowState','maximized')
 patch([f_of_interest,fliplr(f_of_interest)], ...
-    [(SRM_average - SRM_std_error'),fliplr((SRM_average + SRM_std_error'))],...
-    plot_color_SRM,'FaceAlpha',0.2,'HandleVisibility','off')
+    [(lemon_average - lemon_std_error'),fliplr((lemon_average + lemon_std_error'))],...
+    plot_color_lemon,'FaceAlpha',0.2,'HandleVisibility','off')
 hold on
-plot(f_of_interest,SRM_average,'r','LineWidth',2)
+plot(f_of_interest,lemon_average,'r','LineWidth',2)
 patch([f_of_interest,fliplr(f_of_interest)], ...
-    [(ETL_average - ETL_std_error'),fliplr((ETL_average + ETL_std_error'))],...
-    plot_color_ETL,'FaceAlpha',0.2,'HandleVisibility','off')
-plot(f_of_interest,ETL_average,'b','LineWidth',2)
+    [(sEEGnal_average - sEEGnal_std_error'),fliplr((sEEGnal_average + sEEGnal_std_error'))],...
+    plot_color_sEEGnal,'FaceAlpha',0.2,'HandleVisibility','off')
+plot(f_of_interest,sEEGnal_average,'b','LineWidth',2)
 
 % Enhance the plot
-legend({'EEG experts database', 'ETL database'});
+legend({'Lemon database', 'sEEGnal database'});
 title(sprintf('Power in %s and %s area', to_plot.band_of_interest{1}, to_plot.area_of_interest{1}),...
     'Interpreter','none')
 
 end
 
 
-function plot_areas_errorbar(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset)
+function plot_areas_errorbar(config,to_plot,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % All channels
-complete_channel_labels = {'Fp1';'AF7';'AF3';'F1';'F3';'F5';'F7';'FT7';'FC5';'FC3';'FC1';'C1';'C3';'C5';'T7';'TP7';'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9';'PO7';'PO3';'O1';'Iz';'Oz';'POz';'Pz';'CPz';'Fpz';'Fp2';'AF8';'AF4';'AFz';'Fz';'F2';'F4';'F6';'F8';'FT8';'FC6';'FC4';'FC2';'FCz';'Cz';'C2';'C4';'C6';'T8';'TP8';'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10';'PO8';'PO4';'O2'};
+complete_channel_labels = config.complete_channel_labels;
 
 avg_pow = nan(2,numel(to_plot.areas_info));
 std_error_pow = nan(2,numel(to_plot.areas_info));
@@ -178,26 +343,26 @@ for iarea = 1 : numel(to_plot.areas_info)
     channels_index = ismember(complete_channel_labels,areas_of_interest);
     
     % Get pow matrix to plot
-    current_pow_SRM_dataset = pow_eeg_expert_dataset(channels_index,:,:);
-    current_pow_ETL_dataset = pow_ETL_dataset(channels_index,:,:);
+    current_pow_lemon_dataset = pow_lemon_dataset(channels_index,:,:);
+    current_pow_sEEGnal_dataset = pow_sEEGnal_dataset(channels_index,:,:);
     
     % Average across electrodes and subjects
-    current_pow_SRM_dataset = squeeze(nanmean(current_pow_SRM_dataset,1));
+    current_pow_lemon_dataset = squeeze(nanmean(current_pow_lemon_dataset,1));
     
-    current_pow_SRM_dataset = nanmean(squeeze(nanmean(current_pow_SRM_dataset,1)),1);
-    current_pow_ETL_dataset = squeeze(nanmean(nanmean(current_pow_ETL_dataset,1),2));
-    current_pow_SRM_dataset = current_pow_SRM_dataset';
-    current_pow_ETL_dataset = current_pow_ETL_dataset';
+    current_pow_lemon_dataset = nanmean(squeeze(nanmean(current_pow_lemon_dataset,1)),1);
+    current_pow_sEEGnal_dataset = squeeze(nanmean(nanmean(current_pow_sEEGnal_dataset,1),2));
+    current_pow_lemon_dataset = current_pow_lemon_dataset';
+    current_pow_sEEGnal_dataset = current_pow_sEEGnal_dataset';
     
     % Estimate the average and mean error
-    SRM_std_error = nanstd(current_pow_SRM_dataset)/sqrt(numel(current_pow_SRM_dataset));
-    ETL_std_error = nanstd(current_pow_ETL_dataset)/sqrt(numel(current_pow_ETL_dataset));
-
+    lemon_std_error = nanstd(current_pow_lemon_dataset)/sqrt(numel(current_pow_lemon_dataset));
+    sEEGnal_std_error = nanstd(current_pow_sEEGnal_dataset)/sqrt(numel(current_pow_sEEGnal_dataset));
+    
     % Save
-    avg_pow(1,iarea) = nanmean(current_pow_SRM_dataset);
-    avg_pow(2,iarea) = nanmean(current_pow_ETL_dataset);
-    std_error_pow(1,iarea) = SRM_std_error;
-    std_error_pow(2,iarea) = ETL_std_error;
+    avg_pow(1,iarea) = nanmean(current_pow_lemon_dataset);
+    avg_pow(2,iarea) = nanmean(current_pow_sEEGnal_dataset);
+    std_error_pow(1,iarea) = lemon_std_error;
+    std_error_pow(2,iarea) = sEEGnal_std_error;
     
     
 end
@@ -207,7 +372,7 @@ avg_pow = avg_pow';
 std_error_pow = std_error_pow';
 
 % First the bar plot
-figure
+figure('WindowState','maximized')
 hb = bar(avg_pow);
 hold on
 
@@ -217,12 +382,12 @@ for igroup = 1:size(avg_pow,2)
     % get x positions per group
     xpos = hb(igroup).XData + hb(igroup).XOffset;
     % draw errorbar
-    errorbar(xpos, avg_pow(:,igroup), std_error_pow(:,igroup), 'LineStyle', 'none', ... 
+    errorbar(xpos, avg_pow(:,igroup), std_error_pow(:,igroup), 'LineStyle', 'none', ...
         'Color', 'k', 'LineWidth', 1);
 end
 
 % Enhance the plot
-legend({'EEG expert database', 'ETL database'});
+legend({'Lemon database', 'sEEGnal database'});
 xticklabels({to_plot.areas_info.name})
 set(gca,'TickLabelInterpreter','none')
 title('Average power per area across')
@@ -232,13 +397,10 @@ title('Average power per area across')
 end
 
 
-function plot_pow_spectrum_norm_all_areas(to_plot,pow_eeg_expert_dataset,pow_ETL_dataset)
+function plot_pow_spectrum_norm_all_areas(config,to_plot,stats,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % All channels
-complete_channel_labels = {'Fp1';'AF7';'AF3';'F1';'F3';'F5';'F7';'FT7';'FC5';'FC3';'FC1';'C1';'C3';'C5';'T7';'TP7';'CP5';'CP3';'CP1';'P1';'P3';'P5';'P7';'P9';'PO7';'PO3';'O1';'Iz';'Oz';'POz';'Pz';'CPz';'Fpz';'Fp2';'AF8';'AF4';'AFz';'Fz';'F2';'F4';'F6';'F8';'FT8';'FC6';'FC4';'FC2';'FCz';'Cz';'C2';'C4';'C6';'T8';'TP8';'CP6';'CP4';'CP2';'P2';'P4';'P6';'P8';'P10';'PO8';'PO4';'O2'};
-
-% New figure to plot
-figure
+complete_channel_labels = config.complete_channel_labels;
 
 % Go through each area
 for iarea = 1 : numel(to_plot.areas_info)
@@ -247,45 +409,167 @@ for iarea = 1 : numel(to_plot.areas_info)
     areas_of_interest = to_plot.areas_info(iarea).channel;
     channels_index = ismember(complete_channel_labels,areas_of_interest);
     
+    % Define figure
+    fig = figure('WindowState', 'maximized');
+    
+    for imeasure = 1 : numel(config.measures)
+        
+        current_measure = config.measures{imeasure};
+        
+        % Scatter the head
+        ax1 = subplot(1,2,imeasure);
+        [pos_elec, size_elec] = draw_head(config);
+        color_elec = nanmean(stats.broadband.(current_measure),2);
+        
+        % Keep the channels of interest
+        pos_elec = pos_elec(channels_index,:);
+        size_elec = size_elec(channels_index);
+        color_elec = color_elec(channels_index,:);
+        
+        % Scatter the values of interest
+        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
+        c = colorbar;
+        
+        % Set the colormap
+        gradient_1_neg = linspace(1,1,2000);
+        gradient_2_neg = linspace(1,0.4,2000);
+        gradient_3_neg = linspace(1,0.4,2000);
+        gradient_1_pos = linspace(0.4,1,2000);
+        gradient_2_pos = linspace(0.4,1,2000);
+        gradient_3_pos = linspace(1,1,2000);
+        clrmap = [[gradient_1_pos gradient_1_neg]',...
+            [gradient_2_pos gradient_2_neg]',...
+            [gradient_3_pos gradient_3_neg]'];
+        if min(color_elec) > 0
+            clrmap = clrmap(2000:end,:);
+        end
+        colormap(ax1,clrmap)
+    
+        % Details
+        title(sprintf('Broadband - Measure %s', current_measure))
+             
+    end
+    
+    % Save the figure
+    outfile = sprintf('%s/%s_head_measures.svg',config.path.figures,...
+        to_plot.areas_info(iarea).name);
+    saveas(fig,outfile);
+    close(fig);
+    
     % Select broadban frequencies
     f_index = to_plot.bands_info(6).f_limits_index;
     f_of_interest = to_plot.bands_info(6).f_original;
     f_of_interest = f_of_interest(f_index);
     
     % Update pow matrix to plot
-    current_pow_SRM_dataset = pow_eeg_expert_dataset(channels_index,f_index,:);
-    current_pow_ETL_dataset = pow_ETL_dataset(channels_index,f_index,:);
-    
+    current_pow_lemon_dataset = pow_lemon_dataset(channels_index,f_index,:);
+    current_pow_sEEGnal_dataset = pow_sEEGnal_dataset(channels_index,f_index,:);
+
     % Average across electrodes
-    SRM_average = squeeze(nanmean(nanmean(current_pow_SRM_dataset,1),3));
-    ETL_average = squeeze(nanmean(nanmean(current_pow_ETL_dataset,1),3));
+    lemon_average = squeeze(nanmean(nanmean(current_pow_lemon_dataset,1),3));
+    sEEGnal_average = squeeze(nanmean(nanmean(current_pow_sEEGnal_dataset,1),3));
     
     % Estimate mean error
-    SRM_std_error = nanstd(squeeze(nanmean(current_pow_SRM_dataset,1)),1,2)/sqrt(size(current_pow_SRM_dataset,3));
-    ETL_std_error = nanstd(squeeze(nanmean(current_pow_ETL_dataset,1)),1,2)/sqrt(size(current_pow_ETL_dataset,3));
-    
-    % Color
-    plot_color_SRM = [255,179,179]/255;
-    plot_color_ETL = [179,179,255]/255;
+    lemon_std_error = nanstd(squeeze(nanmean(current_pow_lemon_dataset,1)),1,2)/sqrt(size(current_pow_lemon_dataset,3));
+    sEEGnal_std_error = nanstd(squeeze(nanmean(current_pow_sEEGnal_dataset,1)),1,2)/sqrt(size(current_pow_sEEGnal_dataset,3));
     
     % Plot
-    subplot(2,4,iarea)
-    patch([f_of_interest,fliplr(f_of_interest)], ...
-        [(SRM_average - SRM_std_error'),fliplr((SRM_average + SRM_std_error'))],...
-        plot_color_SRM,'FaceAlpha',0.2,'HandleVisibility','off')
-    hold on
-    plot(f_of_interest,SRM_average,'r','LineWidth',2)
-    patch([f_of_interest,fliplr(f_of_interest)], ...
-        [(ETL_average - ETL_std_error'),fliplr((ETL_average + ETL_std_error'))],...
-        plot_color_ETL,'FaceAlpha',0.2,'HandleVisibility','off')
-    plot(f_of_interest,ETL_average,'b','LineWidth',2)
-    ylim([0 0.0008])
+    fig = figure('WindowState','maximized');
+    hold on    
+    plot(f_of_interest,nanmean(current_pow_lemon_dataset,3),...
+        'Color',[0.6980    0.8902    0.8902],'LineWidth',0.5)
+    plot(f_of_interest,nanmean(current_pow_sEEGnal_dataset,3),...
+        'Color',[1.0000    0.7725    0.6902],'LineWidth',0.5)
+%     patch([f_of_interest,fliplr(f_of_interest)], ...
+%         [(lemon_average - lemon_std_error'),fliplr((lemon_average + lemon_std_error'))],...
+%         plot_color_lemon,'FaceAlpha',0.2,'HandleVisibility','off')
+%     patch([f_of_interest,fliplr(f_of_interest)], ...
+%         [(sEEGnal_average - sEEGnal_std_error'),fliplr((sEEGnal_average + sEEGnal_std_error'))],...
+%         plot_color_sEEGnal,'FaceAlpha',0.2,'HandleVisibility','off')
+    plot(f_of_interest,lemon_average,'Color',[0 0.5 0.5],'LineWidth',3)
+    plot(f_of_interest,sEEGnal_average,'Color',[1 0.498 0.314],'LineWidth',3)
     
     % Enhance the plot
-    legend({'EEG expert database', 'ETL database'});
+    lines = findobj(gca, 'Type', 'Line');
+    legend(lines(1:2), {'sEEGnal database', 'Lemon database'});
     title(sprintf('Power in BroadBand and %s area',  to_plot.areas_info(iarea).name),...
         'Interpreter','none')
     
+    % Save the figure
+    outfile = sprintf('%s/%s_pow_spectrum.svg',config.path.figures,...
+        to_plot.areas_info(iarea).name);
+    saveas(fig,outfile);
+    close(fig);
+    
 end
+
+end
+
+
+function [pos_elec,size_elec] = draw_head(config)
+
+hold on;
+axis equal off
+
+% Head (big circle)
+theta = linspace(0, 2*pi, 100);
+r_head = 0.5; % radius of the head
+x_head = r_head * cos(theta);
+y_head = r_head * sin(theta);
+
+% Ears (two small circles)
+r_ear = 0.1; % radius of the ears
+x_ear = r_ear * cos(theta);
+y_ear = r_ear * sin(theta);
+
+% Left ear
+fill(x_ear - r_head/1.2, y_ear, [0.9 0.9 0.9]); % Slightly darker gray
+
+% Right ear
+fill(x_ear + r_head/1.2, y_ear, [0.9 0.9 0.9]);
+
+% Nose (triangle)
+x_nose = [-0.07, 0.07, 0]; % X-coordinates of the triangle
+y_nose = [0.49, 0.49, 0.55]; % Y-coordinates of the triangle
+fill(x_nose, y_nose, [0.9 0.9 0.9]); % Darker gray for nose
+
+% Plot the head at the end
+fill(x_head, y_head, [0.9 0.9 0.9]); % Light gray color
+
+% Plot the sensors
+% Save memory for the positions and colors
+pos_elec = nan(numel(config.complete_channel_labels),2);
+size_elec = 50*ones(numel(config.complete_channel_labels),1);
+
+% Read the channels position file
+lines = readlines('../shared/head_layouts/elec1005.lay');
+
+% Go through each line
+for iline = 1 : size(lines,1)
+    
+    % Get the channel position in the original "complete_channel_labels"
+    % for consistency
+    current_line = strsplit(lines(iline),' ');
+    
+    if size(current_line,2) > 1
+        current_channel = current_line(6);
+        current_channel_index = ismember(config.complete_channel_labels,current_channel);
+        
+        % If present, save the position and color
+        if sum(current_channel_index) == 1
+            
+            % Position
+            pos_elec(current_channel_index,1) = current_line(2);
+            pos_elec(current_channel_index,2) = current_line(3);
+            
+        end
+        
+    end
+    
+end
+
+scatter(pos_elec(:,1),pos_elec(:,2),size_elec,'MarkerEdgeColor',[0 0 0])
+pos_labels = [pos_elec(:,1)-0.015, pos_elec(:,2)+0.03];
+text(pos_labels(:,1),pos_labels(:,2),config.complete_channel_labels)
 
 end
