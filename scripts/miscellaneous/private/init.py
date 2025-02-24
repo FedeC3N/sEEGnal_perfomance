@@ -15,25 +15,32 @@ Created on Thu 17/05/2024
 import os
 import sys
 import glob
+import json
 
 from aimind.sdk.appconfig.client import AIMindAppConfigClient
 
 
-def init_lurtis():
+def init_config(selected_database):
     """
 
-    Load Lurtis configuration from pypi server
+    Load the saved configuration file
 
     """
 
-    # Lurtis configuration
-    os.environ['AI_MIND_CONNECTION_ENDPOINT'] = 'https://pms.lurtis.com'
-    os.environ['AI_MIND_API_CREDENTIALS'] = '{"username": "etluser","password": "80Mind80@"}'
-    SUBSYSTEM = "ETL"
-    APP_NAME = "sEEGnal-meeg-test"
-    app_config = AIMindAppConfigClient(APP_NAME,SUBSYSTEM,logging=False)
-    config = app_config.get_current_configuration()
-    logger = app_config.get_logger()
+    with open('./config/etl_configuration.json','r') as file:
+        config = json.load(file)
+    config['path'] = {}
+    config['path']['data_root'] = os.path.join('databases','AI_Mind_database')
+    config['path']['experts'] = os.path.join('databases','AI_Mind_database','derivatives')
+    config['database'] = selected_database
+    config['tasks'] = ['1EO','2EC','3EO','4EC']
+    config['artifacts_name'] = ['eog','muscle','jump','visual']
+
+    if selected_database == 'human_experts_database':
+        config['testers'] = ['fede','isa','luis','maria']
+    else:
+        config['testers'] = ['sEEGnal']
+
     return config
 
 
@@ -80,9 +87,26 @@ def init_AI_Mind_database(config):
 
     # Folders to find the subjects
     config['data_root'] = os.getcwd()
-    config['dw_folder'] = os.path.join('data',config['database'])
-    folder_subjects = os.path.join(config['data_root'],config['dw_folder'],
-                                   config['dw_curated_folder'],'sub*')
+    config['dw_folder'] = os.path.join('databases',config['database'])
+    folder_subjects = os.path.join(config['data_root'],config['dw_folder'],'sub*')
+
+    # Get all the subjects
+    subjects_id = glob.glob(folder_subjects)
+    subjects_id = [current[-4:] for current in subjects_id]
+
+    # Pre-defined sessions
+    sessions_id = ['1','2','3','4']
+
+
+    return subjects_id,sessions_id
+
+
+def init_human_experts_database(config):
+
+    # Folders to find the subjects
+    config['data_root'] = os.getcwd()
+    config['dw_folder'] = os.path.join('databases','AI_Mind_database')
+    folder_subjects = os.path.join(config['data_root'],config['dw_folder'],'sub*')
 
     # Get all the subjects
     subjects_id = glob.glob(folder_subjects)

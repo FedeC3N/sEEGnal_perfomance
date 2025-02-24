@@ -70,25 +70,51 @@ def create_AI_Mind_database(config,current_subject_id,current_session_id,current
 
     """
 
-    # Create the correct session_id
-    control_digit = "TRWAGMYFPDXBNJZSQVHLCKE"
-    dummy = current_subject_id + current_session_id
-    control_digit_index = int(dummy) % 23
-    real_session_id = dummy + control_digit[control_digit_index]
-
     # Define the metadata to create the BIDS path
     participant_id = current_subject_id
-    session_id = real_session_id
     task = current_task
     datatype = 'eeg'
-    base_root = os.path.join(config['data_root'],config['dw_folder'],config['dw_curated_folder'])
+    base_root = os.path.join(config['data_root'],config['dw_folder'])
     suffix = 'eeg'
     extension = '.vhdr'
 
     # Builds the BIDS path from the metadata.
     bids_path = mne_bids.BIDSPath(
         subject=participant_id,
-        session=session_id,
+        session=current_session_id,
+        task=task,
+        datatype=datatype,
+        root=base_root,
+        suffix=suffix,
+        extension=extension)
+
+    # Check if the file exists
+    if not (os.path.isfile(bids_path.fpath)):
+        bids_path = []
+
+    return bids_path
+
+
+
+def create_human_experts_database(config,current_subject_id,current_session_id,current_task):
+    """
+
+    Create the bids_path
+
+    """
+
+    # Define the metadata to create the BIDS path
+    participant_id = current_subject_id
+    task = current_task
+    datatype = 'eeg'
+    base_root = os.path.join(config['data_root'],config['dw_folder'])
+    suffix = 'eeg'
+    extension = '.vhdr'
+
+    # Builds the BIDS path from the metadata.
+    bids_path = mne_bids.BIDSPath(
+        subject=participant_id,
+        session=current_session_id,
         task=task,
         datatype=datatype,
         root=base_root,

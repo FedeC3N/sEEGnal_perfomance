@@ -18,53 +18,54 @@ import scripts.miscellaneous.private.create_subject as create_subject
 import scripts.miscellaneous.private.plots as plots
 
 
-
 #### PARAMETERS
 # Select the database
 selected_database = 'AI_Mind_database'
-tasks = ['1EO', '2EC', '3EO', '4EC']
-
-
 
 # Init Lurtis configuration
-config = init.init_lurtis()
-config['database'] = selected_database
+config = init.init_config(selected_database)
 
 # Init the database
 subjects_id, sessions_id = init.init_database(config)
 
 # Go through each subject
-for current_subject_id in subjects_id:
+for current_tester in config['testers']:
 
-    # Go through each session
-    for current_session_id in sessions_id:
+    print(current_tester)
 
-        for current_task in tasks:
+    for current_subject_id in subjects_id:
 
-            # Create the subjects following AI-Mind protocol
-            bids_path = create_subject.create_bids_path(config,current_subject_id,current_session_id,current_task)
+        # Go through each session
+        for current_session_id in sessions_id:
 
-            # If the file does not exist, pass
-            if str(bids_path.__class__) == "<class 'list'>":
-                continue
+            for current_task in config['tasks']:
 
-            print('Work with ' + bids_path.basename)
+                # Create the subjects following AI-Mind protocol
+                bids_path = create_subject.create_bids_path(config,current_subject_id,current_session_id,current_task)
 
-            # Plots
-            plots.plot_raw(bids_path)
+                # If the file does not exist, pass
+                if str(bids_path.__class__) == "<class 'list'>":
+                    continue
 
-            # Add to the final list
-            while True:
-                user_input = input('Valid user? (y/n): ')
+                print('  Work with ' + bids_path.basename)
 
-                if user_input.lower() == 'y':
+                # Plots
+                #plots.plot_raw(config,bids_path)
+                plots.plot_clean(config,bids_path,current_tester)
 
-                    with open(os.path.join('.','data','AI_Mind_database','valid_subjects.txt'),'a') as f:
-                        to_write = bids_path.basename + '\r'
-                        f.write(to_write)
 
-                    break
-                elif user_input.lower() == 'n':
-                    break
-                else:
-                    print('Type y or n')
+                # Add to the final list
+                """while True:
+                    user_input = input('Valid user? (y/n): ')
+    
+                    if user_input.lower() == 'y':
+    
+                        with open(os.path.join('.','data','AI_Mind_database','valid_subjects.txt'),'a') as f:
+                            to_write = bids_path.basename + '\r'
+                            f.write(to_write)
+    
+                        break
+                    elif user_input.lower() == 'n':
+                        break
+                    else:
+                        print('Type y or n')"""
