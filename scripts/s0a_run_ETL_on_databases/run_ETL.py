@@ -21,7 +21,7 @@ from sEEGnal.io.export_clean import export_clean
 database = 'AI_Mind_database'
 
 # What step to run: standardize, badchannel, artifact, export_clean
-run = [1,0,0,0]
+run = [0,0,0,1]
 
 # Init the database
 config, files, sub, ses, task = init_database(database)
@@ -31,9 +31,6 @@ errors = []
 
 # Go through each subject
 for current_index in range(len(files)):
-
-        if current_index < 20:
-            continue
 
         # current info
         current_file = files[current_index]
