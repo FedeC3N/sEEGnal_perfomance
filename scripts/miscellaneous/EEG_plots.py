@@ -20,7 +20,7 @@ import scripts.miscellaneous.private.plots as plots
 
 #### PARAMETERS
 # Select the database
-selected_database = 'AI_Mind_database'
+selected_database = 'human_experts_database'
 
 # Init Lurtis configuration
 config = init.init_config(selected_database)
@@ -51,7 +51,8 @@ for current_tester in config['testers']:
 
                 # Plots
                 #plots.plot_raw(config,bids_path)
-                plots.plot_clean(config,bids_path,current_tester)
+                #plots.plot_clean(config,bids_path,current_tester)
+                plots.plot_saved_epochs(config,bids_path,current_tester)
 
 
                 # Add to the final list

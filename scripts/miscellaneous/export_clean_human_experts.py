@@ -82,7 +82,7 @@ ses = [match[0][1] for match in matches]
 task = [match[0][2] for match in matches]
 
 # For each tester
-testers = ['fede']
+overwrite = False
 for current_tester in testers:
 
     print(current_tester)
@@ -106,7 +106,7 @@ for current_tester in testers:
         if not os.path.exists(os.path.dirname(outfile)):
             os.makedirs(os.path.dirname(outfile))
 
-        if os.path.exists(outfile):
+        if os.path.exists(outfile) and not(overwrite):
             print('       Already calculated')
             continue
 
@@ -132,9 +132,6 @@ for current_tester in testers:
 
         # Load the original recording
         raw = mne.io.read_raw_brainvision(bids_path,preload=True)
-
-        # Set reference
-        raw.set_eeg_reference()
 
         # Remove 50 Hz noise (and harmonics)
         raw.notch_filter(config['component_estimation']['notch_frequencies'])
@@ -200,6 +197,9 @@ for current_tester in testers:
         # Apply SOBI
         components_to_exclude = [i for i in range(len(matlab_sobi['type'])) if matlab_sobi['type'][i] == 1]
         sobi.apply(raw,exclude=components_to_exclude)
+
+        # Set montage
+        raw.set_montage('standard_1005',on_missing='ignore')
 
         # Export
         export_mne_epochs(raw,outfile)

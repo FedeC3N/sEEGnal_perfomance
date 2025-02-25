@@ -74,6 +74,22 @@ def plot_clean(config,bids_path,current_tester):
 
 
 
+def plot_saved_epochs(config,bids_path,current_tester):
+
+    # Read the saved file
+    outpath = os.path.join(config['path']['experts'],current_tester,'clean',f"sub-{bids_path.subject}",
+                           f"ses-{bids_path.session}",'eeg')
+    saved_file = f"sub-{bids_path.subject}_ses-{bids_path.session}_task-{bids_path.task}_desc-{current_tester}_clean_eeg.set"
+    raw = mne.io.read_epochs_eeglab(os.path.join(outpath,saved_file))
+
+    # Filter and resample
+    raw.resample(500)
+    raw.filter(2,45)
+
+    # Plot
+    raw.plot(block=True,n_epochs=2)
+
+
 def get_badchannels(config,bids_path,current_tester):
 
     badchannels = []
