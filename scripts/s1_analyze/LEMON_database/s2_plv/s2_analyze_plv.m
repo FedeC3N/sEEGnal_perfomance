@@ -7,7 +7,7 @@ addpath('../shared/')
 
 % Paths
 config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
-config.path.results = '../../../../results/plv';
+config.path.results = '../../../../results/LEMON_database/plv';
 if ~exist(config.path.results), mkdir(config.path.results),end
 
 % Get the different testers

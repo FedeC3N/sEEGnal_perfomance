@@ -4,7 +4,7 @@ restoredefaultpath
 
 % Paths
 config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
-config.path.results = '../../../../results/pow';
+config.path.results = '../../../../results/LEMON_database/pow';
 
 if ~exist(config.path.results),mkdir(config.path.results),end
 

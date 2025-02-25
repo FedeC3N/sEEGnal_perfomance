@@ -5,8 +5,8 @@ restoredefaultpath
 
 % Paths
 config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
-config.path.results = '../../../../results/pow';
-config.path.figures = '../../../../docs/manuscript/figures/pow_results';
+config.path.results = '../../../../results/LEMON_database/pow';
+config.path.figures = '../../../../docs/manuscript/figures/LEMON_database/pow_results';
 
 % Load the results
 load(sprintf('%s/pow_results.mat',config.path.results));

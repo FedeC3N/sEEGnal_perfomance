@@ -3,7 +3,7 @@ clc
 restoredefaultpath
 
 % Paths
-config.path.results = '../../../../results/plv';
+config.path.results = '../../../../results/LEMON_database/plv';
 
 % Load the results
 load(sprintf('%s/plv_results.mat',config.path.results));
