@@ -4,33 +4,18 @@ close all
 restoredefaultpath
 
 % Paths
-config.path.clean_data = '../../../../databases/AI_Mind_database/derivatives';
-config.path.results = '../../../../results/AI_Mind_database/pow';
-config.path.figures = '../../../../docs/manuscript/figures/AI_Mind_database/pow_results';
-
-if ~exist(config.path.figures), mkdir(config.path.figures), end
+config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
+config.path.results = '../../../../results/LEMON_database/pow';
+config.path.figures = '../../../../docs/manuscript/figures/LEMON_database/pow_results';
 
 % Load the results
 load(sprintf('%s/pow_results.mat',config.path.results));
 
-% Get the different testers (except sEEGnal)
-testers = dir(sprintf('%s/*',config.path.clean_data));
-testers = testers(3:end-1);
-testers = {testers.name};
-config.testers = testers;
+% Get the different testers
+testers = {'lemon','sEEGnal'};
 
 % Channels
-config.complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6',...
-    'M1', 'T7', 'C3', 'Cz', 'C4', 'T8', 'M2', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3',...
-    'Pz', 'P4', 'P8', 'POz', 'O1', 'O2', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2',...
-    'F6', 'FC3', 'FCz', 'FC4', 'C5', 'C1', 'C2', 'C6', 'CP3', 'CP4', 'P5', 'P1', 'P2',...
-    'P6', 'F9', 'PO3', 'PO4', 'F10', 'FT7', 'FT8', 'TP7', 'TP8', 'PO7', 'PO8', 'FT9',...
-    'FT10', 'TPP9h', 'TPP10h', 'PO9', 'PO10', 'P9', 'P10', 'AFF1', 'AFz', 'AFF2', 'FFC5h',...
-    'FFC3h', 'FFC4h', 'FFC6h', 'FCC5h', 'FCC3h', 'FCC4h', 'FCC6h', 'CCP5h', 'CCP3h', 'CCP4h',...
-    'CCP6h', 'CPP5h', 'CPP3h', 'CPP4h', 'CPP6h', 'PPO1', 'PPO2', 'I1', 'Iz', 'I2', 'AFp3h', 'AFp4h',...
-    'AFF5h', 'AFF6h', 'FFT7h', 'FFC1h', 'FFC2h', 'FFT8h', 'FTT9h', 'FTT7h', 'FCC1h', 'FCC2h', 'FTT8h',...
-    'FTT10h', 'TTP7h', 'CCP1h', 'CCP2h', 'TTP8h', 'TPP7h', 'CPP1h', 'CPP2h', 'TPP8h', 'PPO9h', 'PPO5h',...
-    'PPO6h', 'PPO10h', 'POO9h', 'POO3h', 'POO4h', 'POO10h', 'OI1h', 'OI2h'};
+config.complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'AFz', 'P7', 'P3', 'Pz', 'P4', 'P8', 'PO9', 'O1', 'Oz', 'O2', 'PO10', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FT7', 'FC3', 'FC4', 'FT8', 'C5', 'C1', 'C2', 'C6', 'TP7', 'CP3', 'CPz', 'CP4', 'TP8', 'P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8'};
 
 % Areas
 areas_info = struct('name',{'frontal','temporal_l','temporal_r','parietal_l',...
@@ -52,8 +37,8 @@ config.bands_info = bands_info;
 config.measures = {'NRMSE', 'rho'};
 
 % Read the power spectrum
-[pow_human_dataset] = read_pow_dataset(config,testers);
-[pow_sEEGnal_dataset] = read_pow_dataset(config,{'sEEGnal'});
+pow_lemon_dataset = read_pow_dataset(config,{'lemon'});
+pow_sEEGnal_dataset = read_pow_dataset(config,{'sEEGnal'});
 
 %%%%%%%%%%%%%%%
 % PLOTS
@@ -63,14 +48,14 @@ config.measures = {'NRMSE', 'rho'};
 plot_stats_in_head(config,stats)
 
 % Normalized pow spectrum for all areas in broadband
-plot_pow_spectrum_norm_one_subject(config,pow_human_dataset,pow_sEEGnal_dataset);
+% Prepare the pow_spectrum
+plot_pow_spectrum_norm_one_subject(config,pow_lemon_dataset,pow_sEEGnal_dataset);
 
 % Violinplots
 plot_NRMSE_channels(config,stats,bands_info)
 
-
 % Functions
-function [pow_dataset_norm] = read_pow_dataset(config,dataset_name)
+function pow_dataset_norm = read_pow_dataset(config,dataset_name)
 
 for itester = 1 : numel(dataset_name)
     
@@ -128,7 +113,7 @@ for imeasure = 1 : numel(config.measures)
     % Scatter the head
     ax1 = subplot(1,2,imeasure);
     [pos_elec, size_elec] = draw_head(config);
-    current_stats = nanmean(stats.(current_measure)(:,:,6,:),4);
+    current_stats = stats.broadband.(current_measure);
     color_elec = nanmean(current_stats,2);
     
     % Scatter the values of interest
@@ -169,8 +154,8 @@ function plot_pow_spectrum_norm_one_subject(config,pow_human_dataset,pow_sEEGnal
 
 
 % Select one subject to plot as an example
-% I checked all the recordings and 19 is the best picture
-for random_index = 19
+% I checked all the recordings and 27 is the best picture
+for random_index = 27
     
     % Estimate mean error
     fig = figure('WindowState','maximized');
@@ -178,7 +163,7 @@ for random_index = 19
     f_of_interest = config.bands_info(6).f_original;
     
     % Estimate the powers
-    current_pow_human_dataset = squeeze(pow_human_dataset(:,:,random_index,:));
+    current_pow_human_dataset = pow_human_dataset(:,:,random_index);
     human_average = nanmean(nanmean(current_pow_human_dataset,3),1);
     current_pow_sEEGnal_dataset = pow_sEEGnal_dataset(:,:,random_index);
     sEEGnal_average = nanmean(current_pow_sEEGnal_dataset,1);
@@ -223,7 +208,7 @@ bands_info = bands_info(1:end-1);
 for iband = 1 : numel(bands_info)
     
     current_band = bands_info(iband).name;
-    current_NRMSE = stats.NRMSE(:,:,iband,:);
+    current_NRMSE = stats.(current_band).NRMSE;
     current_NRMSE = current_NRMSE(:);
     
     % X axis for plot
