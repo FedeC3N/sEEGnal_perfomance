@@ -7,7 +7,7 @@ addpath('../shared/')
 
 % Paths
 config.path.derivatives = fullfile('..','..','..','..','databases',...
-    'LEMON_database','derivatives');
+    'AI_Mind_database','derivatives');
 config.path.performance = fullfile(config.path.derivatives,'sEEGnal',...
     'performance');
 

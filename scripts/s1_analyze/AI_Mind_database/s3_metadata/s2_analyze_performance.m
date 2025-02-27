@@ -7,7 +7,7 @@ addpath('../shared/')
 
 % Paths
 config.path.derivatives = fullfile('..','..','..','..','databases',...
-    'LEMON_database','derivatives');
+    'AI_Mind_database','derivatives');
 
 % Read the performance
 performance = read_performance_dataset(config);

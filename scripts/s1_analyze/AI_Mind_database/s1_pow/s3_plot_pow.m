@@ -8,6 +8,9 @@ config.path.clean_data = '../../../../databases/AI_Mind_database/derivatives';
 config.path.results = '../../../../results/AI_Mind_database/pow';
 config.path.figures = '../../../../docs/manuscript/figures/AI_Mind_database/pow_results';
 
+% Add paths
+addpath('../shared/')
+
 if ~exist(config.path.figures), mkdir(config.path.figures), end
 
 % Load the results
@@ -68,6 +71,8 @@ plot_pow_spectrum_norm_one_subject(config,pow_human_dataset,pow_sEEGnal_dataset)
 % Violinplots
 plot_NRMSE_channels(config,stats,bands_info)
 
+% corr
+plot_corr(config,bands_info,pow_human_dataset,pow_sEEGnal_dataset)
 
 % Functions
 function [pow_dataset_norm] = read_pow_dataset(config,dataset_name)
@@ -119,48 +124,44 @@ end
 
 function plot_stats_in_head(config,stats)
 
-% Define figure
-fig = figure('WindowState', 'maximized');
-for imeasure = 1 : numel(config.measures)
+for iband = 1 : numel(config.bands_info)
     
-    current_measure = config.measures{imeasure};
+    current_band = config.bands_info(iband).name;
     
-    % Scatter the head
-    ax1 = subplot(1,2,imeasure);
-    [pos_elec, size_elec] = draw_head(config);
-    current_stats = nanmean(stats.(current_measure)(:,:,6,:),4);
-    color_elec = nanmean(current_stats,2);
-    
-    % Scatter the values of interest
-    scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
-    c = colorbar;
-    
-    % Set the colormap
-    gradient_1_neg = linspace(1,1,2000);
-    gradient_2_neg = linspace(1,0.4,2000);
-    gradient_3_neg = linspace(1,0.4,2000);
-    gradient_1_pos = linspace(0.4,1,2000);
-    gradient_2_pos = linspace(0.4,1,2000);
-    gradient_3_pos = linspace(1,1,2000);
-    clrmap = [[gradient_1_pos gradient_1_neg]',...
-        [gradient_2_pos gradient_2_neg]',...
-        [gradient_3_pos gradient_3_neg]'];
-    if min(color_elec) > 0
-        clrmap = clrmap(2000:end,:);
+    % Define figure
+    fig = figure('WindowState', 'maximized');
+    for imeasure = 1 : numel(config.measures)
+        
+        current_measure = config.measures{imeasure};
+        
+        % Scatter the head
+        ax1 = subplot(1,2,imeasure);
+        [pos_elec, size_elec] = draw_head(config);
+        current_stats = nanmean(stats.(current_measure)(:,:,iband,:),4);
+        color_elec = nanmean(current_stats,2);
+        
+        % Scatter the values of interest
+        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
+        c = colorbar;
+        c.Location = 'south';
+        
+        % Set the colormap
+        customCMap = [73 144 209; 133 58 123; 209 70 2]/255; 
+        colormap(customCMap)
+        
+        % Details
+        title(sprintf('%s band - Measure %s', current_band, current_measure))
+        
+        
     end
-    colormap(ax1,clrmap)
     
-    % Details
-    title(sprintf('Broadband - Measure %s', current_measure))
-    
+    % Save the figure
+    outfile = sprintf('%s/%s_whole_head_head_measures.svg',...
+        config.path.figures,current_band);
+    saveas(fig,outfile);
+    close(fig);
     
 end
-
-% Save the figure
-outfile = sprintf('%s/whole_head_head_measures.svg',config.path.figures);
-saveas(fig,outfile);
-close(fig);
-    
 
 end
 
@@ -243,6 +244,7 @@ xticklabels({bands_info.name})
 title('NRMSE for each channel')
 ylabel('NRMSE','Interpreter','none')
 set(gca,'TickLabelInterpreter','none')
+legend(bands_info.name)
 
 % Save the figure
 outfile = sprintf('%s/pow_NRMSE_violinplot.svg',config.path.figures);
@@ -253,70 +255,72 @@ close(fig);
 end
 
 
-function [pos_elec,size_elec] = draw_head(config)
+function plot_corr(config,bands_info,pow_human_dataset,pow_sEEGnal_dataset)
 
-hold on;
-axis equal off
+% Remove the broadband
+bands_info = bands_info(1:end-1);
 
-% Head (big circle)
-theta = linspace(0, 2*pi, 100);
-r_head = 0.5; % radius of the head
-x_head = r_head * cos(theta);
-y_head = r_head * sin(theta);
+colors = [0    0.4470    0.7410;...
+    0.8500    0.3250    0.0980;...
+    0.9290    0.6940    0.1250;...
+    0.4940    0.1840    0.5560;...
+    0.4660    0.6740    0.1880];
 
-% Ears (two small circles)
-r_ear = 0.1; % radius of the ears
-x_ear = r_ear * cos(theta);
-y_ear = r_ear * sin(theta);
-
-% Left ear
-fill(x_ear - r_head/1.2, y_ear, [0.9 0.9 0.9]); % Slightly darker gray
-
-% Right ear
-fill(x_ear + r_head/1.2, y_ear, [0.9 0.9 0.9]);
-
-% Nose (triangle)
-x_nose = [-0.07, 0.07, 0]; % X-coordinates of the triangle
-y_nose = [0.49, 0.49, 0.55]; % Y-coordinates of the triangle
-fill(x_nose, y_nose, [0.9 0.9 0.9]); % Darker gray for nose
-
-% Plot the head at the end
-fill(x_head, y_head, [0.9 0.9 0.9]); % Light gray color
-
-% Plot the sensors
-% Save memory for the positions and colors
-pos_elec = nan(numel(config.complete_channel_labels),2);
-size_elec = 50*ones(numel(config.complete_channel_labels),1);
-
-% Read the channels position file
-lines = readlines('../shared/head_layouts/elec1005.lay');
-
-% Go through each line
-for iline = 1 : size(lines,1)
+% For each band
+fig = figure('WindowState', 'maximized');
+hold on
+for iband = 1 : numel(bands_info)
+     
+    % Get the pow in the current frequencies
+    current_band = bands_info(iband).name;
+    current_f = bands_info(iband).f_limits_index;
+    current_human = pow_human_dataset(:,current_f,:,:);
+    current_human = nanmean(current_human,4);
+    current_human = current_human(:);
+    current_sEEGnal = pow_sEEGnal_dataset(:,current_f,:);
+    current_sEEGnal = current_sEEGnal(:);
     
-    % Get the channel position in the original "complete_channel_labels"
-    % for consistency
-    current_line = strsplit(lines(iline),' ');
+    % Remove the nans
+    nans_mask = isnan(current_human) | isnan(current_sEEGnal);
+    current_human = current_human(~nans_mask);
+    current_sEEGnal = current_sEEGnal(~nans_mask);
     
-    if size(current_line,2) > 1
-        current_channel = current_line(6);
-        current_channel_index = ismember(config.complete_channel_labels,current_channel);
-        
-        % If present, save the position and color
-        if sum(current_channel_index) == 1
-            
-            % Position
-            pos_elec(current_channel_index,1) = current_line(2);
-            pos_elec(current_channel_index,2) = current_line(3);
-            
-        end
-        
-    end
+    % Plot
+    subplot(2,3,iband)
+    s = scatter(current_human,current_sEEGnal,'filled');
+    s.SizeData = 10;
+    s.MarkerEdgeColor = colors(iband,:);
+    s.MarkerFaceColor = colors(iband,:);
+    s.MarkerFaceAlpha = 0.2;
+    s.MarkerEdgeAlpha = s.MarkerFaceAlpha;
     
+    % Set the limits of the axis to be square
+    lims = axis;
+    xlim([min(lims) max(lims)])
+    ylim([min(lims) max(lims)])
+    axis square
+    
+    % lsline
+    ls = lsline;
+    ls.Color = [255 136 136]/255;
+    ls.LineWidth = 2;
+    
+    % Plot the identity line
+    l = line([min(lims) max(lims)],[min(lims) max(lims)],'Color','black','LineStyle','--');
+    
+    % Info
+    title(sprintf('%s band correlation',current_band))
+    xlabel('Human Expert')
+    ylabel('sEEGnal')
+
 end
 
-scatter(pos_elec(:,1),pos_elec(:,2),size_elec,'MarkerEdgeColor',[0 0 0])
-% pos_labels = [pos_elec(:,1)-0.015, pos_elec(:,2)+0.03];
-% text(pos_labels(:,1),pos_labels(:,2),config.complete_channel_labels)
+    
+% Save the figure
+outfile = sprintf('%s/pow_corr.svg',config.path.figures);
+saveas(fig,outfile);
+close(fig);
+
 
 end
+

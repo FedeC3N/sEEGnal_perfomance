@@ -6,19 +6,26 @@ restoredefaultpath
 addpath('../shared/')
 
 % Paths
-config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
-config.path.results = '../../../../results/plv';
+config.path.clean_data = '../../../../databases/AI_Mind_database/derivatives';
+config.path.results = '../../../../results/AI_Mind_database/plv';
 if ~exist(config.path.results), mkdir(config.path.results),end
 
-% Get the different testers
-testers = {'lemon','sEEGnal'};
+% Get the different testers (except sEEGnal)
+testers = dir(sprintf('%s/*',config.path.clean_data));
+testers = testers(3:end-1);
 
-% Read the power spectrum
-[plv_lemon_dataset,~,channels_lemon_included] = read_plv_dataset(config,'lemon');
-[plv_sEEGnal_dataset,f,channels_sEEGnal_included] = read_plv_dataset(config,'sEEGnal');
-
-% Areas
-complete_channel_labels = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'AFz', 'P7', 'P3', 'Pz', 'P4', 'P8', 'PO9', 'O1', 'Oz', 'O2', 'PO10', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2', 'F6', 'FT7', 'FC3', 'FC4', 'FT8', 'C5', 'C1', 'C2', 'C6', 'TP7', 'CP3', 'CPz', 'CP4', 'TP8', 'P5', 'P1', 'P2', 'P6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8'};
+% To define later the pow matrix
+complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6',...
+    'M1', 'T7', 'C3', 'Cz', 'C4', 'T8', 'M2', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3',...
+    'Pz', 'P4', 'P8', 'POz', 'O1', 'O2', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2',...
+    'F6', 'FC3', 'FCz', 'FC4', 'C5', 'C1', 'C2', 'C6', 'CP3', 'CP4', 'P5', 'P1', 'P2',...
+    'P6', 'F9', 'PO3', 'PO4', 'F10', 'FT7', 'FT8', 'TP7', 'TP8', 'PO7', 'PO8', 'FT9',...
+    'FT10', 'TPP9h', 'TPP10h', 'PO9', 'PO10', 'P9', 'P10', 'AFF1', 'AFz', 'AFF2', 'FFC5h',...
+    'FFC3h', 'FFC4h', 'FFC6h', 'FCC5h', 'FCC3h', 'FCC4h', 'FCC6h', 'CCP5h', 'CCP3h', 'CCP4h',...
+    'CCP6h', 'CPP5h', 'CPP3h', 'CPP4h', 'CPP6h', 'PPO1', 'PPO2', 'I1', 'Iz', 'I2', 'AFp3h', 'AFp4h',...
+    'AFF5h', 'AFF6h', 'FFT7h', 'FFC1h', 'FFC2h', 'FFT8h', 'FTT9h', 'FTT7h', 'FCC1h', 'FCC2h', 'FTT8h',...
+    'FTT10h', 'TTP7h', 'CCP1h', 'CCP2h', 'TTP8h', 'TPP7h', 'CPP1h', 'CPP2h', 'TPP8h', 'PPO9h', 'PPO5h',...
+    'PPO6h', 'PPO10h', 'POO9h', 'POO3h', 'POO4h', 'POO10h', 'OI1h', 'OI2h'};
 
 % Define the frequency bands
 bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
@@ -27,73 +34,75 @@ bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
 % Stats
 % Output struct
 results = [];
+stats = []; % dimensions: [channels,recordings,bands,testers]
+stats.NRMSE = nan(numel (complete_channel_labels),20,numel(bands_info),numel(testers));
+stats.rho = nan(numel (complete_channel_labels),20,numel(bands_info),numel(testers));
+stats.tstat = nan(numel (complete_channel_labels),20,numel(bands_info),numel(testers));
+stats.cohen_d = nan(numel (complete_channel_labels),20,numel(bands_info),numel(testers));
+stats.p = nan(numel (complete_channel_labels),20,numel(bands_info),numel(testers));
 
-for iband = 1 : numel(bands_info)
+for itester = 1 : numel(testers)
     
-    % For saving purposes
-    current_band = bands_info(iband).name;
+    % Read the power spectrum
+    current_tester = testers(itester).name;
+    [plv_human_dataset,~,channels_lemon_included] = read_plv_dataset(config,current_tester);
+    [plv_sEEGnal_dataset,f,channels_sEEGnal_included] = read_plv_dataset(config,'sEEGnal');
     
-    % To do the mean and std of the statistics
-    stats = [];
-    stats.NMSE = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    stats.rho = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    stats.tstat = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    stats.cohen_d = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    stats.p = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    
-    for ichannel = 1 : numel(complete_channel_labels)
+    for iband = 1 : numel(bands_info)
         
-        % Get the current band matrix
-        current_band_plv_lemon = squeeze(plv_lemon_dataset(:,:,iband,:));
-        current_band_plv_sEEGnal = squeeze(plv_sEEGnal_dataset(:,:,iband,:));
+        % For saving purposes
+        current_band = bands_info(iband).name;
         
-        % Get the current PLV for a channel with the rest of the channels
-        % Just interested in interconnectivity, not intra-connectivity
-        current_band_plv_lemon = squeeze(current_band_plv_lemon(:,ichannel,:));
-        current_band_plv_lemon(ichannel,:) = [];
-        current_band_plv_sEEGnal = squeeze(current_band_plv_sEEGnal(:,ichannel,:));
-        current_band_plv_sEEGnal(ichannel,:) = [];
-        
-        % For each subject, estimate the NMSE, corr, and t-test comparing
-        % the two pre-processing pipelines
-        for isubject = 1 : size(current_band_plv_lemon,2)
+        for ichannel = 1 : numel(complete_channel_labels)
             
-            % NMSE
-            lemon = current_band_plv_lemon(:,isubject);
-            sEEGnal = current_band_plv_sEEGnal(:,isubject);
-            MSE = nanmean((lemon - sEEGnal).^2);
-            RMSE = sqrt(MSE);
-            NRMSE = RMSE / 2; % To normalize we use the range, in PLV [-1 1]
-            stats.NRMSE(ichannel,isubject) = NRMSE;
+            % Get the current band matrix
+            current_band_plv_human = squeeze(plv_human_dataset(:,:,iband,:));
+            current_band_plv_sEEGnal = squeeze(plv_sEEGnal_dataset(:,:,iband,:));
             
-            % corr
-            [rho,~] = corrcoef(lemon,sEEGnal,'Rows','complete');
-            stats.rho(ichannel,isubject) = rho(1,2);
+            % Get the current PLV for a channel with the rest of the channels
+            % Just interested in interconnectivity, not intra-connectivity
+            current_band_plv_human = squeeze(current_band_plv_human(:,ichannel,:));
+            current_band_plv_human(ichannel,:) = [];
+            current_band_plv_sEEGnal = squeeze(current_band_plv_sEEGnal(:,ichannel,:));
+            current_band_plv_sEEGnal(ichannel,:) = [];
             
-            % t-test and  Effect Size (Cohen's d)
-            diff = lemon - sEEGnal;
-            [~,p,~,t_stats] = ttest(diff);
-            diff = abs(lemon - sEEGnal);
-            d = mean(diff)/std(diff);
-            stats.tstat(ichannel,isubject) = t_stats.tstat;
-            stats.cohen_d(ichannel,isubject) = d;
-            stats.p(ichannel,isubject) = p;
+            % For each subject, estimate the NMSE, corr, and t-test comparing
+            % the two pre-processing pipelines
+            for isubject = 1 : size(current_band_plv_human,2)
+                
+                % NMSE
+                human = current_band_plv_human(:,isubject);
+                sEEGnal = current_band_plv_sEEGnal(:,isubject);
+                MSE = nanmean((human - sEEGnal).^2);
+                RMSE = sqrt(MSE);
+                NRMSE = RMSE / 2; % To normalize we use the range, in PLV [-1 1]
+                stats.NRMSE(ichannel,isubject,iband,itester) = NRMSE;
+                
+                % corr
+                [rho,~] = corrcoef(human,sEEGnal,'Rows','complete');
+                stats.rho(ichannel,isubject,iband,itester) = rho(1,2);
+                
+                % t-test and  Effect Size (Cohen's d)
+                diff = human - sEEGnal;
+                [~,p,~,t_stats] = ttest(diff);
+                diff = abs(human - sEEGnal);
+                d = mean(diff)/std(diff);
+                stats.tstat(ichannel,isubject,iband,itester) = t_stats.tstat;
+                stats.cohen_d(ichannel,isubject,iband,itester) = d;
+                stats.p(ichannel,isubject,iband,itester) = p;
+                
+            end
+            
             
         end
-        
-        
+       
     end
-    
-    % Save
-    results.stats.(current_band).NRMSE = stats.NRMSE;
-    results.stats.(current_band).rho = stats.rho;
-    results.stats.(current_band).tstat = stats.tstat;
-    results.stats.(current_band).cohen_d = stats.cohen_d;
-    results.stats.(current_band).p = stats.p;
     
 end
 
 % Complete the information
+results.stats = stats;
+results.dimensions = ['channels','recordings','bands','testers'];
 results.testers = testers;
 results.complete_channel_labels = complete_channel_labels;
 results.bands_info = bands_info;

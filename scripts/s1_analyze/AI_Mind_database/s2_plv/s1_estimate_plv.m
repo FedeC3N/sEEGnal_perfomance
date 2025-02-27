@@ -34,7 +34,7 @@ config.overwrite = false;
 testers = dir(sprintf('%s/*',config.path.clean_data));
 testers = testers(3:end);
 
-for itester = 3 : numel(testers)
+for itester = 1  : numel(testers)
     
     % Load the datset
     current_tester = testers(itester);
@@ -57,6 +57,10 @@ for itester = 3 : numel(testers)
         
         % Check if exist and overwrite
         if ~exist(outfile) || (exist(outfile) && config.overwrite)
+            
+            % Create a dummy file to avoid overwrite while paraleling
+            % processing
+            save(outfile,'itester')
             
             % Process the subject
             [~,data] = evalc( 'process_subject(dataset(ifile))' );
