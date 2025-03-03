@@ -50,10 +50,8 @@ for ifile = 1 : numel(dataset)
         str = char(raw');
         fclose(fid);
         metadata = jsondecode(str);
-        performance.times_seconds.standardize = metadata.standardize.times_seconds;
         performance.times_seconds.badchannel_detection = metadata.badchannel_detection.times_seconds;
         performance.times_seconds.artifact_detection = metadata.artifact_detection.times_seconds;
-        performance.memory_bytes.standardize = metadata.standardize.memory_bytes;
         performance.memory_bytes.badchannel_detection = metadata.badchannel_detection.memory_bytes;
         performance.memory_bytes.artifact_detection = metadata.artifact_detection.memory_bytes;
 
@@ -83,10 +81,16 @@ for ifile = 1 : numel(dataset)
         current_file = dir(current_file);
         
         % Read the file and extract the artifacts
-        metadata = tdfread(fullfile(current_file.folder, current_file.name),'tab');
-        performance.artifacts.label = cellstr(metadata.label);
-        performance.artifacts.onset = metadata.x0xEF0xBB0xBFonset;
-        performance.artifacts.duration = metadata.duration;
+        try
+            metadata = tdfread(fullfile(current_file.folder, current_file.name),'tab');
+            performance.artifacts.label = cellstr(metadata.label);
+            performance.artifacts.onset = metadata.x0xEF0xBB0xBFonset;
+            performance.artifacts.duration = metadata.duration;
+        catch
+            performance.artifacts.label = nan;
+            performance.artifacts.onset = nan;
+            performance.artifacts.duration = nan;
+        end
         
         %%%% ICs
         % Get the file to read
