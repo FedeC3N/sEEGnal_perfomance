@@ -5,8 +5,6 @@ Find different types of badchannels.
 
 EEG: high_impedance_badchannels, high_variance_badchannels, power_spectrum_badchannels
 
-MEG: flat_badchannels, high_variance_badchannels, power_spectrum_badchannel
-
 Created on March 26 2024
 @author: Federico Ramirez
 """

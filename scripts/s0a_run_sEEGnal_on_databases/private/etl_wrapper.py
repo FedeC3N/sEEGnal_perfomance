@@ -26,7 +26,7 @@ def standardize(config, bids_path):
 
     # Load the module
     file_to_call = f"process_{config['database']}.py"
-    file_path = os.path.abspath(os.path.join('.', 'scripts', 's0a_run_ETL_on_databases',
+    file_path = os.path.abspath(os.path.join('.', 'scripts', 's0a_run_sEEGnal_on_databases',
                                              'private',file_to_call))
     loader = importlib.machinery.SourceFileLoader(file_to_call,file_path)
     spec = importlib.util.spec_from_file_location(file_to_call,file_path)
@@ -47,7 +47,7 @@ def badchannel_detection(config,bids_path):
 
     # Load the module
     file_to_call = f"process_{config['database']}.py"
-    file_path = os.path.abspath(os.path.join('.', 'scripts', 's0a_run_ETL_on_databases',
+    file_path = os.path.abspath(os.path.join('.', 'scripts', 's0a_run_sEEGnal_on_databases',
                                              'private', file_to_call))
     loader = importlib.machinery.SourceFileLoader(file_to_call, file_path)
     spec = importlib.util.spec_from_file_location(file_to_call, file_path)
@@ -68,7 +68,7 @@ def artifact_detection(config,bids_path):
 
     # Load the module
     file_to_call = f"process_{config['database']}.py"
-    file_path = os.path.abspath(os.path.join('.', 'scripts', 's0a_run_ETL_on_databases',
+    file_path = os.path.abspath(os.path.join('.', 'scripts', 's0a_run_sEEGnal_on_databases',
                                              'private', file_to_call))
     loader = importlib.machinery.SourceFileLoader(file_to_call, file_path)
     spec = importlib.util.spec_from_file_location(file_to_call, file_path)
@@ -89,7 +89,7 @@ def final_qa(config,bids_path):
 
     # Load the module
     file_to_call = f"process_{config['database']}.py"
-    file_path = os.path.abspath(os.path.join('.', 'scripts', 's0a_run_ETL_on_databases',
+    file_path = os.path.abspath(os.path.join('.', 'scripts', 's0a_run_sEEGnal_on_databases',
                                              'private', file_to_call))
     loader = importlib.machinery.SourceFileLoader(file_to_call, file_path)
     spec = importlib.util.spec_from_file_location(file_to_call, file_path)

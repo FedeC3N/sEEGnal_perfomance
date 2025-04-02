@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-script to prepare the databases to run ETL
+script to prepare the databases to run sEEGnal
 
 Created on Thu 17/05/2024
 

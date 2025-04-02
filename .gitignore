@@ -14,3 +14,6 @@ EEG_experts_preprocessing_scripts.zip
 # Ignore all the documents
 docs/
 excels/
+
+# Ignore some folders
+miscellaneous/

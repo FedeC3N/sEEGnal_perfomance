@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-This module looks for different EEG/MEG artifacts.
+This module looks for different EEG artifacts.
 First, it estimates the SOBI components (after excluding badchannels) and detects muscle and jumps artifacts. These
 artifacts tend to affect SOBI estimation of other components.
 After marking muscle and jumps artifacts, it estimates again SOBI components taking the artifacts out.

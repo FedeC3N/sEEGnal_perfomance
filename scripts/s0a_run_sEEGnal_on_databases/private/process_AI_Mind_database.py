@@ -20,7 +20,7 @@ from pprint import pprint
 import aimind.meeg.io.bids as bids
 import aimind.meeg.tools.mnetools as aimind_mne
 from eeglabio.utils import export_mne_epochs
-from scripts.s0a_run_ETL_on_databases.private.export_execution_results import export_execution_results
+from scripts.s0a_run_sEEGnal_on_databases.private.export_execution_results import export_execution_results
 
 
 

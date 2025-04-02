@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-This module looks for badchannels in EEG/MEG recordings.
+This module looks for badchannels in EEG recordings.
 First, it estimates the SOBI components and labels them.
 Then looks for badchannels based on: amplitude of the signal, power spectrum, impedances.
 
