@@ -274,44 +274,50 @@ for iband = 1 : numel(bands_info)
     % Get the pow in the current frequencies
     current_band = bands_info(iband).name;
     current_f = bands_info(iband).f_limits_index;
-    current_human = pow_human_dataset(:,current_f,:,:);
-    current_human = nanmean(current_human,4);
-    current_human = current_human(:);
-    current_sEEGnal = pow_sEEGnal_dataset(:,current_f,:);
-    current_sEEGnal = current_sEEGnal(:);
-    
-    % Remove the nans
-    nans_mask = isnan(current_human) | isnan(current_sEEGnal);
-    current_human = current_human(~nans_mask);
-    current_sEEGnal = current_sEEGnal(~nans_mask);
-    
-    % Plot
-    subplot(2,3,iband)
-    s = scatter(current_human,current_sEEGnal,'filled');
-    s.SizeData = 10;
-    s.MarkerEdgeColor = colors(iband,:);
-    s.MarkerFaceColor = colors(iband,:);
-    s.MarkerFaceAlpha = 0.2;
-    s.MarkerEdgeAlpha = s.MarkerFaceAlpha;
-    
+
+    for ihuman = 1 : size(pow_human_dataset,4)
+        
+        current_human = pow_human_dataset(:,current_f,:,ihuman);
+        current_human = current_human(:);
+        current_sEEGnal = pow_sEEGnal_dataset(:,current_f,:);
+        current_sEEGnal = current_sEEGnal(:);
+
+        % Remove the nans
+        nans_mask = isnan(current_human) | isnan(current_sEEGnal);
+        current_human = current_human(~nans_mask);
+        current_sEEGnal = current_sEEGnal(~nans_mask);
+
+        % Plot
+        subplot(2,3,iband)
+        s = scatter(current_human,current_sEEGnal,'filled');
+        s.SizeData = 10;
+        s.MarkerEdgeColor = colors(iband,:);
+        s.MarkerFaceColor = colors(iband,:);
+        s.MarkerFaceAlpha = 0.2;
+        s.MarkerEdgeAlpha = s.MarkerFaceAlpha;
+
+        
+    end
+
     % Set the limits of the axis to be square
     lims = axis;
     xlim([min(lims) max(lims)])
     ylim([min(lims) max(lims)])
     axis square
-    
+
     % lsline
     ls = lsline;
     ls.Color = [255 136 136]/255;
     ls.LineWidth = 2;
-    
+
     % Plot the identity line
     l = line([min(lims) max(lims)],[min(lims) max(lims)],'Color','black','LineStyle','--');
-    
+
     % Info
     title(sprintf('%s band correlation',current_band))
     xlabel('Human Expert')
     ylabel('sEEGnal')
+
 
 end
 
