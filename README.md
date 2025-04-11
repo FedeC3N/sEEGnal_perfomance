@@ -2,9 +2,9 @@
 
 ![Python Logo](https://www.ai-mind.eu/wp-content/uploads/sites/39/2020/09/Al-Mind_logo_web-300x185.png "Sample inline image")
 
-Package for automatic preprocessing of EEG and MEG recordings.
+Package for automatic preprocessing of EEG recordings.
 
-This repository comprises four high-level blocks, namely, standardize, badchannel detection, artifact detection, and quality assesment.
+This repository comprises four high-level blocks, namely, standardize, badchannel detection, and artifact detection.
 
 ## Standardize
 
@@ -14,38 +14,21 @@ For more information regarding BIDS, consult [BIDS official website](https://bid
 
 ## Badchannel detection
 
-Marks badchannels in EEG and MEG recordings based on different criteria.
-
-For EEG:
+Marks badchannels in EEG recordings based on different criteria:
 
 - Channels with impedances above 200 KΩ.
-- Channels with significantly higher variance compared to the rest of channels.
+- Channels with significantly higher variance in amplitude compared to the rest of channels.
 - Channels with significantly higher energy in 45-55 Hz range compared to the rest of channels.
 - Channels with gel bridge.
 
-For MEG:
-
-- Channels with no amplitude due to tunnings problems (flat channels).
-- Channels with significantly higher variance compared to the rest of channels.
-- Channels with significantly higher energy in 45-55 Hz range compared to the rest of channels.
 
 ## Artifact detection
 
-First, performs an independent component analysis (ICA) and then label the ICs using [MNE-ICALabel](https://mne.tools/mne-icalabel/stable/index.html).
+Since muscle and sensor artifacts may lead the estimation of Ics, we perform two consecutive SOBIs:
+-	The first SOBI (and the associated ICLabel) is used to identify epochs with muscular and sensor artifacts. Before estimation SOBI for the second time, these muscular and sensor artifacts are removed.
+-	The second SOBI (and the associated ICLabel) is used to identify the remaining muscle, sensor, and ocular artifacts.
 
-Removes the components labelled as EOG, EKG, muscle, line noise, and channel noise.
 
-Looks for remaining artifacts, specifically, it looks for EOG arrtifacts, muscle artifacts, and sensor artifacts (jumps).
-
-## Quality assessment
-
-Checks the EEG/MEG recordings quality after processing based on:
-
-- if any files has been corrupted through the process.
-- the number of badchannels.
-- the number of clean epochs.
-
-If the recording fulfill the quailty assessment, it is stored in a different folder with BIDS structure.
 
 ## Acknoledgemnents
 
