@@ -25,7 +25,7 @@ def init_database(database):
     """
 
     # Read the config dictionary
-    with open('./config/etl_configuration.json','r') as file:
+    with open('./config/sEEGnal_configuration.json','r') as file:
         config = json.load(file)
     config['database'] = database
 

@@ -2,6 +2,9 @@
 .idea/
 *__pycache__
 
+# Ignore Python virutal enviroments
+.venv/
+
 # Ignore data of the project
 data/
 databases/
@@ -17,3 +20,4 @@ excels/
 
 # Ignore some folders
 miscellaneous/
+dist/
