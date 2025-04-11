@@ -21,3 +21,4 @@ excels/
 # Ignore some folders
 miscellaneous/
 dist/
+SRM_database/
