@@ -57,7 +57,6 @@ def high_variance_detection(config, bids_path):
     :arg
     config (dict): Configuration parameters (paths, parameters, etc)
     bids_path (dict): Path to the recording
-    channels_to_include (str): Channels type to work on.
 
     :returns
     List of badchannels
@@ -123,7 +122,6 @@ def power_spectrum_detection(config,bids_path):
     :arg
     config (dict): Configuration parameters (paths, parameters, etc)
     bids_path (dict): Path to the recording
-    channels_to_include (str): Channels type to work on.
 
     :returns
     List of badchannels
@@ -253,10 +251,10 @@ def gel_bridge_detection(config, bids_path):
 
 
 
-def flat_channels_detection(config, bids_path, badchannels=None):
+def low_amplitude_detection(config, bids_path):
     """
 
-    Look for badchannels based on low amplitudes
+    Look for channels with low amplitude
 
     :arg
     config (dict): Configuration parameters (paths, parameters, etc)
@@ -267,47 +265,48 @@ def flat_channels_detection(config, bids_path, badchannels=None):
 
     """
 
-    # If there is no previous badchannels, create an empty list to append badchannels
-    if badchannels is None:
-        badchannels = []
+    # Read the ICA information
+    sobi = bids.read_sobi(bids_path,'sobi-badchannels')
 
-    # Looks in magnetometers and gradiometers separately
-    for current_sensor_type in ['mag', 'grad']:
+    # Parameters for loading EEG  recordings
+    chan_tsv = bids.read_chan (bids_path)
+    channels = list ( chan_tsv [ 'name' ] )
+    freq_limits = [config['badchannel_detection']['high_variance_detection_low_freq'],
+                   config['badchannel_detection']['high_variance_detection_high_freq']]
+    crop_seconds = [config['badchannel_detection']['crop_seconds']]
+    channels_to_include = config['badchannel_detection']["channels_to_include"]
+    channels_to_exclude = config['badchannel_detection']["channels_to_exclude"]
 
-        # Parameters to load raw MEG
-        freq_limits = [config['visualization_low_freq_limit'], config['visualization_high_freq_limit']]
-        crop_seconds = [config['crop_seconds']]
+    # Load the raw data
+    raw = aimind_mne.prepare_raw(
+        config,
+        bids_path,
+        preload=True,
+        channels_to_include=channels_to_include,
+        channels_to_exclude=channels_to_exclude,
+        freq_limits=freq_limits,
+        crop_seconds=crop_seconds,
+        badchannels_to_metadata=False,
+        exclude_badchannels=False,
+        set_annotations=False)
 
-        # Load the raw data
-        raw = aimind_mne.prepare_raw(
-            config,
-            bids_path,
-            preload=True,
-            channels_to_include=[current_sensor_type],
-            channels_to_exclude=[],
-            freq_limits=freq_limits,
-            crop_seconds=crop_seconds,
-            badchannels_to_metadata=False,
-            exclude_badchannels=False,
-            set_annotations=False)
+    # If there is EOG, remove those components
+    if 'eog' in sobi.labels_.keys ():
+        sobi.apply ( raw, exclude = sobi.labels_ [ 'eog' ] )
 
-        # De-mean the channels
-        raw_data = raw.get_data().copy()
-        mean_per_channel = raw_data.mean(axis=1)
-        raw_data_demean = raw_data - mean_per_channel[:, np.newaxis]
+    # Select the current channels
+    raw.pick(channels_to_include)
 
-        # Estimate the average standard deviation of each channel
-        raw_data_demean_std = raw_data_demean.std(axis=1)
+    # De-mean the channels
+    raw_data = raw.get_data().copy()
+    mean_per_channel = raw_data.mean(axis=1)
+    raw_data_demean = raw_data - mean_per_channel[:, np.newaxis]
 
-        # Estimate the average standard deviation of the whole recording
-        average_std = raw_data_demean_std.mean()
+    # Estimate the average standard deviation of each channel
+    raw_data_demean_std = raw_data_demean.std(axis=1)
 
-        # Define as badchannel any channel with a deviation >3*average_std
-        flat_badchannels = [raw.info['ch_names'][ichannel] for ichannel in range(len(raw.info['ch_names'])) if
-                            raw_data_demean_std[ichannel] < config['badchannel_detection_flat_channel_deviation'] * average_std]
+    # Define as badchannel any channel with a deviation < 1 nanovolt
+    hits = np.flatnonzero ( raw_data_demean_std < 0.000000001 )
+    low_amplitude_badchannels = [ raw.ch_names [ hit ] for hit in hits ]
 
-        # Append to the existing badchannels
-        for new_badchannel in flat_badchannels:
-            badchannels.append(new_badchannel)
-
-    return badchannels
+    return low_amplitude_badchannels
