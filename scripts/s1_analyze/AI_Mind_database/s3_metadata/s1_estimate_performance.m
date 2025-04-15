@@ -1,3 +1,14 @@
+%{
+
+Estimate the performance of sEEGnal and human experts by estimating the
+time expent and memory used, and the number of rejected channels, ICs and
+artifacts.
+
+
+@author: Fede
+
+%}
+
 clear
 clc
 restoredefaultpath

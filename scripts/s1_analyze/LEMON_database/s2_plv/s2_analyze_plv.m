@@ -1,3 +1,15 @@
+%{
+
+Evaluate differnces between sEEGnal and human experts.
+ 
+For each subject, we estimate correlation, NRMSE, t-test sensor by sensor
+and save the results.
+
+
+@author: Fede
+
+%}
+
 clear
 clc
 restoredefaultpath

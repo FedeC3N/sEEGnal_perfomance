@@ -1,3 +1,12 @@
+%{
+
+Wrapper to use Fieldtrip to read the EEG files.
+Re-reference the recordings to the average.
+
+@author: Fede
+
+%}
+
 function data = process_subject(current_dataset)
     
     dummy_complete_file = fullfile('..','..','..','..',...

@@ -1,3 +1,11 @@
+%{
+
+Wrapper to read the power files.
+
+@author: Fede
+
+%}
+
 function [pow_dataset,f] = read_pow_dataset(dataset, desired_dataset)
 
 % subject of interest

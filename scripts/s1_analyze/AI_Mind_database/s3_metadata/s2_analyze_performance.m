@@ -1,3 +1,14 @@
+%{
+
+Assess differences in: 
+ 
+   {'times_seconds','memory_bytes','badchannels',
+          'artifacts','ICs_rejected'};
+
+@author: Fede
+
+%}
+
 clear
 clc
 restoredefaultpath

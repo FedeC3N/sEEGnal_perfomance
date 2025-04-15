@@ -1,3 +1,11 @@
+%{
+
+Estimate power spectrum by means of p-welch and save the results in a file
+
+@author: Fede
+
+%}
+
 clear
 clc
 restoredefaultpath

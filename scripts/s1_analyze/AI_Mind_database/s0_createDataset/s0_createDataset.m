@@ -1,3 +1,11 @@
+%{
+
+Create a dataset with the files to process
+
+@author: Fede
+
+%}
+
 clear
 clc
 restoredefaultpath

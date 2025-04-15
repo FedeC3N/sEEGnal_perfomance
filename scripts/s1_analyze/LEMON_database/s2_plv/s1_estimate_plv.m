@@ -1,3 +1,19 @@
+%{
+
+Estimate PLV by means of (doi: 10.1088/1741-2552/aacfe4) and 
+save the results in a file
+
+Underlying logic:
+The more time-consuming calculation is the complex exponential.
+This algorithm works in the exponential space the whole time.
+Uses the logarithmic operations for the phase difference:
+exp ( 1i * ( a - b ) ) = exp ( 1i * a ) / exp ( 1i * b )
+Performs all the divisions at once with matrix multiplication.
+
+@author: Fede
+
+%}
+
 clear
 clc
 restoredefaultpath

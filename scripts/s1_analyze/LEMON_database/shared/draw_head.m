@@ -1,3 +1,12 @@
+%{
+
+Draw a 2-D head (circles and triangles) to plot the sensors on top.
+
+
+@author: Fede
+
+%}
+
 function [pos_elec,size_elec] = draw_head(config)
 
 hold on;
