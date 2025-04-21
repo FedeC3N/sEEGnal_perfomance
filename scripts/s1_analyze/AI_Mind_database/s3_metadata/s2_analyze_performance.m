@@ -74,6 +74,48 @@ for imeasure = 1 : numel(measures)
     
 end
 
+% Print statistical results
+fprintf('\n\nSTATISTICAL RESULTS \n\n')
+
+% T-test and effect size and print
+% Badchannels
+[~,p,~,stats] = ttest2(performance_human.badchannels,...
+    performance_sEEGnal.badchannels);
+cohen_d = (2*stats.tstat)/sqrt(stats.df);
+
+fprintf('Number of Badchannels\n');
+fprintf('   p-value: %.3f\n',p)
+fprintf('   Cohen-d: %.3f\n',cohen_d)
+
+% Artifacts
+[~,p,~,stats] = ttest2(performance_human.artifacts,...
+    performance_sEEGnal.artifacts);
+cohen_d = (2*stats.tstat)/sqrt(stats.df);
+
+fprintf('Number of Artifacts\n');
+fprintf('   p-value: %.3f\n',p)
+fprintf('   Cohen-d: %.3f\n',cohen_d)
+
+% ICs
+[~,p,~,stats] = ttest2(performance_human.ICs_rejected,...
+    performance_sEEGnal.ICs_rejected);
+cohen_d = (2*stats.tstat)/sqrt(stats.df);
+
+fprintf('Number of ICs corrected\n');
+fprintf('   p-value: %.3f\n',p)
+fprintf('   Cohen-d: %.3f\n',cohen_d)
+
+% ICs corrected
+[~,p,~,stats] = ttest2(performance_human.ICs_rejected,...
+    performance_sEEGnal.ICs_rejected_corrected);
+cohen_d = (2*stats.tstat)/sqrt(stats.df);
+
+fprintf('Number of ICs corrected\n');
+fprintf('   p-value: %.3f\n',p)
+fprintf('   Cohen-d: %.3f\n',cohen_d)
+
+
+
 % Read all the performance files
 function performance = read_performance_dataset_sEEGnal(config)
 
@@ -118,6 +160,15 @@ for icurrent = 1 : numel(dummy.dataset)
     dummy_count = strjoin(current_ICs_rejected,',');
     dummy_count = strsplit(dummy_count,',');
     performance.ICs_rejected(icurrent) = numel(dummy_count);
+
+    % Count the number of rejected ICs corrected to be compared to humans
+    current_ICs_rejected_corrected = current_performance.ICs_rejected.IC;
+    current_ICs_rejected_corrected = current_ICs_rejected_corrected(3:4);
+    ICs_rejected_index = strcmp(current_ICs_rejected_corrected,'n/a');
+    current_ICs_rejected_corrected = current_ICs_rejected_corrected(~ICs_rejected_index);
+    dummy_count = strjoin(current_ICs_rejected_corrected,',');
+    dummy_count = strsplit(dummy_count,',');
+    performance.ICs_rejected_corrected(icurrent) = numel(dummy_count);
     
 end
 
