@@ -12,7 +12,8 @@
 		
 		"low_freq_limit": 1,
 		"high_freq_limit": 100,
-		"notch_frequencies": [50, 100, 150, 200, 250]
+		"notch_frequencies": [50, 100, 150, 200, 250],
+		"unclear_threshold": 0.7
 		
 	},
 	

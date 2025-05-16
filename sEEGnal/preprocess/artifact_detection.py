@@ -212,6 +212,21 @@ def estimate_artifact_components(config,bids_path,derivatives_label):
     # Label de ICs
     _ = iclabel.label_components(raw, sobi, method='iclabel')
 
+    # Check the probabilities max probabilities of each category and find those under 0.7
+    max_probability = sobi.labels_scores_.max(axis=1)
+    index_unclear = [i for i in range(len(max_probability)) if
+                     max_probability[i] < config['component_estimation']['unclear_threshold']]
+
+    # Re-arrange the label matrix and assign "other" to the unclears
+    labels = ['brain', 'muscle', 'eog', 'ecg', 'line_noise', 'ch_noise']
+    for current_label in labels:
+        sobi.labels_[current_label] = [i for i in sobi.labels_[current_label] if i not in index_unclear]
+
+    dummy = sobi.labels_['other'].copy()
+    dummy.extend(index_unclear)
+    dummy = list(set(dummy))
+    sobi.labels_['other'] = dummy.copy()
+
     # Writes the SOBI data into the derivatives folder.
     _ = bids.write_sobi (bids_path, sobi, derivatives_label)
 
