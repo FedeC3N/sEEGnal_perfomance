@@ -3,7 +3,7 @@
 *__pycache__
 
 # Ignore Python virutal enviroments
-.venv/
+.venv*/
 
 # Ignore data of the project
 data/

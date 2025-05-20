@@ -26,7 +26,7 @@ performance_sEEGnal = read_performance_dataset_sEEGnal(config);
 
 % Analyze
 modules = {'badchannel_detection', 'artifact_detection'  };
-measures = {'times_seconds','memory_bytes','badchannels','artifacts','ICs_rejected'};
+measures = {'times_seconds','memory_bytes','badchannels','artifacts','ICs_rejected','rejected_variance'};
 for imeasure = 1 : numel(measures)
     
     % Current measure
@@ -101,7 +101,7 @@ fprintf('   Cohen-d: %.3f\n',cohen_d)
     performance_sEEGnal.ICs_rejected);
 cohen_d = (2*stats.tstat)/sqrt(stats.df);
 
-fprintf('Number of ICs corrected\n');
+fprintf('Number of ICs rejected\n');
 fprintf('   p-value: %.3f\n',p)
 fprintf('   Cohen-d: %.3f\n',cohen_d)
 
@@ -110,10 +110,18 @@ fprintf('   Cohen-d: %.3f\n',cohen_d)
     performance_sEEGnal.ICs_rejected_corrected);
 cohen_d = (2*stats.tstat)/sqrt(stats.df);
 
-fprintf('Number of ICs corrected\n');
+fprintf('Number of ICs rejected corrected\n');
 fprintf('   p-value: %.3f\n',p)
 fprintf('   Cohen-d: %.3f\n',cohen_d)
 
+% Variance rejected
+[~,p,~,stats] = ttest2(performance_human.rejected_variance,...
+    performance_sEEGnal.rejected_variance);
+cohen_d = (2*stats.tstat)/sqrt(stats.df);
+
+fprintf('Number of rejected variance\n');
+fprintf('   p-value: %.3f\n',p)
+fprintf('   Cohen-d: %.3f\n',cohen_d)
 
 
 % Read all the performance files
@@ -133,6 +141,7 @@ end
 performance.badchannels = nan(numel(dummy.dataset),1);
 performance.artifacts = nan(numel(dummy.dataset),1);
 performance.ICs_rejected = nan(numel(dummy.dataset),1);
+performance.rejected_variance = nan(numel(dummy.dataset),1);
 
 for icurrent = 1 : numel(dummy.dataset)
     
@@ -169,7 +178,20 @@ for icurrent = 1 : numel(dummy.dataset)
     dummy_count = strjoin(current_ICs_rejected_corrected,',');
     dummy_count = strsplit(dummy_count,',');
     performance.ICs_rejected_corrected(icurrent) = numel(dummy_count);
-    
+
+    % Sum the variance rejected and store it
+    current_ICs_rejected = current_performance.ICs_rejected.IC;
+    current_ICs_rejected = current_ICs_rejected(2:end-1);
+    ICs_rejected_index = strcmp(current_ICs_rejected,'n/a');
+    current_ICs_rejected = current_ICs_rejected(~ICs_rejected_index);
+    current_ICs_rejected = strjoin(current_ICs_rejected,',');
+    current_ICs_rejected = strsplit(current_ICs_rejected,',');
+    rejected_index = cellfun(@(x) x(3:end),current_ICs_rejected,'UniformOutput',false);
+    rejected_index = cellfun(@str2double,rejected_index,'UniformOutput',false);
+    rejected_index = cell2mat(rejected_index);
+    rejected_variance = sum(current_performance.ICs_rejected.explained_variance(rejected_index));
+    performance.rejected_variance(icurrent) = rejected_variance;
+
 end
 
 end
@@ -192,6 +214,7 @@ end
 performance.badchannels = nan(20,numel(testers));
 performance.artifacts = nan(20,numel(testers));
 performance.ICs_rejected = nan(20,numel(testers));
+performance.rejected_variance = nan(20,numel(testers));
 
 for itester = 1 : numel(testers)
     
@@ -210,10 +233,10 @@ for itester = 1 : numel(testers)
         current_performance = load(performance_file);
         
         % Store times and bytes
-        for imodule = 1 : numel(modules)
-            performance.times_seconds.(modules{imodule})(icurrent,itester) = current_performance.times_seconds.(modules{imodule});
-            performance.memory_bytes.(modules{imodule})(icurrent,itester) = current_performance.memory_bytes.(modules{imodule}) * 0.000001;
-        end
+        % for imodule = 1 : numel(modules)
+            % performance.times_seconds.(modules{imodule})(icurrent,itester) = current_performance.times_seconds.(modules{imodule});
+            % performance.memory_bytes.(modules{imodule})(icurrent,itester) = current_performance.memory_bytes.(modules{imodule}) * 0.000001;
+        % end
         
         % Store number of badchannels and artifacts
         performance.badchannels(icurrent,itester) = numel(current_performance.badchannels.label);
@@ -222,6 +245,11 @@ for itester = 1 : numel(testers)
         % Count the number of rejected ICs and store it
         performance.ICs_rejected(icurrent,itester) = numel(current_performance.ICs_rejected.IC);
         
+        % Sum the variance rejected and store it
+        rejected_index = current_performance.ICs_rejected.IC;
+        rejected_variance = sum(current_performance.ICs_rejected.explained_variance(rejected_index));
+        performance.rejected_variance(icurrent,itester) = rejected_variance;
+
     end
     
 end
@@ -234,5 +262,6 @@ end
 performance.badchannels = nanmean(performance.badchannels,2);
 performance.artifacts = nanmean(performance.artifacts,2);
 performance.ICs_rejected = nanmean(performance.ICs_rejected,2);
+performance.rejected_variance = nanmean(performance.rejected_variance,2);
 
 end

@@ -70,14 +70,14 @@ for itester = 1 : numel(testers)
             metadata_trl = load(sprintf('%s/%s',current_file.folder,current_file.name));
             
             % Times and memory
-            performance.times_seconds.badchannel_detection = metadata_trl.times_seconds.select_badchannels;
-            performance.times_seconds.artifact_detection = nansum([metadata_trl.times_seconds.select_artifacts,...
-                metadata_trl.times_seconds.component_extraction,metadata_trl.times_seconds.component_revision,...
-                metadata_trl.times_seconds.artifact_revision]);
-            performance.memory_bytes.badchannel_detection = metadata_trl.memory_bytes.select_badchannels;
-            performance.memory_bytes.artifact_detection = max([metadata_trl.times_seconds.select_artifacts,...
-                metadata_trl.times_seconds.component_extraction, metadata_trl.times_seconds.component_revision,...
-                metadata_trl.times_seconds.artifact_revision]);
+            % performance.times_seconds.badchannel_detection = metadata_trl.times_seconds.select_badchannels;
+            % performance.times_seconds.artifact_detection = nansum([metadata_trl.times_seconds.select_artifacts,...
+            %     metadata_trl.times_seconds.component_extraction,metadata_trl.times_seconds.component_revision,...
+            %     metadata_trl.times_seconds.artifact_revision]);
+            % performance.memory_bytes.badchannel_detection = metadata_trl.memory_bytes.select_badchannels;
+            % performance.memory_bytes.artifact_detection = max([metadata_trl.times_seconds.select_artifacts,...
+            %     metadata_trl.times_seconds.component_extraction, metadata_trl.times_seconds.component_revision,...
+            %     metadata_trl.times_seconds.artifact_revision]);
             
             %%%% BADCHANNELS
             % Read the file and extract the badchannels
@@ -106,6 +106,7 @@ for itester = 1 : numel(testers)
             %%%% ICs
             IC_rejected_index = find(metadata_trl.compinfo.SOBI.EEG.type > 0);
             performance.ICs_rejected.IC = IC_rejected_index;
+            performance.ICs_rejected.explained_variance = metadata_trl.compinfo.SOBI.EEG.explained_variance;
             
             % Save the file
             save(outfile,'-struct','performance')

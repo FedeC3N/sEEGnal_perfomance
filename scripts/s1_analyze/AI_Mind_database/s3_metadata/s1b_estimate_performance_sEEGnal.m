@@ -36,25 +36,25 @@ load(dataset_path);
 modules = {'standardize', 'badchannel_detection', 'artifact_detection'  };
 measures = {'times_seconds','memory_bytes','badchannels','artifacts','ICs_rejected'};
 for ifile = 1 : numel(dataset)
-    
+
     outfile_name = sprintf('sub-%s_ses-%s_task-%s_%s_performance.mat',...
         dataset(ifile).sub,dataset(ifile).ses,dataset(ifile).task,...
         dataset(ifile).origin);
     outfile = fullfile(config.path.performance,outfile_name);
-    
+
     % Check if exist and overwrite
     if ~exist(outfile) || (exist(outfile) && config.overwrite)
-        
+
         % Save the output structure
         performance = [];
-        
+
         %%%% METADATA
         % Get the file to read
         current_file = fullfile(config.path.derivatives,'sEEGnal', 'clean',...
             ['sub-' dataset(ifile).sub],'ses-1','eeg',...
             ['*' dataset(ifile).task '*measure_performance.json']);
         current_file = dir(current_file);
-        
+
         % Read the json file
         fid = fopen(fullfile(current_file.folder, current_file.name));
         raw = fread(fid);
@@ -72,7 +72,7 @@ for ifile = 1 : numel(dataset)
             ['sub-' dataset(ifile).sub],'ses-1','eeg',...
             ['*' dataset(ifile).task '*channels.tsv']);
         current_file = dir(current_file);
-        
+
         % Read the file and extract the badchannels
         metadata = tdfread(fullfile(current_file.folder, current_file.name),'tab');
         badchannels = cellstr(metadata.status);
@@ -83,14 +83,14 @@ for ifile = 1 : numel(dataset)
         badchannels_description = badchannels_description(badchannels_index);
         performance.badchannels.label = badchannels;
         performance.badchannels.description = badchannels_description;
-        
+
         %%%% ARTIFACTS
         % Get the file to read
         current_file = fullfile(config.path.derivatives,'sEEGnal', 'clean',...
             ['sub-' dataset(ifile).sub],'ses-1','eeg',...
             ['*' dataset(ifile).task '*desc-artifacts_annotations.tsv']);
         current_file = dir(current_file);
-        
+
         % Read the file and extract the artifacts
         try
             metadata = tdfread(fullfile(current_file.folder, current_file.name),'tab');
@@ -102,37 +102,47 @@ for ifile = 1 : numel(dataset)
             performance.artifacts.onset = nan;
             performance.artifacts.duration = nan;
         end
-        
+
         %%%% ICs
         % Get the file to read
         current_file = fullfile(config.path.derivatives,'sEEGnal', 'clean',...
             ['sub-' dataset(ifile).sub],'ses-1','eeg',...
-            ['*' dataset(ifile).task '*desc-sobi_artifacts_annotations.tsv']);
+            ['*' dataset(ifile).task '*desc-sobi_annotations.tsv']);
         current_file = dir(current_file);
-        
+
         % Read the file and extract the ICs
         metadata = tdfread(fullfile(current_file.folder, current_file.name),'tab');
         ICs_rejected = cellstr(metadata.channel);
         ICs_rejected_labels = cellstr(metadata.label);
         performance.ICs_rejected.IC = ICs_rejected;
-        performance.ICs_rejected.label = ICs_rejected_labels;   
-        
+        performance.ICs_rejected.label = ICs_rejected_labels;
+
+        % Estimate the variance of each component
+        current_file = fullfile(config.path.derivatives,'sEEGnal', 'clean',...
+            ['sub-' dataset(ifile).sub],'ses-1','eeg',...
+            ['*' dataset(ifile).task '*desc-sobi_explained_variance.tsv']);
+        current_file = dir(current_file);
+        metadata = readtable(fullfile(current_file.folder, current_file.name), "FileType","text",'Delimiter', '\t');
+        explained_variance = table2array(metadata(:,'ExplainedVariance'));
+        performance.ICs_rejected.explained_variance = explained_variance;
+
         % Save the file
         save(outfile,'-struct','performance')
-          
+
         % Add the info to the dataset
         performance = [];
         performance.path = config.path.performance;
         performance.file = outfile_name;
         dataset(ifile).performance = performance;
-        
+
     else
-        
+
         fprintf('   Already calculated. Do not overwrite.\n\n')
-        
+
     end
-    
+
 end
 
 % Save the dataset
 save('-v7.3',dataset_path,'dataset')
+
