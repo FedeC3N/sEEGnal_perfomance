@@ -37,7 +37,7 @@ def high_impedance_detection(config, bids_path):
     channels = bids.read_chan (bids_path)
 
     # Identifies the channels with high impedance (higher than 200).
-    hits = channels [ 'impedance' ] > config ['badchannel_detection'][ 'high_impedance_limit' ]
+    hits = channels [ 'impedance' ] > config ['badchannel_detection'][ 'high_impedance']['threshold']
     high_impedance_badchannels = list ( channels.loc [ hits, 'name' ] )
 
     # Remove the excluded channels
@@ -49,10 +49,10 @@ def high_impedance_detection(config, bids_path):
 
 
 
-def high_variance_detection(config, bids_path):
+def impossible_amplitude_detection(config, bids_path,badchannels):
     """
 
-    Look for badchannels based on the channel variance
+    Look for channels with low amplitude
 
     :arg
     config (dict): Configuration parameters (paths, parameters, etc)
@@ -63,17 +63,12 @@ def high_variance_detection(config, bids_path):
 
     """
 
-    # Read the ICA information
-    sobi = bids.read_sobi(bids_path,'sobi-badchannels')
-
     # Parameters for loading EEG  recordings
-    chan_tsv = bids.read_chan (bids_path)
-    channels = list ( chan_tsv [ 'name' ] )
-    freq_limits = [config['badchannel_detection']['high_variance_detection_low_freq'],
-                   config['badchannel_detection']['high_variance_detection_high_freq']]
-    crop_seconds = [config['badchannel_detection']['crop_seconds']]
+    freq_limits = [config['badchannel_detection']['impossible_amplitude']['low_freq'],
+                   config['badchannel_detection']['impossible_amplitude']['high_freq']]
     channels_to_include = config['badchannel_detection']["channels_to_include"]
     channels_to_exclude = config['badchannel_detection']["channels_to_exclude"]
+    epoch_definition = config['badchannel_detection']['impossible_amplitude']["epoch_definition"]
 
     # Load the raw data
     raw = aimind_mne.prepare_raw(
@@ -83,34 +78,36 @@ def high_variance_detection(config, bids_path):
         channels_to_include=channels_to_include,
         channels_to_exclude=channels_to_exclude,
         freq_limits=freq_limits,
-        crop_seconds=crop_seconds,
-        badchannels_to_metadata=False,
-        exclude_badchannels=False,
-        set_annotations=False)
-
-    # If there is EOG, remove those components
-    if 'eog' in sobi.labels_.keys ():
-        sobi.apply ( raw, exclude = sobi.labels_ [ 'eog' ] )
+        set_annotations=False,
+        epoch=epoch_definition)
 
     # Select the current channels
     raw.pick(channels_to_include)
 
+    # Exclude the previous badchannels
+    raw.drop_channels(badchannels,on_missing='ignore')
+
     # De-mean the channels
     raw_data = raw.get_data().copy()
-    mean_per_channel = raw_data.mean(axis=1)
-    raw_data_demean = raw_data - mean_per_channel[:, np.newaxis]
+    mean_per_channel = raw_data.mean(axis=2)
+    raw_data_demean = raw_data - mean_per_channel[:, :, np.newaxis]
 
-    # Estimate the average standard deviation of each channel
-    raw_data_demean_std = raw_data_demean.std(axis=1)
+    # Estimate the average standard deviation of each epoch
+    raw_data_demean_std = raw_data_demean.std(axis=2)
 
-    # Estimate the average standard deviation of the whole recording
-    average_std = raw_data_demean_std.mean()
+    # Use the low and high threshold to define impossible amplitudes
+    hits_low = raw_data_demean_std < config['badchannel_detection']['impossible_amplitude']["low_threshold"]
+    hits_high = raw_data_demean_std > config['badchannel_detection']['impossible_amplitude']["high_threshold"]
 
-    # Define as badchannel any channel with a deviation >3*average_std
-    hits = np.flatnonzero ( raw_data_demean_std > config['badchannel_detection']['high_variance_detection_threshold'] * average_std )
-    high_variance_badchannels = [ raw.ch_names [ hit ] for hit in hits ]
+    # Get the number of occurrences per channel in percentage
+    hits = hits_low + hits_high
+    hits = hits.sum(axis=0) / raw_data_demean_std.shape[0]
 
-    return high_variance_badchannels
+    # Define as badchannel if many epochs are bads
+    hits = np.flatnonzero ( hits > config['badchannel_detection']['impossible_amplitude']["percentage_threshold"] )
+    impossible_amplitude_badchannels = [ raw.ch_names [ hit ] for hit in hits ]
+
+    return impossible_amplitude_badchannels
 
 
 
@@ -251,10 +248,10 @@ def gel_bridge_detection(config, bids_path):
 
 
 
-def low_amplitude_detection(config, bids_path):
+def high_variance_detection(config, bids_path):
     """
 
-    Look for channels with low amplitude
+    Look for badchannels based on the channel variance
 
     :arg
     config (dict): Configuration parameters (paths, parameters, etc)
@@ -305,8 +302,11 @@ def low_amplitude_detection(config, bids_path):
     # Estimate the average standard deviation of each channel
     raw_data_demean_std = raw_data_demean.std(axis=1)
 
-    # Define as badchannel any channel with a deviation < 1 nanovolt
-    hits = np.flatnonzero ( raw_data_demean_std < 0.000000001 )
-    low_amplitude_badchannels = [ raw.ch_names [ hit ] for hit in hits ]
+    # Estimate the average standard deviation of the whole recording
+    average_std = raw_data_demean_std.mean()
 
-    return low_amplitude_badchannels
+    # Define as badchannel any channel with a deviation >3*average_std
+    hits = np.flatnonzero ( raw_data_demean_std > config['badchannel_detection']['high_variance_detection_threshold'] * average_std )
+    high_variance_badchannels = [ raw.ch_names [ hit ] for hit in hits ]
+
+    return high_variance_badchannels

@@ -3,13 +3,14 @@
 *__pycache__
 
 # Ignore Python virutal enviroments
-.venv/
+.venv*/
 
 # Ignore data of the project
 data/
 databases/
 metadata/
 results/
+SOBI_files/
 EEG_experts_preprocessing_scripts.zip
 *.mat
 *.zip
@@ -19,6 +20,6 @@ docs/
 excels/
 
 # Ignore some folders
-miscellaneous/
+old_AI-Mind_groups/
 dist/
 SRM_database/

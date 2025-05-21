@@ -20,6 +20,7 @@ import mne_icalabel as iclabel
 import sEEGnal.io.bids as bids
 import sEEGnal.tools.mnetools as aimind_mne
 import sEEGnal.tools.find_badchannels as find_badchannels
+from sEEGnal.tools.find_badchannels import impossible_amplitude_detection
 from sEEGnal.tools.measure_performance import measure_performance
 
 
@@ -94,7 +95,15 @@ def eeg_badchannel_detection(config,bids_path):
 
     Call the badchannel detection processes one by one for each type of recording.
     It will define badchannels based on the impedance, high amplitude, flat channels, high-energy pow spectrum, and
-    gel-bridged channels
+    gel-bridged channels.
+
+    The order of detection is important:
+        1. High impedance
+        2. Flat channels
+        3. Impossible high amplitude
+        4. High power spectrum power
+        5. Gel-bridged channels
+        6. High variance channels
 
     :arg
     config (dict): Configuration parameters (paths, parameters, etc)
@@ -115,35 +124,36 @@ def eeg_badchannel_detection(config,bids_path):
     badchannels = []
     badchannels_description = []
 
-    # Find channels with low amplitude
-    low_amplitude_badchannels = find_badchannels.low_amplitude_detection(config, bids_path)
-    badchannels.extend(low_amplitude_badchannels)
-    current_badchannel_description = ['bad_low_amplitude_badchannels' for i in range(len(low_amplitude_badchannels))]
-    badchannels_description.extend(current_badchannel_description)
-
     # Find channels with high impedance
-    high_impedance_badchannels = find_badchannels.high_impedance_detection(config,bids_path)
+    high_impedance_badchannels = find_badchannels.high_impedance_detection(config, bids_path)
     badchannels.extend(high_impedance_badchannels)
     current_badchannel_description = ['bad_high_impedance' for i in range(len(high_impedance_badchannels))]
+    badchannels_description.extend(current_badchannel_description)
+
+    # Find channels with biologically impossible amplitude
+    impossible_amplitude_badchannels = find_badchannels.impossible_amplitude_detection(config, bids_path,badchannels)
+    badchannels.extend(impossible_amplitude_badchannels)
+    current_badchannel_description = ['bad_impossible_amplitude_badchannels' for i in range(len(impossible_amplitude_badchannels))]
+    badchannels_description.extend(current_badchannel_description)
+
+
+    # Find abnormal power spectrum
+    """power_spectrum_badchannels = find_badchannels.power_spectrum_detection(config, bids_path)
+    badchannels.extend(power_spectrum_badchannels)
+    current_badchannel_description = ['bad_power_spectrum' for i in range(len(power_spectrum_badchannels))]
+    badchannels_description.extend(current_badchannel_description)
+
+    # Find channels with gel bridge
+    gel_bridge_badchannels = find_badchannels.gel_bridge_detection(config, bids_path)
+    badchannels.extend(gel_bridge_badchannels)
+    current_badchannel_description = ['bad_gel_bridge' for i in range(len(gel_bridge_badchannels))]
     badchannels_description.extend(current_badchannel_description)
 
     # Find channels with high variance
     high_variance_badchannels = find_badchannels.high_variance_detection(config,bids_path)
     badchannels.extend(high_variance_badchannels)
     current_badchannel_description = ['bad_high_variance' for i in range(len(high_variance_badchannels))]
-    badchannels_description.extend(current_badchannel_description)
-
-    # Find abnormal power spectrum
-    power_spectrum_badchannels = find_badchannels.power_spectrum_detection(config,bids_path)
-    badchannels.extend(power_spectrum_badchannels)
-    current_badchannel_description = ['bad_power_spectrum' for i in range(len(power_spectrum_badchannels))]
-    badchannels_description.extend(current_badchannel_description)
-
-    # Find channels with gel bridge
-    gel_bridge_badchannels = find_badchannels.gel_bridge_detection(config,bids_path)
-    badchannels.extend(gel_bridge_badchannels)
-    current_badchannel_description = ['bad_gel_bridge' for i in range(len(gel_bridge_badchannels))]
-    badchannels_description.extend(current_badchannel_description)
+    badchannels_description.extend(current_badchannel_description)"""
 
     # Save the results
     bids.update_badchans (bids_path, badchannels, badchannels_description)
@@ -164,11 +174,11 @@ def estimate_badchannel_component(config, bids_path):
     """
 
     # Parameters for loading EEG recordings
-    freq_limits = [config['component_estimation']['low_freq_limit'],
-                   config['component_estimation']['high_freq_limit']
+    freq_limits = [config['component_estimation']['low_freq'],
+                   config['component_estimation']['high_freq']
                    ]
-    resample_frequency = config['badchannel_detection']['resampled_frequency_estimate_component']
-    epoch_definition = config['badchannel_detection']['epoch_definition']
+    resample_frequency = config['component_estimation']['resampled_frequency']
+    epoch_definition = config['component_estimation']['epoch_definition']
     channels_to_include = config['component_estimation']["channels_to_include"]
     channels_to_exclude = config['component_estimation']["channels_to_exclude"]
 
