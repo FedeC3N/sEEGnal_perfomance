@@ -18,12 +18,15 @@ from scripts.miscellaneous.private import channel_information
 
 #### PARAMETERS
 # Select the database
-database = 'LEMON_database'
+database = 'AI_Mind_database'
 
 
 
 # Plot deviation of the channels
-deviation_all = channel_information.estimate_deviation(database)
+"""deviation_all = channel_information.estimate_deviation(database)
 x = range(deviation_all.shape[1])
 plt.plot(x,deviation_all.transpose(),'o')
-plt.show(block=True)
+plt.show(block=True)"""
+
+# Plot the type of badchannels
+channel_information.badchannel_types(database)
