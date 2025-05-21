@@ -559,6 +559,16 @@ def prepare_raw(config,bids_path, preload=True, channels_to_include=None, channe
         if len ( annotations ):
             raw.set_annotations ( annotations )
 
+    # Remove the beggining and the end of the recording
+    if crop_seconds:
+        if len(crop_seconds) == 1:
+            raw.crop(tmin=crop_seconds[0], tmax=raw.times[-1] - crop_seconds[0])
+        elif len(crop_seconds) == 2:
+            raw.crop(tmin=crop_seconds[0], tmax=raw.times[-1] - crop_seconds[1])
+        else:
+            raise ValueError("The crop vector must have one or two elements")
+            # print('The crop vector must have one or two elements')
+
     # Epoch the data
     # if (len(epoch.keys()) == 3):
     if epoch:
@@ -584,15 +594,6 @@ def prepare_raw(config,bids_path, preload=True, channels_to_include=None, channe
     if epoch:
         raw.crop(tmin=0,tmax=raw.times[-1] - epoch['padding'])
 
-    # Remove the beggining and the end of the recording
-    if crop_seconds:
-        if len(crop_seconds) == 1:
-            raw.crop(tmin=crop_seconds[0], tmax=raw.times[-1] - crop_seconds[0])
-        elif len(crop_seconds) == 2:
-            raw.crop(tmin=crop_seconds[0], tmax=raw.times[-1] - crop_seconds[1])
-        else:
-            raise ValueError("The crop vector must have one or two elements")
-            # print('The crop vector must have one or two elements')
 
     # Add the badchannel information
     if badchannels_to_metadata:

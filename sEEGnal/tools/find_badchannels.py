@@ -78,6 +78,8 @@ def impossible_amplitude_detection(config, bids_path,badchannels):
         channels_to_include=channels_to_include,
         channels_to_exclude=channels_to_exclude,
         freq_limits=freq_limits,
+        badchannels_to_metadata=False,
+        exclude_badchannels=False,
         set_annotations=False,
         epoch=epoch_definition)
 
@@ -111,7 +113,7 @@ def impossible_amplitude_detection(config, bids_path,badchannels):
 
 
 
-def power_spectrum_detection(config,bids_path):
+def power_spectrum_detection(config,bids_path,badchannels):
     """
 
     Look for badchannels based on anomalies in the power spectrum to detect badchannels
@@ -126,11 +128,12 @@ def power_spectrum_detection(config,bids_path):
     """
 
     # Parameters for loading EEG  recordings
-    freq_limits = [config['badchannel_detection']['pow_spectrum_detection_low_freq'],
-                   config['badchannel_detection']['pow_spectrum_detection_high_freq']]
-    crop_seconds = [config['badchannel_detection']['crop_seconds']]
+    freq_limits = [config['badchannel_detection']['pow_spectrum']['low_freq'],
+                   config['badchannel_detection']['pow_spectrum']['high_freq']]
     channels_to_include = config['badchannel_detection']["channels_to_include"]
     channels_to_exclude = config['badchannel_detection']["channels_to_exclude"]
+    crop_seconds = [config['badchannel_detection']["crop_seconds"]]
+    epoch_definition = config['badchannel_detection']['pow_spectrum']['epoch_definition']
 
     # Load the raw data
     raw = aimind_mne.prepare_raw(
@@ -143,22 +146,38 @@ def power_spectrum_detection(config,bids_path):
         crop_seconds=crop_seconds,
         badchannels_to_metadata=False,
         exclude_badchannels=False,
-        set_annotations=False)
+        set_annotations=False,
+        epoch=epoch_definition)
+
+    # Select the current channels
+    raw.pick(channels_to_include)
+
+    # Exclude the previous badchannels
+    raw.drop_channels(badchannels, on_missing='ignore')
 
     # Compute the power spectrum
-    win_length = 8 * raw.info['sfreq']
-    freq,psd = scipy.signal.welch(
-        raw.get_data(),
-        raw.info['sfreq'],
-        nperseg=win_length)
-    psd_average = psd.mean(1)
+    psd = raw.compute_psd(method='welch',fmin=freq_limits[0],fmax=freq_limits[1])
+    psd_data = psd.get_data()
 
-    # Define the threshold as 3 times above the average
-    threshold = config['badchannel_detection']['pow_spectrum_detection_threshold'] * psd.mean(1).mean(0)
+    # Get the average of each epoch and channel
+    hits = np.empty((psd_data.shape[0],psd_data.shape[1]))
+    for ichannel in range(psd_data.shape[1]):
 
-    # Select the channels above the threshold
-    hits = np.flatnonzero ( psd_average > threshold )
-    power_spectrum_badchannels = [ raw.ch_names [ hit ] for hit in hits ]
+        # Remove the current channel to estimate the average value of the power spectrum in the rest of the recording
+        current_channel_psd = psd_data[:,ichannel,:].sum(axis=1)
+        rest_psd = np.delete(psd_data,ichannel,1)
+        rest_psd = rest_psd.sum(axis=2).mean(axis=1)
+
+        # Find the epochs where the current channel is above the threshold
+        threshold = config['badchannel_detection']['pow_spectrum']['threshold'] * rest_psd
+        hits[:,ichannel] = current_channel_psd > threshold
+
+    # Get the number of occurrences per channel in percentage
+    hits = hits.sum(axis=0) / psd_data.shape[0]
+
+    # Define as badchannel if many epochs are bads
+    hits = np.flatnonzero(hits > config['badchannel_detection']['pow_spectrum']["percentage_threshold"])
+    power_spectrum_badchannels = [raw.ch_names[hit] for hit in hits]
 
     return power_spectrum_badchannels
 
