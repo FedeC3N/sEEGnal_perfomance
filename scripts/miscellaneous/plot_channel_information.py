@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Use this script to load all the data and plot different information
+
+Created on Thu 21/05/2025
+
+@author: Fede
+"""
+
+# Imports
+import numpy
+import matplotlib.pyplot as plt
+
+from scripts.miscellaneous.private import channel_information
+
+
+
+#### PARAMETERS
+# Select the database
+database = 'LEMON_database'
+
+
+
+# Plot deviation of the channels
+deviation_all = channel_information.estimate_deviation(database)
+x = range(deviation_all.shape[1])
+plt.plot(x,deviation_all.transpose(),'o')
+plt.show(block=True)
