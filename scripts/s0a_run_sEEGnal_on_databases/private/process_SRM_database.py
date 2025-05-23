@@ -97,7 +97,7 @@ def badchannel_detection(config,bids_path):
     badchannels = []
 
     # Find channels with high variance
-    high_variance_badchannels_eeg = find_badchannels.high_variance_detection(config,bids_path,'eeg')
+    high_variance_badchannels_eeg = find_badchannels.high_deviation_detection(config, bids_path, 'eeg')
     badchannels.extend(high_variance_badchannels_eeg)
 
     # Find abnormal power spectrum

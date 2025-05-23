@@ -226,12 +226,6 @@ def gel_bridge_detection(config, bids_path,badchannels):
         set_annotations=False,
         epoch=epoch_definition)
 
-    # Select the current channels
-    raw.pick(channels_to_include)
-
-    # Exclude the previous badchannels
-    raw.drop_channels(badchannels, on_missing='ignore')
-
     # If there is EOG or EKG, remove those components
     components_to_exclude = []
     if 'eog' in sobi.labels_.keys():
@@ -244,6 +238,12 @@ def gel_bridge_detection(config, bids_path,badchannels):
     if len(components_to_exclude) > 0:
         # Remove the eog components
         sobi.apply(raw, exclude=components_to_exclude)
+
+    # Select the current channels
+    raw.pick(channels_to_include)
+
+    # Exclude the previous badchannels
+    raw.drop_channels(badchannels, on_missing='ignore')
 
     # Get the data
     raw_data = raw.get_data()
@@ -313,7 +313,7 @@ def gel_bridge_detection(config, bids_path,badchannels):
 
 
 
-def high_variance_detection(config, bids_path):
+def high_deviation_detection(config, bids_path, badchannels):
     """
 
     Look for badchannels based on the channel variance
@@ -331,13 +331,12 @@ def high_variance_detection(config, bids_path):
     sobi = bids.read_sobi(bids_path,'sobi-badchannels')
 
     # Parameters for loading EEG  recordings
-    chan_tsv = bids.read_chan (bids_path)
-    channels = list ( chan_tsv [ 'name' ] )
-    freq_limits = [config['badchannel_detection']['high_variance_detection_low_freq'],
-                   config['badchannel_detection']['high_variance_detection_high_freq']]
-    crop_seconds = [config['badchannel_detection']['crop_seconds']]
+    freq_limits = [config['badchannel_detection']['high_deviation']['low_freq'],
+                   config['badchannel_detection']['high_deviation']['high_freq']]
     channels_to_include = config['badchannel_detection']["channels_to_include"]
     channels_to_exclude = config['badchannel_detection']["channels_to_exclude"]
+    crop_seconds = [config['badchannel_detection']["crop_seconds"]]
+    epoch_definition = config['badchannel_detection']['high_deviation']['epoch_definition']
 
     # Load the raw data
     raw = aimind_mne.prepare_raw(
@@ -350,28 +349,53 @@ def high_variance_detection(config, bids_path):
         crop_seconds=crop_seconds,
         badchannels_to_metadata=False,
         exclude_badchannels=False,
-        set_annotations=False)
+        set_annotations=False,
+        epoch=epoch_definition)
 
-    # If there is EOG, remove those components
-    if 'eog' in sobi.labels_.keys ():
-        sobi.apply ( raw, exclude = sobi.labels_ [ 'eog' ] )
+    # If there is EOG or EKG, remove those components
+    components_to_exclude = []
+    if 'eog' in sobi.labels_.keys():
+        components_to_exclude.append(sobi.labels_['eog'])
+    if 'ecg' in sobi.labels_.keys():
+        components_to_exclude.append(sobi.labels_['ecg'])
+    components_to_exclude = sum(components_to_exclude, [])
+
+    # If desired components, apply them.
+    if len(components_to_exclude) > 0:
+        # Remove the eog components
+        sobi.apply(raw, exclude=components_to_exclude)
 
     # Select the current channels
     raw.pick(channels_to_include)
 
-    # De-mean the channels
+    # Exclude the previous badchannels
+    raw.drop_channels(badchannels, on_missing='ignore')
+
+    # Get a new copy of the data
     raw_data = raw.get_data().copy()
-    mean_per_channel = raw_data.mean(axis=1)
-    raw_data_demean = raw_data - mean_per_channel[:, np.newaxis]
 
-    # Estimate the average standard deviation of each channel
-    raw_data_demean_std = raw_data_demean.std(axis=1)
+    # Demean the data
+    mean_per_channel = raw_data.mean(axis=2)
+    raw_data_demean = raw_data - mean_per_channel[:, :, np.newaxis]
 
-    # Estimate the average standard deviation of the whole recording
-    average_std = raw_data_demean_std.mean()
+    # Get the average of each epoch and channel
+    hits = np.empty((raw_data_demean.shape[0], raw_data_demean.shape[1]))
+    for ichannel in range(len(raw.ch_names)):
 
-    # Define as badchannel any channel with a deviation >3*average_std
-    hits = np.flatnonzero ( raw_data_demean_std > config['badchannel_detection']['high_variance_detection_threshold'] * average_std )
-    high_variance_badchannels = [ raw.ch_names [ hit ] for hit in hits ]
+        # Remove the current channel to estimate the average value of the power spectrum in the rest of the recording
+        current_channel_std = raw_data_demean[:,ichannel,:].std(axis=1)
+        rest_std = np.delete(raw_data_demean, ichannel, 1)
+        rest_std = rest_std.std(axis=2).mean(axis=1)
 
-    return high_variance_badchannels
+        # Find the epochs where the current channel is above the threshold
+        threshold = config['badchannel_detection']['high_deviation']['threshold'] * rest_std
+        hits[:, ichannel] = current_channel_std > threshold
+
+    # Get the number of occurrences per channel in percentage
+    hits = hits.sum(axis=0) / hits.shape[0]
+
+    # Define as badchannel if many epochs are bads
+    hits = np.flatnonzero(hits > config['badchannel_detection']['high_deviation']["percentage_threshold"])
+    high_deviation_badchannels = [ raw.ch_names [ hit ] for hit in hits ]
+
+    return high_deviation_badchannels

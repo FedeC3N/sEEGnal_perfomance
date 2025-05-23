@@ -76,10 +76,16 @@
 			}
 		},
 
-		"high_variance":{
+		"high_deviation":{
 			"threshold": 3,
 			"low_freq":2,
-			"high_freq":45
+			"high_freq":45,
+			"percentage_threshold": 0.5,
+			"epoch_definition":{
+				"length": 4,
+				"overlap": 0,
+				"padding": 2
+		}
 		}
 	},
 	

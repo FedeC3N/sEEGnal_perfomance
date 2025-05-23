@@ -140,20 +140,20 @@ def eeg_badchannel_detection(config,bids_path):
     power_spectrum_badchannels = find_badchannels.power_spectrum_detection(config, bids_path,badchannels)
     badchannels.extend(power_spectrum_badchannels)
     current_badchannel_description = ['bad_power_spectrum' for i in range(len(power_spectrum_badchannels))]
-    badchannels_description.extend(current_badchannel_description)"""
+    badchannels_description.extend(current_badchannel_description)
 
     # Find channels with gel bridge
     gel_bridge_badchannels = find_badchannels.gel_bridge_detection(config, bids_path,badchannels)
     badchannels.extend(gel_bridge_badchannels)
     current_badchannel_description = ['bad_gel_bridge' for i in range(len(gel_bridge_badchannels))]
-    badchannels_description.extend(current_badchannel_description)
-    print(badchannels)
+    badchannels_description.extend(current_badchannel_description)"""
 
     # Find channels with high variance
-    """high_variance_badchannels = find_badchannels.high_variance_detection(config,bids_path)
-    badchannels.extend(high_variance_badchannels)
-    current_badchannel_description = ['bad_high_variance' for i in range(len(high_variance_badchannels))]
-    badchannels_description.extend(current_badchannel_description)"""
+    high_deviation_badchannels = find_badchannels.high_deviation_detection(config, bids_path, badchannels)
+    badchannels.extend(high_deviation_badchannels)
+    current_badchannel_description = ['bad_high_deviation' for i in range(len(high_deviation_badchannels))]
+    badchannels_description.extend(current_badchannel_description)
+    print(badchannels)
 
     # Save the results
     bids.update_badchans (bids_path, badchannels, badchannels_description)

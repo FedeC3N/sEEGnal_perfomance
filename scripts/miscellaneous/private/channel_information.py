@@ -85,7 +85,7 @@ def badchannel_types(database):
 
     # Channel types
     ch_types = ['n/a','bad_high_impedance', 'bad_impossible_amplitude_badchannels', 'bad_power_spectrum',
-                'bad_gel_bridge', 'bad_high_variance']
+                'bad_gel_bridge', 'bad_high_deviation']
 
     # Go through each subject
     for current_index in range(len(files)):
