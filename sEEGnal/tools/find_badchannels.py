@@ -183,10 +183,11 @@ def power_spectrum_detection(config,bids_path,badchannels):
 
 
 
-def gel_bridge_detection(config, bids_path):
+def gel_bridge_detection(config, bids_path,badchannels):
     """
 
-    Look for badchannels based on gel bridges
+    Look for badchannels based on gel bridges. It is based on correlation and the idea that the correlation must happen
+    continuously in time over certain point.
 
     :arg
     config (dict): Configuration parameters (paths, parameters, etc)
@@ -204,11 +205,12 @@ def gel_bridge_detection(config, bids_path):
     sobi = bids.read_sobi(bids_path,'sobi-badchannels')
 
     # Parameters for loading EEG  recordings
-    freq_limits = [config['badchannel_detection']['gel_bridge_low_freq_limit'],
-                   config['badchannel_detection']['gel_bridge_high_freq_limit']]
-    crop_seconds = [config['badchannel_detection']['crop_seconds']]
+    freq_limits = [config['badchannel_detection']['gel_bridge']['low_freq'],
+                   config['badchannel_detection']['gel_bridge']['high_freq']]
     channels_to_include = config['badchannel_detection']["channels_to_include"]
     channels_to_exclude = config['badchannel_detection']["channels_to_exclude"]
+    crop_seconds = [config['badchannel_detection']["crop_seconds"]]
+    epoch_definition = config['badchannel_detection']['gel_bridge']['epoch_definition']
 
     # Load the raw EEG
     raw = aimind_mne.prepare_raw(
@@ -221,23 +223,67 @@ def gel_bridge_detection(config, bids_path):
         crop_seconds=crop_seconds,
         badchannels_to_metadata=False,
         exclude_badchannels=False,
-        set_annotations=False)
+        set_annotations=False,
+        epoch=epoch_definition)
 
-    # If there is EOG, remove those components
-    if 'eog' in sobi.labels_.keys ():
-        sobi.apply ( raw, exclude = sobi.labels_ [ 'eog' ] )
+    # Select the current channels
+    raw.pick(channels_to_include)
+
+    # Exclude the previous badchannels
+    raw.drop_channels(badchannels, on_missing='ignore')
+
+    # If there is EOG or EKG, remove those components
+    components_to_exclude = []
+    if 'eog' in sobi.labels_.keys():
+        components_to_exclude.append(sobi.labels_['eog'])
+    if 'ecg' in sobi.labels_.keys():
+        components_to_exclude.append(sobi.labels_['ecg'])
+    components_to_exclude = sum(components_to_exclude, [])
+
+    # If desired components, apply them.
+    if len(components_to_exclude) > 0:
+        # Remove the eog components
+        sobi.apply(raw, exclude=components_to_exclude)
 
     # Get the data
     raw_data = raw.get_data()
 
-    # Estimate the correlation matrix
-    correlation_coefficients = np.corrcoef(raw_data)
+    # Estimate the correlation matrix for each epoch
+    correlation_coefficients_mask = np.empty((raw_data.shape[1],raw_data.shape[1],raw_data.shape[0]))
+    for i in range(raw_data.shape[0]):
 
-    # Discard simmetrical values and diagonal = 1
-    correlation_coefficients = np.triu(correlation_coefficients,k=1)
+        # I'm going to save the values above the threshold
+        current_correlation = np.corrcoef(raw_data[i,:,:])
+        current_correlation = np.triu(current_correlation, k=1)
+        correlation_coefficients_mask[:,:,i] = current_correlation > config['badchannel_detection']['gel_bridge']['threshold']
 
-    # Find indexes of corr > threshold
-    row_ind,col_ind = np.where(correlation_coefficients > config['badchannel_detection']['gel_bridge_detection_threshold'])
+    # Now define a new matrix with sequences of correlations above threshold
+    correlation_sequence = np.empty((raw_data.shape[1],raw_data.shape[1]))
+    for irow in range(correlation_sequence.shape[0]):
+        for icol in range(correlation_sequence.shape[1]):
+
+            # Get the current sequence
+            current_sequence = correlation_coefficients_mask[irow,icol,:]
+
+            # Look for missing detection (zeros between ones). If it has been gel-bridged, it cannot go below the threshold
+            for i in range(1, len(current_sequence) - 1):
+                if current_sequence[i] == 0 and current_sequence[i - 1] == 1 and current_sequence[i + 1] == 1:
+                    current_sequence[i] = 1  # Fill detection fail
+
+            # Look for false detections (ones between zeros)
+            for i in range(1, len(current_sequence) - 1):
+                if current_sequence[i] == 1 and current_sequence[i - 1] == 0 and current_sequence[i + 1] == 0:
+                    current_sequence[i] = 0  # Fill false detection
+
+            # Now find the last zero (the start the gel-bridge)
+            last_zero = np.where(current_sequence == 0)[0]
+            if len(last_zero) > 0:
+                correlation_sequence[irow,icol] = (len(current_sequence) - last_zero[-1]) / len(current_sequence)
+            else:
+                correlation_sequence[irow, icol] = len(current_sequence)
+
+    # Find indexes of channels with sequences indicating gel-bridge.
+    row_ind,col_ind = np.where(correlation_sequence > config['badchannel_detection']['gel_bridge']['seq_threshold'])
 
     # If any gel_bridged badchannel, check if they are neighbours
     if len(row_ind) > 0:

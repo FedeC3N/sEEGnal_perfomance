@@ -10,6 +10,7 @@ Created on Thu 21/05/2025
 
 # Imports
 import numpy
+import matplotlib.pyplot as plt
 
 import mne_bids
 
@@ -121,3 +122,86 @@ def badchannel_types(database):
             else:
                 print(f"{current_type} ({len(current_channels)}): {current_channels}")
         print()
+
+
+
+def correlation_values(database):
+    # Init the database
+    config, files, sub, ses, task = init_database(database)
+
+    # Create the output matrix
+    if database == 'LEMON_database':
+        deviation_all = numpy.empty((61, len(files)))
+    else:
+        deviation_all = numpy.empty((126, len(files)))
+
+    # Go through each subject
+    for current_index in range(len(files)):
+        # current info
+        current_file = files[current_index]
+        current_sub = sub[current_index]
+        current_ses = ses[current_index]
+        current_task = task[current_index]
+
+        # Create the subjects following AI-Mind protocol
+        bids_path = bids.create_bids_path(config, current_file, current_sub, current_ses, current_task)
+
+        # Read the ICA information
+        sobi = bids.read_sobi(bids_path, 'sobi-badchannels')
+
+        # Parameters for loading EEG  recordings
+        freq_limits = [config['badchannel_detection']['gel_bridge']['low_freq'],
+                       config['badchannel_detection']['gel_bridge']['high_freq']]
+        channels_to_include = config['badchannel_detection']["channels_to_include"]
+        channels_to_exclude = config['badchannel_detection']["channels_to_exclude"]
+        crop_seconds = [config['badchannel_detection']["crop_seconds"]]
+        epoch_definition = config['badchannel_detection']['gel_bridge']['epoch_definition']
+
+        # Load the raw EEG
+        raw = aimind_mne.prepare_raw(
+            config,
+            bids_path,
+            preload=True,
+            channels_to_include=channels_to_include,
+            channels_to_exclude=channels_to_exclude,
+            freq_limits=freq_limits,
+            crop_seconds=crop_seconds,
+            badchannels_to_metadata=False,
+            exclude_badchannels=False,
+            set_annotations=False,
+            epoch=epoch_definition)
+
+        # Select the current channels
+        raw.pick(channels_to_include)
+
+        # If there is EOG or EKG, remove those components
+        components_to_exclude = []
+        if 'eog' in sobi.labels_.keys():
+            components_to_exclude.append(sobi.labels_['eog'])
+        if 'ecg' in sobi.labels_.keys():
+            components_to_exclude.append(sobi.labels_['ecg'])
+        components_to_exclude = sum(components_to_exclude, [])
+
+        # If desired components, apply them.
+        if len(components_to_exclude) > 0:
+            # Remove the eog components
+            sobi.apply(raw, exclude=components_to_exclude)
+
+        # Get the data
+        raw_data = raw.get_data()
+
+        # Estimate the correlation matrix for each epoch
+        correlation_coefficients = numpy.empty((raw_data.shape[1], raw_data.shape[1], raw_data.shape[0]))
+        for i in range(raw_data.shape[0]):
+            current_correlation = numpy.corrcoef(raw_data[i, :, :])
+            mask = numpy.triu(numpy.ones_like(current_correlation, dtype=bool),k=1)
+            current_correlation = numpy.where(mask,current_correlation,numpy.nan)
+            correlation_coefficients[:, :, i] = current_correlation
+
+        correlation_coefficients = correlation_coefficients.mean(axis=2)
+        dummy = correlation_coefficients.reshape((1,-1))
+        dummy = dummy[~numpy.isnan(dummy)]
+        x = (current_index + 1 )*numpy.ones((len(dummy),1))
+        plt.plot(x,dummy,'o')
+
+    plt.show(block=True)

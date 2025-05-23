@@ -29,4 +29,7 @@ plt.plot(x,deviation_all.transpose(),'o')
 plt.show(block=True)"""
 
 # Plot the type of badchannels
-channel_information.badchannel_types(database)
+"""channel_information.badchannel_types(database)"""
+
+# Plot correlation values
+channel_information.correlation_values(database)
