@@ -20,7 +20,6 @@ import mne_icalabel as iclabel
 import sEEGnal.io.bids as bids
 import sEEGnal.tools.mnetools as aimind_mne
 import sEEGnal.tools.find_badchannels as find_badchannels
-from sEEGnal.tools.find_badchannels import impossible_amplitude_detection
 from sEEGnal.tools.measure_performance import measure_performance
 
 
@@ -118,14 +117,14 @@ def eeg_badchannel_detection(config,bids_path):
     bids.init_derivatives (bids_path)
 
     # Estimate Independent Components
-    #estimate_badchannel_component(config,bids_path)
+    estimate_badchannel_component(config,bids_path)
 
     # Create an empty list to append badchannels
     badchannels = []
     badchannels_description = []
 
     # Find channels with high impedance
-    """high_impedance_badchannels = find_badchannels.high_impedance_detection(config, bids_path)
+    high_impedance_badchannels = find_badchannels.high_impedance_detection(config, bids_path)
     badchannels.extend(high_impedance_badchannels)
     current_badchannel_description = ['bad_high_impedance' for i in range(len(high_impedance_badchannels))]
     badchannels_description.extend(current_badchannel_description)
@@ -146,14 +145,13 @@ def eeg_badchannel_detection(config,bids_path):
     gel_bridge_badchannels = find_badchannels.gel_bridge_detection(config, bids_path,badchannels)
     badchannels.extend(gel_bridge_badchannels)
     current_badchannel_description = ['bad_gel_bridge' for i in range(len(gel_bridge_badchannels))]
-    badchannels_description.extend(current_badchannel_description)"""
+    badchannels_description.extend(current_badchannel_description)
 
     # Find channels with high variance
     high_deviation_badchannels = find_badchannels.high_deviation_detection(config, bids_path, badchannels)
     badchannels.extend(high_deviation_badchannels)
     current_badchannel_description = ['bad_high_deviation' for i in range(len(high_deviation_badchannels))]
     badchannels_description.extend(current_badchannel_description)
-    print(badchannels)
 
     # Save the results
     bids.update_badchans (bids_path, badchannels, badchannels_description)

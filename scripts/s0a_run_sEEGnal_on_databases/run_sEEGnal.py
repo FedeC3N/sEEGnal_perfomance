@@ -18,7 +18,7 @@ from sEEGnal.io.export_clean import export_clean
 
 #### PARAMETERS
 # Select the database
-database = 'AI_Mind_database'
+database = 'LEMON_database'
 
 # What step to run: standardize, badchannel, artifact, export_clean
 run = [0,1,0,0]

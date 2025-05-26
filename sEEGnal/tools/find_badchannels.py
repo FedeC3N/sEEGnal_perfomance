@@ -83,9 +83,6 @@ def impossible_amplitude_detection(config, bids_path,badchannels):
         set_annotations=False,
         epoch=epoch_definition)
 
-    # Select the current channels
-    raw.pick(channels_to_include)
-
     # Exclude the previous badchannels
     raw.drop_channels(badchannels,on_missing='ignore')
 
@@ -149,15 +146,12 @@ def power_spectrum_detection(config,bids_path,badchannels):
         set_annotations=False,
         epoch=epoch_definition)
 
-    # Select the current channels
-    raw.pick(channels_to_include)
-
     # Exclude the previous badchannels
     raw.drop_channels(badchannels, on_missing='ignore')
 
     # Compute the power spectrum
     psd = raw.compute_psd(method='welch',fmin=freq_limits[0],fmax=freq_limits[1])
-    psd_data = psd.get_data()
+    psd_data = psd.get_data().copy()
 
     # Get the average of each epoch and channel
     hits = np.empty((psd_data.shape[0],psd_data.shape[1]))
@@ -239,14 +233,11 @@ def gel_bridge_detection(config, bids_path,badchannels):
         # Remove the eog components
         sobi.apply(raw, exclude=components_to_exclude)
 
-    # Select the current channels
-    raw.pick(channels_to_include)
-
     # Exclude the previous badchannels
     raw.drop_channels(badchannels, on_missing='ignore')
 
     # Get the data
-    raw_data = raw.get_data()
+    raw_data = raw.get_data().copy()
 
     # Estimate the correlation matrix for each epoch
     correlation_coefficients_mask = np.empty((raw_data.shape[1],raw_data.shape[1],raw_data.shape[0]))
@@ -364,9 +355,6 @@ def high_deviation_detection(config, bids_path, badchannels):
     if len(components_to_exclude) > 0:
         # Remove the eog components
         sobi.apply(raw, exclude=components_to_exclude)
-
-    # Select the current channels
-    raw.pick(channels_to_include)
 
     # Exclude the previous badchannels
     raw.drop_channels(badchannels, on_missing='ignore')
