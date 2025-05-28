@@ -29,7 +29,13 @@ plt.plot(x,deviation_all.transpose(),'o')
 plt.show(block=True)"""
 
 # Plot the type of badchannels
-channel_information.badchannel_types(database)
+"""channel_information.badchannel_types(database)"""
 
 # Plot correlation values
-"""channel_information.correlation_values(database)"""
+"""channel_information.plot_correlation_values(database)"""
+
+# Compare correlation with the whole channels and with epochs
+"""channel_information.compare_correlation_values(database)"""
+
+# Print channel distance
+channel_information.print_channels_distance()

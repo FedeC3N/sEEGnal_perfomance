@@ -249,29 +249,12 @@ def gel_bridge_detection(config, bids_path,badchannels):
         correlation_coefficients_mask[:,:,i] = current_correlation > config['badchannel_detection']['gel_bridge']['threshold']
 
     # Now define a new matrix with sequences of correlations above threshold
-    correlation_sequence = np.empty((raw_data.shape[1],raw_data.shape[1]))
+    correlation_sequence = np.empty((raw_data.shape[1], raw_data.shape[1]))
     for irow in range(correlation_sequence.shape[0]):
         for icol in range(correlation_sequence.shape[1]):
-
             # Get the current sequence
-            current_sequence = correlation_coefficients_mask[irow,icol,:]
-
-            # Look for missing detection (zeros between ones). If it has been gel-bridged, it cannot go below the threshold
-            for i in range(1, len(current_sequence) - 1):
-                if current_sequence[i] == 0 and current_sequence[i - 1] == 1 and current_sequence[i + 1] == 1:
-                    current_sequence[i] = 1  # Fill detection fail
-
-            # Look for false detections (ones between zeros)
-            for i in range(1, len(current_sequence) - 1):
-                if current_sequence[i] == 1 and current_sequence[i - 1] == 0 and current_sequence[i + 1] == 0:
-                    current_sequence[i] = 0  # Fill false detection
-
-            # Now find the last zero (the start the gel-bridge)
-            last_zero = np.where(current_sequence == 0)[0]
-            if len(last_zero) > 0:
-                correlation_sequence[irow,icol] = (len(current_sequence) - last_zero[-1]) / len(current_sequence)
-            else:
-                correlation_sequence[irow, icol] = len(current_sequence)
+            current_sequence = correlation_coefficients_mask[irow, icol, :]
+            correlation_sequence[irow, icol] = np.sum(current_sequence) / len(current_sequence)
 
     # Find indexes of channels with sequences indicating gel-bridge.
     row_ind,col_ind = np.where(correlation_sequence > config['badchannel_detection']['gel_bridge']['seq_threshold'])
@@ -295,7 +278,7 @@ def gel_bridge_detection(config, bids_path,badchannels):
             distance = np.linalg.norm(ch_pos1 - ch_pos2)
 
             # If the channels are close enough, they are gel-bridged
-            if distance < config['badchannel_detection']['neighbour_distance']:
+            if distance < config['badchannel_detection']['gel_bridge']['neighbour_distance']:
 
                 gel_bridge_badchannels.append(montage.ch_names[row_ind[ichannel]])
                 gel_bridge_badchannels.append(montage.ch_names[col_ind[ichannel]])
