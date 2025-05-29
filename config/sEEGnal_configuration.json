@@ -107,12 +107,25 @@
 		},
 		
 		"sensor":{
-			"low_freq":5,
-			"high_freq":45,
+			"low_freq":0.5,
+			"high_freq":2,
 			"crop_seconds": 10,
 			"resampled_frequency":500,
 			"threshold": 0.99,
 			"ratio": 5,
+			"epoch_definition":{
+				"length": 4,
+				"overlap": 0,
+				"padding": 2
+			}
+		},
+		
+		"other":{
+			"low_freq":2,
+			"high_freq":45,
+			"crop_seconds": 10,
+			"resampled_frequency":500,
+			"threshold": 0.0005,
 			"epoch_definition":{
 				"length": 4,
 				"overlap": 0,
@@ -125,8 +138,7 @@
 			"high_freq":5,
 			"crop_seconds": 10,
 			"resampled_frequency":500,
-			"threshold": 0.8,
-			"ratio": 5,
+			"ratio": 10,
 			"epoch_definition":{
 				"length": 4,
 				"overlap": 0,

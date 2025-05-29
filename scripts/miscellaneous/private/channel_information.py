@@ -418,3 +418,64 @@ def print_channels_distance():
                     print(f"{ch_names[ichannel]} - {ch_names[jchannel]}: {distance} ********")
                 else:
                     print(f"{ch_names[ichannel]} - {ch_names[jchannel]}: {distance}")
+
+
+
+def plot_clean_subject(database):
+
+    # Init the database
+    config, files, sub, ses, task = init_database(database)
+
+    # Go through each subject
+    for current_index in range(len(files)):
+
+        # current info
+        current_file = files[current_index]
+        current_sub = sub[current_index]
+        current_ses = ses[current_index]
+        current_task = task[current_index]
+
+        print(f"{current_sub} - {current_ses} - {current_task}")
+
+        # Create the subjects following AI-Mind protocol
+        bids_path = bids.create_bids_path(config, current_file, current_sub, current_ses, current_task)
+
+        # Parameters for loading EEG  recordings
+        channels_to_include = config['badchannel_detection']["channels_to_include"]
+        channels_to_exclude = config['badchannel_detection']["channels_to_exclude"]
+
+        # Load the raw data
+        raw = aimind_mne.prepare_raw(
+            config,
+            bids_path,
+            preload=True,
+            channels_to_include=channels_to_include,
+            channels_to_exclude=channels_to_exclude,
+            freq_limits=[1, 100],
+            crop_seconds=[10],
+            badchannels_to_metadata=True,
+            exclude_badchannels=False,
+            set_annotations=True)
+
+        # Read the ICA information
+        sobi = bids.read_sobi(bids_path, 'sobi')
+
+        # If there is EOG or EKG, remove those components
+        components_to_exclude = []
+        if 'eog' in sobi.labels_.keys():
+            components_to_exclude.append(sobi.labels_['eog'])
+        if 'ecg' in sobi.labels_.keys():
+            components_to_exclude.append(sobi.labels_['ecg'])
+        components_to_exclude = sum(components_to_exclude, [])
+
+        # If desired components, apply them.
+        if len(components_to_exclude) > 0:
+            # Remove the eog components
+            sobi.apply(raw, exclude=components_to_exclude)
+
+
+        raw.filter(2,45)
+
+
+
+        raw.plot(block=True)

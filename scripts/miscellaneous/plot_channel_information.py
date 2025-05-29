@@ -18,7 +18,7 @@ from scripts.miscellaneous.private import channel_information
 
 #### PARAMETERS
 # Select the database
-database = 'LEMON_database'
+database = 'AI_Mind_database'
 
 
 
@@ -38,4 +38,7 @@ plt.show(block=True)"""
 """channel_information.compare_correlation_values(database)"""
 
 # Print channel distance
-channel_information.print_channels_distance()
+"""channel_information.print_channels_distance()"""
+
+# Print clean subjects
+channel_information.plot_clean_subject(database)

@@ -208,11 +208,12 @@ def muscle_detection(config,bids_path,channels_to_include):
         muscle_components_time_courses = sources.get_data().copy()
 
     # Find the peaks of each channel (peak = signal > 10*std)
-    muscle_components_time_courses_std = muscle_components_time_courses.std(axis=1)
+    muscle_components_time_courses_demean = muscle_components_time_courses - muscle_components_time_courses.mean(axis=1)[:,np.newaxis]
+    muscle_components_time_courses_std = muscle_components_time_courses_demean.std(axis=1)
     muscle_index = []
     for ichannel in range(len(muscle_components_time_courses_std)):
 
-        current_channel = muscle_components_time_courses[ichannel,:]
+        current_channel = muscle_components_time_courses_demean[ichannel,:]
         current_std = muscle_components_time_courses_std[ichannel]
         current_peaks,_ = find_peaks(
             abs(current_channel),
@@ -347,6 +348,102 @@ def sensor_detection(config,bids_path, channels_to_include):
 
 
     return sensor_index, last_sample, sfreq
+
+
+def other_detection(config,bids_path, channels_to_include):
+    """
+
+    Look for signal with impossible values
+
+    :arg
+    config (dict): Configuration parameters (paths, parameters, etc)
+    bids_path (dict): Path to the recording
+
+    :returns
+    List of badchannels
+
+    """
+
+    # Read the ICA information
+    sobi = bids.read_sobi(bids_path, 'sobi_artifacts')
+
+    # Parameters for loading EEG or MEG recordings
+    channels = sobi.ch_names
+    freq_limits = [config['component_estimation']['low_freq'],
+                   config['component_estimation']['high_freq']]
+    crop_seconds = [config['artifact_detection']['other']['crop_seconds']]
+    resample_frequency = config['artifact_detection']['other']['resampled_frequency']
+    channels_to_exclude = config['artifact_detection']["channels_to_exclude"]
+
+    # Load the raw data
+    raw = aimind_mne.prepare_raw(
+        config,
+        bids_path,
+        preload=True,
+        channels_to_include=channels,
+        channels_to_exclude=channels_to_exclude,
+        crop_seconds=crop_seconds,
+        freq_limits=freq_limits,
+        resample_frequency=resample_frequency,
+        badchannels_to_metadata=True,
+        exclude_badchannels=True,
+        set_annotations=True
+    )
+
+    # If there is EOG or EKG, remove those components
+    components_to_exclude = []
+    if 'eog' in sobi.labels_.keys():
+        components_to_exclude.append(sobi.labels_['eog'])
+    if 'ecg' in sobi.labels_.keys():
+        components_to_exclude.append(sobi.labels_['ecg'])
+    components_to_exclude = sum(components_to_exclude, [])
+
+    # If desired components, apply them.
+    if len(components_to_exclude) > 0:
+        # Remove the eog components
+        sobi.apply(raw, exclude=components_to_exclude)
+
+    # Keep the desired channels
+    raw.pick(channels_to_include)
+
+    # Filter again in the desired frequencies
+    freq_limits = [config['artifact_detection']['other']['low_freq'],
+                   config['artifact_detection']['other']['high_freq']]
+    raw.filter(freq_limits[0], freq_limits[1])
+
+    # De-mean the channels
+    raw_data = raw.get_data().copy()
+    mean_per_channel = raw_data.mean(axis=1)
+    raw_data_demean = raw_data - mean_per_channel[:, np.newaxis]
+
+    # Estimate the average standard deviation of each epoch
+    raw_data_demean_abs = np.abs(raw_data_demean)
+
+    # Check if the std of any channel is > 3*raw_std
+    other_index = []
+    for ichannel in range(raw_data_demean_abs.shape[0]):
+
+        current_channel = raw_data_demean_abs[ichannel,:]
+        current_peaks, _ = find_peaks(
+            current_channel, height=config['artifact_detection']['other']['threshold'])
+
+        # If any, add to list
+        if len(current_peaks) > 0:
+            other_index = other_index + current_peaks.tolist()
+
+
+    # Extra outputs
+    last_sample = raw.last_samp
+    sfreq = raw.info['sfreq']
+
+    # If you have crop the recordings, put the indexes according to the original number of samples
+    if crop_seconds:
+        crop_samples = crop_seconds[0] * sfreq
+        last_sample = int(last_sample + 2 * crop_samples)
+        other_index = [int(current_index + crop_samples) for current_index in other_index]
+
+    return other_index, last_sample, sfreq
+
 
 
 

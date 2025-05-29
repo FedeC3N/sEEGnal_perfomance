@@ -310,8 +310,8 @@ def high_deviation_detection(config, bids_path, badchannels):
     sobi = bids.read_sobi(bids_path,'sobi-badchannels')
 
     # Parameters for loading EEG  recordings
-    freq_limits = [config['badchannel_detection']['high_deviation']['low_freq'],
-                   config['badchannel_detection']['high_deviation']['high_freq']]
+    freq_limits = [config['component_estimation']['low_freq'],
+                   config['component_estimation']['high_freq']]
     channels_to_include = config['badchannel_detection']["channels_to_include"]
     channels_to_exclude = config['badchannel_detection']["channels_to_exclude"]
     crop_seconds = [config['badchannel_detection']["crop_seconds"]]
@@ -346,6 +346,11 @@ def high_deviation_detection(config, bids_path, badchannels):
 
     # Exclude the previous badchannels
     raw.drop_channels(badchannels, on_missing='ignore')
+
+    # Filter again in the desired frequencies
+    freq_limits = [config['badchannel_detection']['high_deviation']['low_freq'],
+                   config['badchannel_detection']['high_deviation']['high_freq']]
+    raw.filter(freq_limits[0], freq_limits[1])
 
     # Get a new copy of the data
     raw_data = raw.get_data().copy()

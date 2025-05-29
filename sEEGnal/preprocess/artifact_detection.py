@@ -129,7 +129,7 @@ def eeg_artifact_detection(config,bids_path):
     _ = bids.write_annot(bids_path, annotations)
 
     # Estimate the SOBI components to detect artifacts
-    estimate_artifact_components(config,bids_path,'sobi')
+    #estimate_artifact_components(config,bids_path,'sobi')
 
     # I have to find again all the artifacts
     # For EEG
@@ -156,8 +156,14 @@ def eeg_artifact_detection(config,bids_path):
         'eeg',
         frontal_channels=config['artifact_detection']["frontal_channels"])
 
+    # Sensor (jumps)
+    other_annotations = other_detection(
+        config,
+        bids_path,
+        'eeg')
+
     # Merge all the annotations into a MNE Annotation object
-    annotations = EOG_annotations.__add__(muscle_annotations).__add__(sensor_annotations)
+    annotations = other_annotations.__add__(EOG_annotations).__add__(muscle_annotations).__add__(sensor_annotations)
 
     # Save the annotations in BIDS format
     _ = bids.write_annot(bids_path,annotations)
@@ -346,6 +352,47 @@ def sensor_detection(config,bids_path, channels_to_include):
             last_sample,
             sfreq,
             'bad_jump',
+            fictional_artifact_duration=0.3)
+
+    # If no artifacts, create empty Annotation
+    else:
+        sensor_annotations = mne.Annotations(onset=[], duration=[], description=[])
+
+    return sensor_annotations
+
+
+
+def other_detection(config,bids_path, channels_to_include):
+    """
+
+    Detect sensor artifacts (jumps)
+
+    :arg
+    config (dict): Configuration parameters (paths, parameters, etc)
+    bids_path (dict): Path to the recording
+    channels_to_include (str): Channels type to work on.
+
+    :returns
+    MNE annotation object with detected sensor artifacts
+
+    """
+
+    # Look the position of muscular artifacts
+    other_index,last_sample,sfreq = find_artifacts.other_detection(
+        config,
+        bids_path,
+        channels_to_include)
+
+    # Create as Annotations
+    if len(other_index) > 0:
+
+        # Create the annotations
+        other_index.sort()  # First sort the list
+        sensor_annotations = find_artifacts.create_annotations(
+            other_index,
+            last_sample,
+            sfreq,
+            'bad_other',
             fictional_artifact_duration=0.3)
 
     # If no artifacts, create empty Annotation
