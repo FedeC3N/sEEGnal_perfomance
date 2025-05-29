@@ -31,35 +31,44 @@ def export_clean(config,bids_path):
         if not os.path.exists(os.path.dirname(out_filepath)):
             os.makedirs(os.path.dirname(out_filepath))
 
-        # Load the recording
-        epoch_definition = config['artifact_detection']['epoch_definition']
+        # Read the ICA information
+        sobi = bids.read_sobi(bids_path, 'sobi')
+
+        # Parameters
+        channels_to_include = sobi.ch_names
         channels_to_exclude = config['component_estimation']["channels_to_exclude"]
+        freq_limits = [config['component_estimation']['low_freq'],
+                       config['component_estimation']['high_freq']]
+        epoch_definition = config['export_clean']['epoch_definition']
+        crop_seconds = [config['export_clean']['crop_seconds']]
+
+
+        # Load the recording
         raw = aimind_mne.prepare_raw(
             config,
             bids_path,
             preload=True,
+            channels_to_include=channels_to_include,
+            channels_to_exclude=channels_to_exclude,
+            freq_limits=freq_limits,
+            crop_seconds=crop_seconds,
             badchannels_to_metadata=True,
             exclude_badchannels=True,
-            channels_to_exclude=channels_to_exclude,
             set_annotations=True,
             epoch=epoch_definition)
 
-        # Apply the clean components
-        # Read the ICA information
-        sobi = bids.read_sobi(bids_path, 'sobi')
-
-        # Keep brain and other components
-        components_to_include = []
-        if 'brain' in sobi.labels_.keys():
-            components_to_include.append(sobi.labels_['brain'])
-        if 'other' in sobi.labels_.keys():
-            components_to_include.append(sobi.labels_['other'])
-        components_to_include = sum(components_to_include, [])
+        # If there is EOG or EKG, remove those components
+        components_to_exclude = []
+        if 'eog' in sobi.labels_.keys():
+            components_to_exclude.append(sobi.labels_['eog'])
+        if 'ecg' in sobi.labels_.keys():
+            components_to_exclude.append(sobi.labels_['ecg'])
+        components_to_exclude = sum(components_to_exclude, [])
 
         # If desired components, apply them.
-        if len(components_to_include) > 0:
+        if len(components_to_exclude) > 0:
             # Remove the eog components
-            sobi.apply(raw, include=components_to_include)
+            sobi.apply(raw, exclude=components_to_exclude)
 
 
         # Export

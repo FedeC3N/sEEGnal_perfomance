@@ -7,7 +7,9 @@
 		
 		
 	},
-	
+
+
+
 	"component_estimation":{
 		
 		"low_freq": 1,
@@ -23,12 +25,15 @@
 		
 	},
 	
-	
+
+
 	"standardization":{
 		
 		
 	},
-	
+
+
+
 	"badchannel_detection":{
 		
 		"notch_frequencies": [50, 100, 150, 200, 250],
@@ -88,7 +93,9 @@
 			}
 		}
 	},
-	
+
+
+
 	"artifact_detection":{
 		
 		"notch_frequencies": [50, 100, 150, 200, 250],
@@ -147,6 +154,17 @@
 		}
 			
 		
+	},
+
+
+	"export_clean":{
+
+		"notch_frequencies": [50, 100, 150, 200, 250],
+		"crop_seconds": 10,
+		"epoch_definition":{
+			"length": 4,
+			"overlap": 0,
+			"padding": 2}
 	}
-	
+
 }
