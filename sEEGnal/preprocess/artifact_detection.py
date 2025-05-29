@@ -104,7 +104,7 @@ def eeg_artifact_detection(config,bids_path):
     """
 
     # Estimate the SOBI components to detect artifacts
-    #estimate_artifact_components(config, bids_path, 'sobi_artifacts')
+    estimate_artifact_components(config, bids_path, 'sobi_artifacts')
 
     # Muscle and sensor artifact detection.
     # Muscle
@@ -129,7 +129,7 @@ def eeg_artifact_detection(config,bids_path):
     _ = bids.write_annot(bids_path, annotations)
 
     # Estimate the SOBI components to detect artifacts
-    #estimate_artifact_components(config,bids_path,'sobi')
+    estimate_artifact_components(config,bids_path,'sobi')
 
     # I have to find again all the artifacts
     # For EEG
