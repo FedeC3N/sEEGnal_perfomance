@@ -85,31 +85,55 @@
 				"length": 4,
 				"overlap": 0,
 				"padding": 2
-		}
+			}
 		}
 	},
 	
 	"artifact_detection":{
 		
 		"notch_frequencies": [50, 100, 150, 200, 250],
-		"crop_seconds": 10,
-		"resampled_frequency_estimate_component":500,
-		"artifact_detection_eog_low_freq": 2,
-		"artifact_detection_eog_high_freq": 45,
-		"artifact_detection_muscle_low_freq":110,
-		"artifact_detection_muscle_high_freq": 145,
-		"artifact_detection_sensor_low_freq":5,
-		"artifact_detection_sensor_high_freq": 45,
-		"artifact_detection_muscle_threshold": 10,
-		"artifact_detection_sensor_threshold":0.99,
-		"artifact_detection_min_epochs":20,
-		"artifact_detection_eog_threshold":0.8,
-		"artifact_detection_eog_ratio": 5,
-		"epoch_definition":{
-			"length": 4,
-			"overlap": 0,
-			"padding": 2
+		
+		"muscle":{
+			"low_freq":110,
+			"high_freq":145,
+			"crop_seconds": 10,
+			"resampled_frequency":500,
+			"threshold": 10,
+			"epoch_definition":{
+				"length": 4,
+				"overlap": 0,
+				"padding": 2
+			}
+		},
+		
+		"sensor":{
+			"low_freq":5,
+			"high_freq":45,
+			"crop_seconds": 10,
+			"resampled_frequency":500,
+			"threshold": 0.99,
+			"ratio": 5,
+			"epoch_definition":{
+				"length": 4,
+				"overlap": 0,
+				"padding": 2
+			}
+		},
+		
+		"EOG":{
+			"low_freq":2,
+			"high_freq":5,
+			"crop_seconds": 10,
+			"resampled_frequency":500,
+			"threshold": 0.8,
+			"ratio": 5,
+			"epoch_definition":{
+				"length": 4,
+				"overlap": 0,
+				"padding": 2
+			}
 		}
+			
 		
 	}
 	

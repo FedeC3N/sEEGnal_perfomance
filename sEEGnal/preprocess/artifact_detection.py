@@ -104,7 +104,7 @@ def eeg_artifact_detection(config,bids_path):
     """
 
     # Estimate the SOBI components to detect artifacts
-    estimate_artifact_components(config, bids_path, 'sobi_artifacts')
+    #estimate_artifact_components(config, bids_path, 'sobi_artifacts')
 
     # Muscle and sensor artifact detection.
     # Muscle
@@ -179,10 +179,10 @@ def estimate_artifact_components(config,bids_path,derivatives_label):
     """
 
     # Parameters for loading EEG recordings
-    freq_limits = [config['component_estimation']['low_freq_limit'],
-                   config['component_estimation']['high_freq_limit']]
-    resample_frequency = config['artifact_detection']['resampled_frequency_estimate_component']
-    epoch_definition = config['artifact_detection']['epoch_definition']
+    freq_limits = [config['component_estimation']['low_freq'],
+                   config['component_estimation']['high_freq']]
+    resample_frequency = config['component_estimation']['resampled_frequency']
+    epoch_definition = config['component_estimation']['epoch_definition']
     channels_to_include = config['component_estimation']["channels_to_include"]
     channels_to_exclude = config['component_estimation']["channels_to_exclude"]
 
