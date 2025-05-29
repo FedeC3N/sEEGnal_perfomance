@@ -155,8 +155,8 @@ def muscle_detection(config,bids_path,channels_to_include):
 
     # Parameters for loading EEG recordings
     channels = sobi.ch_names
-    freq_limits = [config['artifact_detection']['muscle']['low_freq'],
-                   config['artifact_detection']['muscle']['high_freq']]
+    freq_limits = [config['component_estimation']['low_freq'],
+                   config['component_estimation']['high_freq']]
     crop_seconds = [config['artifact_detection']['muscle']['crop_seconds']]
     resample_frequency = config['artifact_detection']['muscle']['resampled_frequency']
     channels_to_exclude = config['artifact_detection']["channels_to_exclude"]
@@ -292,6 +292,11 @@ def sensor_detection(config,bids_path, channels_to_include):
 
     # Keep the desired channels
     raw.pick(channels_to_include)
+
+    # Filter again in the desired frequencies
+    freq_limits = [config['artifact_detection']['sensor']['low_freq'],
+                   config['artifact_detection']['sensor']['high_freq']]
+    raw.filter(freq_limits[0],freq_limits[1])
 
     # Create Epoch object of 1 second to estimate the average std discarding first the muscle artefacts
     dummy_events = mne.make_fixed_length_events(raw,duration=0.5)
