@@ -12,7 +12,7 @@ restoredefaultpath
 
 % Add functions to the path
 addpath('../shared/')
-addpath('../../../../../../Programacion/SharedFunctions/fieldtrip-20220626/')
+addpath('../../../shared/fieldtrip-20220626/')
 ft_defaults
 
 % Paths
@@ -37,7 +37,7 @@ config.overwrite = false;
 testers = dir(sprintf('%s/*',config.path.clean_data));
 testers = testers(3:end);
 
-for itester = 1 : numel(testers)
+for itester = 4 : numel(testers)
     
     % Load the datset
     current_tester = testers(itester);
@@ -45,7 +45,7 @@ for itester = 1 : numel(testers)
         current_tester.name,current_tester.name);
     load(dataset_path);
     
-    for ifile = 1 : numel(dataset)
+    for ifile = 3 : numel(dataset)
         
         % Only .set files
         if ~strcmp(dataset(ifile).file(end-2:end),'set')
