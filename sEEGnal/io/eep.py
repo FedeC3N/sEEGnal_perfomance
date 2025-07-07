@@ -229,33 +229,37 @@ def read_info ( filename ):
     dummy    = bytes ( subtree [ 'data' ] ).decode ()
     
     # Looks for the file version.
-    hits     = re.split ( '\[File Version\]([^\[]*)', dummy )
-    if len ( hits ) > 2:
-        info [ 'file_version' ] = hits [1].strip ()
+    pattern = r'\[File Version]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len ( hits ) > 0:
+        info [ 'file_version' ] = hits [0]
     
     # Looks for the sampling rate.
-    hits     = re.split ( '\[Sampling Rate\]([^\[]*)', dummy )
-    if len ( hits ) > 2:
-        info [ 'sample_rate' ] = float ( hits [1] )
+    pattern = r'\[Sampling Rate]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len(hits) > 0:
+        info['sample_rate'] = int(float(hits[0]))
     
     # Looks for the number of samples.
-    hits     = re.split ( '\[Samples\]([^\[]*)', dummy )
-    if len ( hits ) > 2:
-        info [ 'sample_count' ] = int ( hits [1] )
+    pattern = r'\[Samples]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len(hits) > 0:
+        info['sample_count'] = int(float(hits[0]))
     
     # Looks for the number of channels.
-    hits     = re.split ( '\[Channels\]([^\[]*)', dummy )
-    if len ( hits ) > 2:
-        info [ 'channel_count' ] = int ( hits [1] )
-    
+    pattern = r'\[Channels]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len(hits) > 0:
+        info['channel_count'] = int(float(hits[0]))
     
     # Looks for the channel information.
-    hits     = re.split ( '\[Basic Channel Data\]([^\[]*)', dummy )
-    assert len ( hits ) > 2, 'No channel definition. Cannot continue.'
+    pattern = r'\[Basic Channel Data]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    assert len ( hits ) > 0, 'No channel definition. Cannot continue.'
     
     # Checks for the (mandatory) channel information header.
-    chaninfo = hits [1].strip ()
-    hits     = re.split ( ';label(?:[\s]+)calibration factor(.*)', chaninfo, 0, re.S )
+    chaninfo = hits [0].strip ()
+    hits     = re.split ( ';label.*calibration factor(.*)', chaninfo, 0, re.S )
     assert len ( hits ) > 2, 'The channel information is not correct. Cannot continue.'
     
     # Parses the channel definition.
@@ -279,38 +283,44 @@ def read_info ( filename ):
     dummy    = bytes ( subtree [ 'data' ] ).decode ()
     
     # Looks for the acquistion date and fraction.
-    hits     = re.split ( '\[StartDate\]([^\[]*)[.]*\[StartFraction\]([^\[]*)', dummy )
-    if len ( hits ) > 3:
-        acqdate  = float ( hits [1] )
-        acqfrac  = float ( hits [2] )
+    pattern = r'\[StartDate]\n([^\[]+)\n\[StartFraction]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len ( hits ) > 0:
+        acqdate  = float ( hits [0][0] )
+        acqfrac  = float ( hits [0][1] )
         
         # Converts the acquisition date into POSIX time format.
         info [ 'acquisition_time' ] = acqdate * ( 60 * 60 * 24 ) - 2209161600 + acqfrac
     
     # Looks for the file version.
-    hits     = re.split ( '\[File Version\]([^\[]*)', dummy )
-    if len ( hits ) > 2:
-        info [ 'file_version' ] = hits [1].strip ()
+    pattern = r'\[File Version]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len ( hits ) > 0:
+        info [ 'file_version' ] = hits [0]
     
     # Looks for the software identification.
-    hits     = re.split ( '\[MachineMake\]([^\[]*)', dummy )
-    if len ( hits ) > 2:
-        info [ 'software_id' ] = hits [1].strip ()
+    pattern = r'\[MachineMake]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len ( hits ) > 0:
+        info [ 'software_id' ] = hits [0]
     
     # Looks for the amplifier identification.
-    hits     = re.split ( '\[MachineModel\]([^\[]*)', dummy )
-    if len ( hits ) > 2:
-        info [ 'hardware_id' ] = hits [1].strip ()
+    pattern = r'\[MachineModel]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len ( hits ) > 0:
+        info [ 'hardware_id' ] = hits [0]
     
     # Looks for the subject name.
-    hits     = re.split ( '\[SubjectName\]([^\[]*)', dummy )
-    if len ( hits ) > 2:
-        info [ 'subject_name' ] = hits [1].strip ()
+    pattern = r'\[SubjectName]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len ( hits ) > 0:
+        info [ 'subject_name' ] = hits [0]
     
     # Looks for the subject birth date.
-    hits     = re.split ( '\[SubjectDateOfBirth\]([^\[]*)', dummy )
-    if len ( hits ) > 2:
-        info [ 'subject_birth' ] = hits [1].strip ()
+    pattern = r'\[SubjectDateOfBirth]\n([^\[]+)\n'
+    hits = re.findall(pattern, dummy)
+    if len ( hits ) > 0:
+        info [ 'subject_birth' ] = hits [0]
     
     
     # # Gets the event definition.
@@ -822,14 +832,15 @@ def read_seg ( filename ):
     
     
     # Looks for the segment definition.
-    hits     = re.split ( 'NumberSegments=[\s]*([\d]+)(.*)', rawseg, 0, re.S )
-    assert len ( hits ) > 2, 'Segment file is corrupted.'
+    pattern = r'NumberSegments=(.*)\n(.*)'
+    hits = re.findall(pattern, rawseg)
+    assert len ( hits ) > 0, 'Segment file is corrupted.'
     
     # Gets the number of segments and the data.
-    nseg     = int ( hits [1] )
+    nseg     = int ( hits [0][0] )
     
     # Parses the segment definition.
-    segdata  = hits [2].strip ()
+    segdata  = hits [0][1].strip ()
     segdata  = [ x.split () for x in segdata.splitlines () ]
     segdata  = pandas.DataFrame ( segdata, dtype = float )
     segdata  = segdata [ :nseg - 1 ]
