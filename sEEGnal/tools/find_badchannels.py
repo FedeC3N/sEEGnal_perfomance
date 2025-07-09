@@ -204,7 +204,6 @@ def gel_bridge_detection(config, bids_path,badchannels):
     channels_to_include = config['badchannel_detection']["channels_to_include"]
     channels_to_exclude = config['badchannel_detection']["channels_to_exclude"]
     crop_seconds = [config['badchannel_detection']["crop_seconds"]]
-    epoch_definition = config['badchannel_detection']['gel_bridge']['epoch_definition']
 
     # Load the raw EEG
     raw = aimind_mne.prepare_raw(
@@ -217,8 +216,7 @@ def gel_bridge_detection(config, bids_path,badchannels):
         crop_seconds=crop_seconds,
         badchannels_to_metadata=False,
         exclude_badchannels=False,
-        set_annotations=False,
-        epoch=epoch_definition)
+        set_annotations=False)
 
     # If there is EOG or EKG, remove those components
     components_to_exclude = []
@@ -244,25 +242,15 @@ def gel_bridge_detection(config, bids_path,badchannels):
     # Get the data
     raw_data = raw.get_data().copy()
 
-    # Estimate the correlation matrix for each epoch
-    correlation_coefficients_mask = np.empty((raw_data.shape[1],raw_data.shape[1],raw_data.shape[0]))
-    for i in range(raw_data.shape[0]):
+    # Estimate the correlation
+    correlation_coefficients = np.corrcoef(raw_data)
 
-        # I'm going to save the values above the threshold
-        current_correlation = np.corrcoef(raw_data[i,:,:])
-        current_correlation = np.triu(current_correlation, k=1)
-        correlation_coefficients_mask[:,:,i] = current_correlation > config['badchannel_detection']['gel_bridge']['threshold']
-
-    # Now define a new matrix with sequences of correlations above threshold
-    correlation_sequence = np.empty((raw_data.shape[1], raw_data.shape[1]))
-    for irow in range(correlation_sequence.shape[0]):
-        for icol in range(correlation_sequence.shape[1]):
-            # Get the current sequence
-            current_sequence = correlation_coefficients_mask[irow, icol, :]
-            correlation_sequence[irow, icol] = np.sum(current_sequence) / len(current_sequence)
+    # Find highly correlated channels
+    correlation_coefficients = np.triu(correlation_coefficients, k=1)
+    correlation_coefficients_mask = correlation_coefficients > config['badchannel_detection']['gel_bridge']['threshold']
 
     # Find indexes of channels with sequences indicating gel-bridge.
-    row_ind,col_ind = np.where(correlation_sequence > config['badchannel_detection']['gel_bridge']['seq_threshold'])
+    row_ind, col_ind = np.where(correlation_coefficients_mask)
 
     # If any gel_bridged badchannel, check if they are neighbours
     if len(row_ind) > 0:

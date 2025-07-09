@@ -168,6 +168,9 @@ for iband = 1 : numel(config.bands_info)
     outfile = sprintf('%s/%s_whole_head_head_measures.svg',...
         config.path.figures,current_band);
     saveas(fig,outfile);
+    outfile = sprintf('%s/%s_whole_head_head_measures.png',...
+        config.path.figures,current_band);
+    saveas(fig,outfile);
     close(fig);
     
 end
@@ -214,6 +217,9 @@ for random_index = 19
     outfile = sprintf('%s/%i_pow_spectrum.svg',config.path.figures,...
         random_index);
     saveas(fig,outfile);
+    outfile = sprintf('%s/%i_pow_spectrum.png',config.path.figures,...
+        random_index);
+    saveas(fig,outfile);
     close(fig);
     
 end
@@ -257,6 +263,8 @@ legend(bands_info.name)
 
 % Save the figure
 outfile = sprintf('%s/pow_NRMSE_violinplot.svg',config.path.figures);
+saveas(fig,outfile);
+outfile = sprintf('%s/pow_NRMSE_violinplot.png',config.path.figures);
 saveas(fig,outfile);
 close(fig);
 
@@ -333,6 +341,8 @@ end
     
 % Save the figure
 outfile = sprintf('%s/pow_corr.svg',config.path.figures);
+saveas(fig,outfile);
+outfile = sprintf('%s/pow_corr.png',config.path.figures);
 saveas(fig,outfile);
 close(fig);
 

@@ -154,7 +154,7 @@ for icurrent = 1 : numel(dummy.dataset)
     
     % Count the number of rejected ICs and store it
     current_ICs_rejected = current_performance.ICs_rejected.IC;
-    current_ICs_rejected = current_ICs_rejected(2:end-1);
+    current_ICs_rejected = current_ICs_rejected(3:4);
     ICs_rejected_index = strcmp(current_ICs_rejected,'n/a');
     current_ICs_rejected = current_ICs_rejected(~ICs_rejected_index);
     dummy_count = strjoin(current_ICs_rejected,',');

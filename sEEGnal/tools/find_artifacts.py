@@ -176,7 +176,7 @@ def muscle_detection(config,bids_path,channels_to_include):
         set_annotations=False)
 
     # Get the muscle components time series
-    if 'muscle' in sobi.labels_.keys():
+    if len(sobi.labels_['muscle']) > 0:
 
         # Get the sources of interest
         sources = sobi.get_sources(raw)
@@ -186,7 +186,7 @@ def muscle_detection(config,bids_path,channels_to_include):
 
 
     # If no muscular, we use the whole matrix but without eog (it confused the muscle artifact detection)
-    elif 'eog' in sobi.labels_.keys():
+    elif len(sobi.labels_['eog']) > 0:
 
         # Get the sources of interest
         ic_labels_without_EOG = sobi.labels_.copy()
