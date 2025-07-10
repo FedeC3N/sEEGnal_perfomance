@@ -18,13 +18,15 @@ from sEEGnal.io.export_clean import export_clean
 
 #### PARAMETERS
 # Select the database
-database = 'test_retest_database'
+database = 'AI_Mind_database'
 
 # What step to run: standardize, badchannel, artifact, export_clean
-run = [1,0,0,0]
+run = [1,1,1,1]
 
 # Init the database
 config, files, sub, ses, task = init_database(database)
+config['overwrite'] = False
+
 
 # List of subjects with errors
 errors = []
@@ -42,6 +44,11 @@ for current_index in range(len(files)):
         bids_path = create_bids_path(config,current_file,current_sub,current_ses,current_task)
 
         print('Working with sub ' + current_sub + ' ses ' + current_ses + ' task ' + current_task)
+
+        # Check if the file exist and the overwrite condition
+        if bids_path.fpath.exists() and not config['overwrite']:
+            print('  Already calculated. Skip.')
+            continue
 
         try:
 
