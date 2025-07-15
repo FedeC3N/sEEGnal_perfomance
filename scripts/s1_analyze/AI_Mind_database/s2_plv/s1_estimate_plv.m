@@ -20,7 +20,7 @@ restoredefaultpath
 
 % Add functions to the path
 addpath('../shared/')
-addpath('../../../../../../Programacion/SharedFunctions/fieldtrip-20220626/')
+addpath('../../../shared/fieldtrip-20220626/')
 ft_defaults
 
 % Paths
@@ -32,7 +32,7 @@ bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
 
 % To define later the PLV matrix
 complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6',...
-    'M1', 'T7', 'C3', 'Cz', 'C4', 'T8', 'M2', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3',...
+    'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3',...
     'Pz', 'P4', 'P8', 'POz', 'O1', 'O2', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2',...
     'F6', 'FC3', 'FCz', 'FC4', 'C5', 'C1', 'C2', 'C6', 'CP3', 'CP4', 'P5', 'P1', 'P2',...
     'P6', 'F9', 'PO3', 'PO4', 'F10', 'FT7', 'FT8', 'TP7', 'TP8', 'PO7', 'PO8', 'FT9',...
@@ -44,7 +44,7 @@ complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'F
     'PPO6h', 'PPO10h', 'POO9h', 'POO3h', 'POO4h', 'POO10h', 'OI1h', 'OI2h'};
 
 % Avoid overwrite
-config.overwrite = false;
+config.overwrite = true;
 
 % Get the different testers
 testers = dir(sprintf('%s/*',config.path.clean_data));

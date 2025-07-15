@@ -84,7 +84,7 @@ ses = [match[0][1] for match in matches]
 task = [match[0][2] for match in matches]
 
 # For each tester
-overwrite = True
+overwrite = False
 for current_tester in testers:
 
     print(current_tester)
@@ -202,6 +202,7 @@ for current_tester in testers:
         sobi.apply(raw,exclude=components_to_exclude)
 
         # Set montage
+        raw.drop_channels(['M1','M2'], on_missing='ignore')
         raw.set_montage('standard_1005',on_missing='ignore')
 
         # Export

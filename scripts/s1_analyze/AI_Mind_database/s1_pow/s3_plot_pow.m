@@ -33,7 +33,7 @@ config.testers = testers;
 
 % Channels
 config.complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6',...
-    'M1', 'T7', 'C3', 'Cz', 'C4', 'T8', 'M2', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3',...
+    'T7', 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3',...
     'Pz', 'P4', 'P8', 'POz', 'O1', 'O2', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2',...
     'F6', 'FC3', 'FCz', 'FC4', 'C5', 'C1', 'C2', 'C6', 'CP3', 'CP4', 'P5', 'P1', 'P2',...
     'P6', 'F9', 'PO3', 'PO4', 'F10', 'FT7', 'FT8', 'TP7', 'TP8', 'PO7', 'PO8', 'FT9',...
@@ -133,18 +133,23 @@ end
 
 function plot_stats_in_head(config,stats)
 
-for iband = 1 : numel(config.bands_info)
+for imeasure = 1 : numel(config.measures)    
     
-    current_band = config.bands_info(iband).name;
+    current_measure = config.measures{imeasure};
+
+    % Colorbar limits
+    dummy = nanmean(stats.(current_measure),2);
+    high_limit = max(dummy(:));
     
     % Define figure
     fig = figure('WindowState', 'maximized');
-    for imeasure = 1 : numel(config.measures)
-        
-        current_measure = config.measures{imeasure};
+    
+    for iband = 1 : numel(config.bands_info)
+
+        current_band = config.bands_info(iband).name;
         
         % Scatter the head
-        ax1 = subplot(1,2,imeasure);
+        ax1 = subplot(2,3,iband);
         [pos_elec, size_elec] = draw_head(config);
         current_stats = nanmean(stats.(current_measure)(:,:,iband,:),4);
         color_elec = nanmean(current_stats,2);
@@ -155,15 +160,26 @@ for iband = 1 : numel(config.bands_info)
         c.Location = 'south';
         
         % Set the colormap
-        customCMap = [73 144 209; 133 58 123; 209 70 2]/255; 
-        colormap(customCMap)
+        % Set the colormap
+        switch current_measure
+            case 'NRMSE'
+                caxis([0, high_limit])
+                customCMap = 'jet';
+            case 'rho'
+                caxis([-1 1]);
+                customCMap = 'jet';
+        end
+        colormap(ax1,customCMap)
         
         % Details
-        title(sprintf('%s band - Measure %s', current_band, current_measure))
+        title(sprintf('%s band',current_band))
         
         
     end
     
+    % Details
+    sgtitle(sprintf('Measure %s', current_measure))
+
     % Save the figure
     outfile = sprintf('%s/%s_whole_head_head_measures.svg',...
         config.path.figures,current_band);
