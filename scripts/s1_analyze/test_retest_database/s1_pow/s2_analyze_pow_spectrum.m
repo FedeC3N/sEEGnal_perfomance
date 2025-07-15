@@ -43,20 +43,20 @@ bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma', 'broadband'
     'f_limits_index',[],'f_original',[]);
 
 % Desired tasks
-desired_tasks = {'EO', 'EC'};
+tasks = {'EO', 'EC'};
 
 % Variable for the stats
 results = [];
 stats = []; % dimensions: [channels,subjects,bands,task]
-stats.NRMSE = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(desired_tasks));
-stats.rho = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(desired_tasks));
-stats.tstat = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(desired_tasks));
-stats.cohen_d = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(desired_tasks));
-stats.p = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(desired_tasks));
+stats.NRMSE = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(tasks));
+stats.rho = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(tasks));
+stats.tstat = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(tasks));
+stats.cohen_d = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(tasks));
+stats.p = nan(numel (config.complete_channel_labels),10,numel(bands_info),numel(tasks));
 
-for itask = 1 : numel(desired_tasks)
+for itask = 1 : numel(tasks)
 
-    current_task = desired_tasks{itask};
+    current_task = tasks{itask};
 
     % Differentiate EC and EO
     [pow_dataset_norm,f,~] = read_pow_dataset(config, current_task);
@@ -115,10 +115,11 @@ end
 
 % Complete the information
 results.stats = stats;
-results.dimensions = ['channels','recordings','bands','task'];
+results.dimensions = 'channels x recordings x bands x task';
 results.testers = testers;
-results.config.complete_channel_labels = config.complete_channel_labels;
+results.complete_channel_labels = config.complete_channel_labels;
 results.bands_info = bands_info;
+results.tasks = tasks;
 
 % Save the file
 outfile = sprintf('%s/pow_results.mat',config.path.results);

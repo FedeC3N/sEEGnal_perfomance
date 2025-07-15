@@ -33,7 +33,7 @@ complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'F
     'PPO6h', 'PPO10h', 'POO9h', 'POO3h', 'POO4h', 'POO10h', 'OI1h', 'OI2h'};
 
 % Avoid overwrite
-config.overwrite = true;
+config.overwrite = false;
 
 % Get the different testers
 testers = dir(sprintf('%s/*',config.path.clean_data));
@@ -133,6 +133,13 @@ for itester = 1 : numel(testers)
         else
             
             fprintf('   Already calculated. Do not overwrite.\n\n')
+
+            % Save the metadata in the dataset
+            pow = [];
+            pow.path = fullfile('databases','test_retest_database','derivatives',...
+                current_tester.name, 'pow');
+            pow.file = outfile_name;
+            dataset(ifile).pow = pow;
             
         end
         
