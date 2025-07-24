@@ -15,6 +15,7 @@ restoredefaultpath
 config.path.clean_data = '../../../../databases/LEMON_database/derivatives';
 config.path.results = '../../../../results/LEMON_database/pow';
 config.path.figures = '../../../../docs/manuscript/figures/LEMON_database/pow_results';
+if ~exist(config.path.figures), mkdir(config.path.figures), end
 
 % Add paths
 addpath('../shared/')
@@ -45,7 +46,7 @@ config.bands_info = bands_info;
 
 % Define measures
 % config.measures = {'NRMSE', 'rho', 'tstat'};
-config.measures = {'NRMSE', 'rho'};
+config.measures = {'NRMSE'};
 
 % Read the power spectrum
 pow_lemon_dataset = read_pow_dataset(config,{'lemon'});
@@ -56,17 +57,16 @@ pow_sEEGnal_dataset = read_pow_dataset(config,{'sEEGnal'});
 %%%%%%%%%%%%%%%
 
 % corr and NRMSE in head
-plot_stats_in_head(config,stats)
+% plot_stats_in_head(config,stats)
 
 % Normalized pow spectrum for all areas in broadband
-% Prepare the pow_spectrum
-plot_pow_spectrum_norm_one_subject(config,pow_lemon_dataset,pow_sEEGnal_dataset)
+% plot_pow_spectrum_norm_one_subject(config,pow_lemon_dataset,pow_sEEGnal_dataset);
 
 % Violinplots
-plot_NRMSE_violinplots(config,stats,bands_info)
+% plot_violinplots(config,stats,bands_info)
 
 % corr
-plot_corr(config,bands_info,pow_lemon_dataset,pow_sEEGnal_dataset)
+plot_sEEGnal_vs_lemon(config,bands_info,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % Functions
 function pow_dataset_norm = read_pow_dataset(config,dataset_name)
@@ -116,22 +116,28 @@ end
 end
 
 
+
 function plot_stats_in_head(config,stats)
 
-for iband = 1 : numel(config.bands_info)
-    
-    current_band = config.bands_info(iband).name;
-    
+for imeasure = 1 : numel(config.measures)
+
+    current_measure = config.measures{imeasure};
+
+    % Colorbar limits
+    dummy = nanmean(stats.(current_measure),2);
+    high_limit = max(dummy(:));
+
     % Define figure
     fig = figure('WindowState', 'maximized');
-    for imeasure = 1 : numel(config.measures)
-        
-        current_measure = config.measures{imeasure};
+
+    for iband = 1 : numel(config.bands_info)
+
+        current_band = config.bands_info(iband).name;
         
         % Scatter the head
-        ax1 = subplot(1,2,imeasure);
+        ax1 = subplot(2,3,iband);
         [pos_elec, size_elec] = draw_head(config);
-        current_stats = stats.(current_band).(current_measure);
+        current_stats = stats.(current_measure)(:,:,iband);
         color_elec = nanmean(current_stats,2);
         
         % Scatter the values of interest
@@ -140,115 +146,142 @@ for iband = 1 : numel(config.bands_info)
         c.Location = 'south';
         
         % Set the colormap
-        customCMap = [73 144 209; 133 58 123; 209 70 2]/255; 
-        colormap(customCMap)
+        switch current_measure
+            case 'NRMSE'
+                caxis([0, high_limit])
+                customCMap = 'jet';
+            case 'rho'
+                caxis([-1 1]);
+                customCMap = 'jet';
+        end
+        colormap(ax1,customCMap)
         
         % Details
-        title(sprintf('%s band - Measure %s',current_band, current_measure))
+        title(sprintf('%s band',current_band))
         
         
     end
+    % Details
+    sgtitle(sprintf('Measure %s', current_measure))
     
     % Save the figure
-    outfile = sprintf('%s/%s_whole_head_head_measures.svg',...
-        config.path.figures, current_band);
+    outfile = sprintf('%s/%s_whole_head.svg',...
+        config.path.figures,current_measure);
+    saveas(fig,outfile);
+    outfile = sprintf('%s/%s_whole_head.png',...
+        config.path.figures,current_measure);
     saveas(fig,outfile);
     close(fig);
+    
 end
 
 end
 
 
-function plot_pow_spectrum_norm_one_subject(config,pow_human_dataset,pow_sEEGnal_dataset)
+
+function plot_pow_spectrum_norm_one_subject(config,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 
 % Select one subject to plot as an example
-% I checked all the recordings and 27 is the best picture
+% I checked all the recordings and 19 is the best picture
 for random_index = 27
-    
+
     % Estimate mean error
     fig = figure('WindowState','maximized');
     hold on
     f_of_interest = config.bands_info(6).f_original;
-    
+
     % Estimate the powers
-    current_pow_human_dataset = pow_human_dataset(:,:,random_index);
-    human_average = nanmean(nanmean(current_pow_human_dataset,3),1);
+    current_pow_lemon_dataset = pow_lemon_dataset(:,:,random_index);
+    human_average = nanmean(current_pow_lemon_dataset,1);
     current_pow_sEEGnal_dataset = pow_sEEGnal_dataset(:,:,random_index);
     sEEGnal_average = nanmean(current_pow_sEEGnal_dataset,1);
-    
+
     % Plot channels first
-    plot(f_of_interest,nanmean(current_pow_human_dataset,3),...
+    plot(f_of_interest,current_pow_lemon_dataset,...
         'Color',[0.6980    0.8902    0.8902],'LineWidth',0.5)
-    plot(f_of_interest,nanmean(current_pow_sEEGnal_dataset,4),...
+    plot(f_of_interest,current_pow_sEEGnal_dataset,...
         'Color',[1.0000    0.7725    0.6902],'LineWidth',0.5)
-    
+
     % Plot mean
     plot(f_of_interest,human_average,...
         'Color',[0 0.5 0.5],'LineWidth',3)
     plot(f_of_interest,sEEGnal_average,...
         'Color',[1 0.498 0.314],'LineWidth',3)
-    
+
     % Enhance the plot
     lines = findobj(gca, 'Type', 'Line');
     legend(lines(1:2),{'sEEGnal','Human experts'});
     title('Power in BroadBand in whole head')
-    
+
     % Save the figure
     outfile = sprintf('%s/%i_pow_spectrum.svg',config.path.figures,...
         random_index);
     saveas(fig,outfile);
+    outfile = sprintf('%s/%i_pow_spectrum.png',config.path.figures,...
+        random_index);
+    saveas(fig,outfile);
     close(fig);
-    
-end
 
 end
 
+end
 
-function plot_NRMSE_violinplots(config,stats,bands_info)
 
-fig = figure('WindowState', 'maximized');
-hold on
+
+function plot_violinplots(config,stats,bands_info)
 
 % Remove the broadband
 bands_info = bands_info(1:end-1);
 
-% For each band
-for iband = 1 : numel(bands_info)
-    
-    current_band = bands_info(iband).name;
-    current_NRMSE = stats.(current_band).NRMSE;
-    current_NRMSE = current_NRMSE(:);
-    
-    % X axis for plot
-    x_vector = iband * ones(numel(current_NRMSE),1);
-    
-    % Plot
-    sw = swarmchart(x_vector,current_NRMSE,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
-    bx = boxchart(x_vector,current_NRMSE,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
-        'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
-    
-    
+for imeasure = 1 : numel(config.measures)
+
+    current_measure = config.measures{imeasure};
+
+    fig = figure('WindowState', 'maximized');
+    hold on
+
+    % For each band
+    for iband = 1 : numel(bands_info)
+
+        current_band = bands_info(iband).name;
+        current_stat = stats.(current_measure)(:,:,iband);
+        current_stat = current_stat(:);
+
+        % X axis for plot
+        x_vector = iband * ones(numel(current_stat),1);
+
+        % Plot
+        sw = swarmchart(x_vector,current_stat,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
+        bx = boxchart(x_vector,current_stat,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
+            'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
+
+
+    end
+
+    xlim([0 numel(bands_info) + 1])
+    xticks(1:numel(bands_info))
+    xticklabels({bands_info.name})
+    title(sprintf('%s for each channel',current_measure))
+    ylabel(current_measure,'Interpreter','none')
+    set(gca,'TickLabelInterpreter','none')
+    legend(bands_info.name)
+
+    % Save the figure
+    outfile = sprintf('%s/pow_%s_violinplot.svg',config.path.figures,current_measure);
+    saveas(fig,outfile);
+    outfile = sprintf('%s/pow_%s_violinplot.png',config.path.figures,current_measure);
+    saveas(fig,outfile);
+    close(fig);
+
 end
 
-xlim([0 numel(bands_info) + 1])
-xticks(1:numel(bands_info))
-xticklabels({bands_info.name})
-title('NRMSE for each channel')
-ylabel('NRMSE','Interpreter','none')
-set(gca,'TickLabelInterpreter','none')
-legend(bands_info.name)
-
-% Save the figure
-outfile = sprintf('%s/pow_NRMSE_violinplot.svg',config.path.figures);
-saveas(fig,outfile);
-close(fig);
-
 
 end
 
 
-function plot_corr(config,bands_info,pow_lemon_dataset,pow_sEEGnal_dataset)
+
+function plot_sEEGnal_vs_lemon(config,bands_info,pow_lemon_dataset,pow_sEEGnal_dataset)
 
 % Remove the broadband
 bands_info = bands_info(1:end-1);
@@ -263,54 +296,58 @@ colors = [0    0.4470    0.7410;...
 fig = figure('WindowState', 'maximized');
 hold on
 for iband = 1 : numel(bands_info)
-    
- 
+
     % Get the pow in the current frequencies
     current_band = bands_info(iband).name;
     current_f = bands_info(iband).f_limits_index;
-    current_human = pow_lemon_dataset(:,current_f,:);
-    current_human = current_human(:);
+    current_lemon = pow_lemon_dataset(:,current_f,:);
+    current_lemon = squeeze(nanmean(current_lemon,2));
     current_sEEGnal = pow_sEEGnal_dataset(:,current_f,:);
-    current_sEEGnal = current_sEEGnal(:);
-    
+    current_sEEGnal = squeeze(nanmean(current_sEEGnal,2));
+
     % Remove the nans
-    nans_mask = isnan(current_human) | isnan(current_sEEGnal);
-    current_human = current_human(~nans_mask);
+    nans_mask = isnan(current_lemon) | isnan(current_sEEGnal);
+    current_lemon = current_lemon(~nans_mask);
     current_sEEGnal = current_sEEGnal(~nans_mask);
-    
+
     % Plot
     subplot(2,3,iband)
-    s = scatter(current_human,current_sEEGnal,'filled');
+    s = scatter(current_lemon,current_sEEGnal,'filled');
     s.SizeData = 10;
     s.MarkerEdgeColor = colors(iband,:);
     s.MarkerFaceColor = colors(iband,:);
     s.MarkerFaceAlpha = 0.2;
     s.MarkerEdgeAlpha = s.MarkerFaceAlpha;
-    
-    % Set the limits of the axis to be square
+
+
+    % Get the limits for plot purposes
     lims = axis;
-    xlim([min(lims) max(lims)])
-    ylim([min(lims) max(lims)])
-    axis square
-    
+
     % lsline
     ls = lsline;
     ls.Color = [255 136 136]/255;
     ls.LineWidth = 2;
-    
+
     % Plot the identity line
-    l = line([min(lims) max(lims)],[min(lims) max(lims)],'Color','black','LineStyle','--');
-    
+    l = line([0 max(lims)],[0 max(lims)],'Color','black','LineStyle','--');
+
+    % Set the limits of the axis to be square
+    xlim([0 max(lims)])
+    ylim([0 max(lims)])
+    axis square
+
     % Info
-    title(sprintf('%s band correlation',current_band))
     xlabel('Human Expert')
     ylabel('sEEGnal')
 
+
 end
 
-    
+
 % Save the figure
-outfile = sprintf('%s/pow_corr.svg',config.path.figures);
+outfile = sprintf('%s/pow_sEEGnal_vs_human.svg',config.path.figures);
+saveas(fig,outfile);
+outfile = sprintf('%s/pow_sEEGnal_vs_human.png',config.path.figures);
 saveas(fig,outfile);
 close(fig);
 
