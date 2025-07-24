@@ -61,7 +61,7 @@ config.bands_info = stats.bands_info;
 
 % Define measures
 % config.measures = {'NRMSE', 'rho', 'tstat'};
-config.measures = {'NRMSE', 'rho'};
+config.measures = {'NRMSE'};
 
 % Desired tasks
 config.tasks = {'EO', 'EC'};
@@ -86,16 +86,16 @@ for itask = 1 : numel(config.tasks)
     %%%%%%%%%%%%%%%
 
     % corr and NRMSE in head
-    plot_stats_in_head(config,current_stats)
+    % plot_stats_in_head(config,current_stats)
 
     % Normalized pow spectrum for all areas in broadband
     % plot_pow_spectrum_norm_one_subject(config,pow_dataset_norm);
 
     % Violinplots
-    plot_NRMSE_channels(config,stats.stats,stats.bands_info)
+    plot_violinplot(config,stats.stats,stats.bands_info)
 
     % corr
-    plot_corr(config,stats.bands_info,pow_dataset_norm)
+    % plot_first_vs_second(config,stats.bands_info,pow_dataset_norm)
 
 end
 
@@ -283,55 +283,62 @@ end
 
 
 
-function plot_NRMSE_channels(config,stats,bands_info)
-
-fig = figure('WindowState', 'maximized');
-hold on
+function plot_violinplot(config,stats,bands_info)
 
 % Remove the broadband
 bands_info = bands_info(1:end-1);
 
-% For each band
-for iband = 1 : numel(bands_info)
+for imeasure = 1 : numel(config.measures)
 
-    current_band = bands_info(iband).name;
-    current_NRMSE = stats.NRMSE(:,:,iband,config.itask);
-    current_NRMSE = current_NRMSE(:);
+    fig = figure('WindowState', 'maximized');
+    hold on
 
-    % X axis for plot
-    x_vector = iband * ones(numel(current_NRMSE),1);
+    current_measure = config.measures{imeasure};
+    current_stats = stats.(current_measure);
 
-    % Plot
-    sw = swarmchart(x_vector,current_NRMSE,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
-    bx = boxchart(x_vector,current_NRMSE,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
-        'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
+    % For each band
+    for iband = 1 : numel(bands_info)
+
+        current_band = bands_info(iband).name;
+        current_stats_band = current_stats(:,:,iband,config.itask);
+        current_stats_band = current_stats_band(:);
+
+        % X axis for plot
+        x_vector = iband * ones(numel(current_stats_band),1);
+
+        % Plot
+        sw = swarmchart(x_vector,current_stats_band,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
+        bx = boxchart(x_vector,current_stats_band,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
+            'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
+
+
+    end
+
+    xlim([0 numel(bands_info) + 1])
+    xticks(1:numel(bands_info))
+    xticklabels({bands_info.name})
+    title(sprintf('%s for each channel',current_measure))
+    ylabel(current_measure,'Interpreter','none')
+    set(gca,'TickLabelInterpreter','none')
+    legend(bands_info.name)
+
+    % Save the figure
+    outfile = sprintf('%s/%s_pow_%s_violinplot.svg',...
+        config.path.figures, config.tasks{config.itask},current_measure);
+    saveas(fig,outfile);
+    outfile = sprintf('%s/%s_pow_%s_violinplot.png',...
+        config.path.figures, config.tasks{config.itask},current_measure);
+    saveas(fig,outfile);
+    close(fig);
+
+end
 
 
 end
 
-xlim([0 numel(bands_info) + 1])
-xticks(1:numel(bands_info))
-xticklabels({bands_info.name})
-title('NRMSE for each channel')
-ylabel('NRMSE','Interpreter','none')
-set(gca,'TickLabelInterpreter','none')
-legend(bands_info.name)
-
-% Save the figure
-outfile = sprintf('%s/%s_pow_NRMSE_violinplot.svg',...
-    config.path.figures, config.tasks{config.itask});
-saveas(fig,outfile);
-outfile = sprintf('%s/%s_pow_NRMSE_violinplot.png',...
-    config.path.figures, config.tasks{config.itask});
-saveas(fig,outfile);
-close(fig);
 
 
-end
-
-
-
-function plot_corr(config,bands_info,pow_dataset_norm)
+function plot_first_vs_second(config,bands_info,pow_dataset_norm)
 
 % Remove the broadband
 bands_info = bands_info(1:end-1);
@@ -352,8 +359,10 @@ for iband = 1 : numel(bands_info)
     current_f = bands_info(iband).f_limits_index;
 
     current_first = squeeze(pow_dataset_norm(:,current_f,1,:));
+    current_first = squeeze(nanmean(current_first,2));
     current_first = current_first(:);
     current_second = squeeze(pow_dataset_norm(:,current_f,2,:));
+    current_second = squeeze(nanmean(current_second,2));
     current_second = current_second(:);
 
     % Remove the nans
@@ -369,8 +378,6 @@ for iband = 1 : numel(bands_info)
     s.MarkerFaceColor = colors(iband,:);
     s.MarkerFaceAlpha = 0.2;
     s.MarkerEdgeAlpha = s.MarkerFaceAlpha;
-
-
 
     % Set the limits of the axis to be square
     lims = axis;
@@ -397,10 +404,10 @@ sgtitle(config.tasks{config.itask})
 
 
 % Save the figure
-outfile = sprintf('%s/%s_pow_corr.svg',...
+outfile = sprintf('%s/%s_pow_first_vs_second.svg',...
     config.path.figures,config.tasks{config.itask});
 saveas(fig,outfile);
-outfile = sprintf('%s/%s_pow_corr.png',...
+outfile = sprintf('%s/%s_pow_first_vs_second.png',...
     config.path.figures,config.tasks{config.itask});
 saveas(fig,outfile);
 close(fig);
