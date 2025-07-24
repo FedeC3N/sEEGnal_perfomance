@@ -98,8 +98,8 @@ for itester = 1 : numel(testers)
                 [~,p,~,t_stats] = ttest(diff);
                 diff = abs(human - sEEGnal);
                 d = mean(diff)/std(diff);
-                stats.tstat(ichannel,isubject,itester) = t_stats.tstat;
-                stats.cohen_d(ichannel,isubject,itester) = d;
+                stats.tstat(ichannel,isubject,iband,itester) = t_stats.tstat;
+                stats.cohen_d(ichannel,isubject,iband,itester) = d;
                 stats.p(ichannel,isubject,iband,itester) = p;
                 
             end

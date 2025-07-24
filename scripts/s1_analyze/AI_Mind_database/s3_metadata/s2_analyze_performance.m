@@ -78,6 +78,36 @@ end
 fprintf('\n\nSTATISTICAL RESULTS \n\n')
 
 % T-test and effect size and print
+% Time
+[~,p,~,stats] = ttest2(performance_human.times_seconds.badchannel_detection,...
+    performance_sEEGnal.times_seconds.badchannel_detection);
+cohen_d = (2*stats.tstat)/sqrt(stats.df);
+fprintf('Time of Badchannels\n');
+fprintf('   p-value: %.3f\n',p)
+fprintf('   Cohen-d: %.3f\n',cohen_d)
+
+[~,p,~,stats] = ttest2(performance_human.times_seconds.artifact_detection,...
+    performance_sEEGnal.times_seconds.artifact_detection);
+cohen_d = (2*stats.tstat)/sqrt(stats.df);
+fprintf('Time of Artifact\n');
+fprintf('   p-value: %.3f\n',p)
+fprintf('   Cohen-d: %.3f\n',cohen_d)
+
+% Memory
+[~,p,~,stats] = ttest2(performance_human.memory_bytes.badchannel_detection,...
+    performance_sEEGnal.memory_bytes.badchannel_detection);
+cohen_d = (2*stats.tstat)/sqrt(stats.df);
+fprintf('Memory of Badchannels\n');
+fprintf('   p-value: %.3f\n',p)
+fprintf('   Cohen-d: %.3f\n',cohen_d)
+
+[~,p,~,stats] = ttest2(performance_human.memory_bytes.artifact_detection,...
+    performance_sEEGnal.memory_bytes.artifact_detection);
+cohen_d = (2*stats.tstat)/sqrt(stats.df);
+fprintf('Memory of Artifact\n');
+fprintf('   p-value: %.3f\n',p)
+fprintf('   Cohen-d: %.3f\n',cohen_d)
+
 % Badchannels
 [~,p,~,stats] = ttest2(performance_human.badchannels,...
     performance_sEEGnal.badchannels);
@@ -105,15 +135,6 @@ fprintf('Number of ICs corrected\n');
 fprintf('   p-value: %.3f\n',p)
 fprintf('   Cohen-d: %.3f\n',cohen_d)
 
-% ICs corrected
-[~,p,~,stats] = ttest2(performance_human.ICs_rejected,...
-    performance_sEEGnal.ICs_rejected_corrected);
-cohen_d = (2*stats.tstat)/sqrt(stats.df);
-
-fprintf('Number of ICs corrected\n');
-fprintf('   p-value: %.3f\n',p)
-fprintf('   Cohen-d: %.3f\n',cohen_d)
-
 
 
 % Read all the performance files
@@ -133,6 +154,7 @@ end
 performance.badchannels = nan(numel(dummy.dataset),1);
 performance.artifacts = nan(numel(dummy.dataset),1);
 performance.ICs_rejected = nan(numel(dummy.dataset),1);
+performance.badchannels_description = cell(numel(dummy.dataset),124);
 
 for icurrent = 1 : numel(dummy.dataset)
     
@@ -152,6 +174,10 @@ for icurrent = 1 : numel(dummy.dataset)
     performance.badchannels(icurrent) = numel(current_performance.badchannels.label);
     performance.artifacts(icurrent) = numel(current_performance.artifacts.label);
     
+    % Store the badchannel description
+    descriptions = current_performance.badchannels.description;
+    performance.badchannels_description(icurrent,1:numel(descriptions)) = descriptions;
+    
     % Count the number of rejected ICs and store it
     current_ICs_rejected = current_performance.ICs_rejected.IC;
     current_ICs_rejected = current_ICs_rejected(3:4);
@@ -160,15 +186,6 @@ for icurrent = 1 : numel(dummy.dataset)
     dummy_count = strjoin(current_ICs_rejected,',');
     dummy_count = strsplit(dummy_count,',');
     performance.ICs_rejected(icurrent) = numel(dummy_count);
-
-    % Count the number of rejected ICs corrected to be compared to humans
-    current_ICs_rejected_corrected = current_performance.ICs_rejected.IC;
-    current_ICs_rejected_corrected = current_ICs_rejected_corrected(3:4);
-    ICs_rejected_index = strcmp(current_ICs_rejected_corrected,'n/a');
-    current_ICs_rejected_corrected = current_ICs_rejected_corrected(~ICs_rejected_index);
-    dummy_count = strjoin(current_ICs_rejected_corrected,',');
-    dummy_count = strsplit(dummy_count,',');
-    performance.ICs_rejected_corrected(icurrent) = numel(dummy_count);
     
 end
 
