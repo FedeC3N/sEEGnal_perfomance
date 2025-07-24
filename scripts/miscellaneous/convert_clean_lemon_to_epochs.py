@@ -48,7 +48,7 @@ for current_subject in subjects:
                                                        )
 
                     # Export epochs
-                    out_filepath = current_file[0:115] + '_new' +  current_file[115:]
+                    out_filepath = current_file[0:112] + current_file[116:]
                     # Export
                     export_mne_epochs(raw,str(out_filepath))
                 except:
