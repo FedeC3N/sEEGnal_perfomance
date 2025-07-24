@@ -43,9 +43,9 @@ performance_sEEGnal = read_performance_dataset_sEEGnal(config);
 % Plot
 plot_IC_distribution(config,performance_human,performance_sEEGnal);
 
-% plot_artifacts_distribution(config,performance_human,performance_sEEGnal);
+plot_artifacts_distribution(config,performance_human,performance_sEEGnal);
 
-% plot_badchannels_scatter(config,performance_sEEGnal,performance_human)
+plot_badchannels_scatter(config,performance_sEEGnal,performance_human)
 
 %%%% FUNCTIONS
 % Read all the performance files
@@ -159,7 +159,6 @@ performance.ICs_rejected = nanmean(performance.ICs_rejected,2);
 end
 
 
-
 function plot_IC_distribution(config,performance_human,performance_sEEGnal)
 
 % IC labels
@@ -192,12 +191,11 @@ close(fig);
 end
 
 
-
 function plot_artifacts_distribution(config,performance_human,performance_sEEGnal)
 
 % sEEGnal
 % IC labels
-artifacst_labels = {'bad_EOG','bad_muscle','bad_jump','bad_other'};
+artifacst_labels = {'bad_EOG','bad_muscle','bad_jump'};
 
 % Count each type and estimate the percentage
 count = [];
@@ -242,6 +240,9 @@ for itype = 1 : numel(artifacst_labels)
 
 end
 
+% Add visual to jump
+count(count == 4) = 3;
+
 % Scatter the head with electrodes
 fig = figure('WindowState', 'maximized');
 imagesc(count)
@@ -255,7 +256,6 @@ close(fig);
 
 
 end
-
 
 
 function plot_badchannels_scatter(config,performance_sEEGnal,performance_human)
