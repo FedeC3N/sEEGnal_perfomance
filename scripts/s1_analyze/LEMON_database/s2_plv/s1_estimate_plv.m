@@ -160,6 +160,13 @@ for itester = 1 : numel(testers)
             fprintf('\n\n')
             
         else
+
+            % Save the metadata in the dataset
+            plv = [];
+            plv.path = fullfile('databases','LEMON_database','derivatives',...
+                current_tester.name, 'plv');
+            plv.file = outfile_name;
+            dataset(ifile).plv = plv;
             
             fprintf('   Already calculated. Do not overwrite.\n\n')
                  
