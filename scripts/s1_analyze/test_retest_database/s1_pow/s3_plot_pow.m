@@ -64,7 +64,7 @@ config.bands_info = stats.bands_info;
 config.measures = {'NRMSE'};
 
 % Desired tasks
-config.tasks = {'EO', 'EC'};
+config.tasks = {'EO'};
 
 for itask = 1 : numel(config.tasks)
 
@@ -86,16 +86,16 @@ for itask = 1 : numel(config.tasks)
     %%%%%%%%%%%%%%%
 
     % corr and NRMSE in head
-    % plot_stats_in_head(config,current_stats)
+    plot_stats_in_head(config,current_stats)
 
     % Normalized pow spectrum for all areas in broadband
-    % plot_pow_spectrum_norm_one_subject(config,pow_dataset_norm);
+    plot_pow_spectrum_norm_one_subject(config,pow_dataset_norm);
 
     % Violinplots
     plot_violinplot(config,stats.stats,stats.bands_info)
 
     % corr
-    % plot_first_vs_second(config,stats.bands_info,pow_dataset_norm)
+    plot_first_vs_second(config,stats.bands_info,pow_dataset_norm)
 
 end
 

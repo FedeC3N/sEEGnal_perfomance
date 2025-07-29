@@ -55,7 +55,7 @@ areas_info(7).channel = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1
 config.bands = {'delta', 'theta','alpha','beta','gamma'};
 
 % Define measures
-config.measures = {'NRMSE', 'rho'};
+config.measures = {'NRMSE'};
 
 % Channels
 % Channels
