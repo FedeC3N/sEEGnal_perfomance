@@ -81,13 +81,13 @@ config.complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', '
 %%%%%%%%%%%%%%%
 
 % Topoplots of the stats
-plot_stats_in_head(config,stats)
+% plot_stats_in_head(config,stats)
 
 % Plot differences in channels as measures by NRMSE
 plot_violinplots(config,stats,bands_info)
 
 % Plot differences in channels as measures by corr
-plot_sEEGnal_vs_human(config,bands_info,plv_human_dataset,plv_sEEGnal_dataset)
+% plot_sEEGnal_vs_human(config,bands_info,plv_human_dataset,plv_sEEGnal_dataset)
 
 
 % Aux functions
@@ -106,17 +106,10 @@ for itester = 1 : numel(dataset_name)
         current_dataset = dummy.dataset(icurrent);
         plv_file = sprintf('../../../../%s/%s.mat',current_dataset.plv.path,...
             current_dataset.plv.file);
-
-        if ~exist(plv_file)
-            fake_pow = nan(size(current_pow));
-            pow_dataset_norm(:,:,icurrent,itester) = fake_pow;
-            continue
-        end
-
         plv = load(plv_file);
 
         % Create the PLV_all struct and the channels info
-        if icurrent == 1
+        if icurrent == 1 && itester == 1
             n_sensors = numel(plv.channels_included_index);
             n_bands = numel(plv.bands_info);
             n_subjects = numel(dummy.dataset);
@@ -187,7 +180,7 @@ for imeasure = 1 : numel(config.measures)
     sgtitle(sprintf('Measure %s', current_measure))
 
     % Save the figure
-    outfile = sprintf('%s/%s_head_measures.svg',config.path.figures,...
+    outfile = sprintf('%s/plv_%s_head_measures.svg',config.path.figures,...
         current_measure);
     saveas(fig,outfile);
     close(fig);
@@ -199,6 +192,12 @@ end
 
 
 function plot_violinplots(config,stats,bands_info)
+
+colors = [0    0.4470    0.7410;...
+    0.8500    0.3250    0.0980;...
+    0.9290    0.6940    0.1250;...
+    0.4940    0.1840    0.5560;...
+    0.4660    0.6740    0.1880];
 
 fig = figure('WindowState', 'maximized');
 hold on
@@ -214,8 +213,10 @@ for iband = 1 : numel(bands_info)
     x_vector = iband * ones(numel(current_NRMSE),1);
 
     % Plot
-    sw = swarmchart(x_vector,current_NRMSE,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
-    bx = boxchart(x_vector,current_NRMSE,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
+    sw = swarmchart(x_vector,current_NRMSE,...
+        'MarkerFaceColor', colors(iband,:),'MArkerEdgeColor',colors(iband,:),...
+        'MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
+    bx = boxchart(x_vector,current_NRMSE,'BoxFaceColor',colors(iband,:) ./ 1.2,'WhiskerLineColor',colors(iband,:) ./ 1.2,...
         'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
 
 
@@ -230,7 +231,7 @@ set(gca,'TickLabelInterpreter','none')
 legend(bands_info.name)
 
 % Save the figure
-outfile = sprintf('%s/NRMSE_violinplot.svg',config.path.figures);
+outfile = sprintf('%s/plv_NRMSE_violinplot.svg',config.path.figures);
 saveas(fig,outfile);
 close(fig);
 
@@ -254,13 +255,13 @@ for iband = 1 : numel(bands_info)
     % Get the pow in the current frequencies
     current_band = bands_info(iband).name;
     current_human = squeeze(plv_human_dataset(:,:,iband,:,:));
-    current_human = nanmean(current_human,4);
     % Create the upper matrix mask
     triu_mask = triu(ones(size(current_human(:,:,1))));
-    triu_mask = repmat(triu_mask,1,1,size(current_human,3));
+    triu_mask = repmat(triu_mask,1,1,size(current_human,3),size(current_human,4));
     triu_mask = logical(triu_mask);
     current_human = current_human(triu_mask);
     current_sEEGnal = squeeze(plv_sEEGnal_dataset(:,:,iband,:));
+    current_sEEGnal = repmat(current_sEEGnal,1,1,1,size(plv_human_dataset,5));
     current_sEEGnal = current_sEEGnal(triu_mask);
 
     % Remove the nans

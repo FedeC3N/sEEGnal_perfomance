@@ -316,29 +316,27 @@ for iband = 1 : numel(bands_info)
     % Get the pow in the current frequencies
     current_band = bands_info(iband).name;
     current_f = bands_info(iband).f_limits_index;
+    current_human = pow_human_dataset(:,current_f,:,:);
+    current_human = squeeze(nanmean(current_human,2));
+    current_sEEGnal = pow_sEEGnal_dataset(:,current_f,:);
+    current_sEEGnal = squeeze(nanmean(current_sEEGnal,2));
 
-    for ihuman = 1 : size(pow_human_dataset,4)
+    % Repmat sEEGnal for each human
+    current_sEEGnal = repmat(current_sEEGnal,1,1,size(current_human,3));
 
-        current_human = pow_human_dataset(:,current_f,:,ihuman);
-        current_human = squeeze(nanmean(current_human,2));
-        current_sEEGnal = pow_sEEGnal_dataset(:,current_f,:);
-        current_sEEGnal = squeeze(nanmean(current_sEEGnal,2));
+    % Remove the nans
+    nans_mask = isnan(current_human) | isnan(current_sEEGnal);
+    current_human = current_human(~nans_mask);
+    current_sEEGnal = current_sEEGnal(~nans_mask);
 
-        % Remove the nans
-        nans_mask = isnan(current_human) | isnan(current_sEEGnal);
-        current_human = current_human(~nans_mask);
-        current_sEEGnal = current_sEEGnal(~nans_mask);
-
-        % Plot
-        subplot(2,3,iband)
-        s = scatter(current_human,current_sEEGnal,'filled');
-        s.SizeData = 10;
-        s.MarkerEdgeColor = colors(iband,:);
-        s.MarkerFaceColor = colors(iband,:);
-        s.MarkerFaceAlpha = 0.2;
-        s.MarkerEdgeAlpha = s.MarkerFaceAlpha;
-
-    end
+    % Plot
+    subplot(2,3,iband)
+    s = scatter(current_human,current_sEEGnal,'filled');
+    s.SizeData = 10;
+    s.MarkerEdgeColor = colors(iband,:);
+    s.MarkerFaceColor = colors(iband,:);
+    s.MarkerFaceAlpha = 0.2;
+    s.MarkerEdgeAlpha = s.MarkerFaceAlpha;
 
     % Get the limits for plot purposes
     lims = axis;
