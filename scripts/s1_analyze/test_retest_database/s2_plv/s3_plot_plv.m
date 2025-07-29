@@ -16,24 +16,19 @@ restoredefaultpath
 addpath('../shared/')
 
 % Paths
-config.path.clean_data = '../../../../databases/AI_Mind_database/derivatives';
-config.path.results = '../../../../results/AI_Mind_database/plv';
-config.path.figures = '../../../../docs/manuscript/figures/AI_Mind_database/plv_results';
+config.path.clean_data = '../../../../databases/test_retest_database/derivatives';
+config.path.results = '../../../../results/test_retest_database/plv';
+config.path.figures = '../../../../docs/manuscript/figures/test_retest_database/plv_results';
 
 if ~exist(config.path.figures), mkdir(config.path.figures),end
 
 % Load the results
-load(sprintf('%s/plv_results.mat',config.path.results));
-
-% Get the different testers (except sEEGnal)
-testers = dir(sprintf('%s/*',config.path.clean_data));
-testers = testers(3:end-1);
-testers = {testers.name};
-config.testers = testers;
+stats = load(sprintf('%s/plv_results.mat',config.path.results));
 
 % Define the frequency bands
 bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
     'f_limits',{[ 2 4] , [4 8] , [8 12] , [12 20] , [20 45] });
+config.bands_info = stats.bands_info;
 
 % Areas
 % Areas
@@ -53,86 +48,99 @@ areas_info(7).channel = {'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1
 
 % Define the frequency bands
 config.bands = {'delta', 'theta','alpha','beta','gamma'};
+config.bands_info = bands_info;
 
 % Define measures
 config.measures = {'NRMSE'};
 
+% Desired tasks
+config.tasks = {'EO','EC'};
+
 % Channels
-% Channels
-config.complete_channel_labels = {'Fp1', 'Fpz', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6',...
-    'M1', 'T7', 'C3', 'Cz', 'C4', 'T8', 'M2', 'CP5', 'CP1', 'CP2', 'CP6', 'P7', 'P3',...
-    'Pz', 'P4', 'P8', 'POz', 'O1', 'O2', 'AF7', 'AF3', 'AF4', 'AF8', 'F5', 'F1', 'F2',...
-    'F6', 'FC3', 'FCz', 'FC4', 'C5', 'C1', 'C2', 'C6', 'CP3', 'CP4', 'P5', 'P1', 'P2',...
-    'P6', 'F9', 'PO3', 'PO4', 'F10', 'FT7', 'FT8', 'TP7', 'TP8', 'PO7', 'PO8', 'FT9',...
-    'FT10', 'TPP9h', 'TPP10h', 'PO9', 'PO10', 'P9', 'P10', 'AFF1', 'AFz', 'AFF2', 'FFC5h',...
-    'FFC3h', 'FFC4h', 'FFC6h', 'FCC5h', 'FCC3h', 'FCC4h', 'FCC6h', 'CCP5h', 'CCP3h', 'CCP4h',...
-    'CCP6h', 'CPP5h', 'CPP3h', 'CPP4h', 'CPP6h', 'PPO1', 'PPO2', 'I1', 'Iz', 'I2', 'AFp3h', 'AFp4h',...
-    'AFF5h', 'AFF6h', 'FFT7h', 'FFC1h', 'FFC2h', 'FFT8h', 'FTT9h', 'FTT7h', 'FCC1h', 'FCC2h', 'FTT8h',...
-    'FTT10h', 'TTP7h', 'CCP1h', 'CCP2h', 'TTP8h', 'TPP7h', 'CPP1h', 'CPP2h', 'TPP8h', 'PPO9h', 'PPO5h',...
-    'PPO6h', 'PPO10h', 'POO9h', 'POO3h', 'POO4h', 'POO10h', 'OI1h', 'OI2h'};
+config.complete_channel_labels = stats.complete_channel_labels;
 
-% Read the power spectrum
-[plv_human_dataset] = read_plv_dataset(config,testers);
-[plv_sEEGnal_dataset] = read_plv_dataset(config,{'sEEGnal'});
+for itask = 1 : numel(config.tasks)
 
-%%%%%%%%%%%%%%%
-% PLOTS
-%%%%%%%%%%%%%%%
+    % Save for plot title purpose
+    config.itask = itask;
 
-% Topoplots of the stats
-plot_stats_in_head(config,stats)
+    % Read the power spectrum
+    % Differentiate EC and EO
+    plv_dataset = read_plv_dataset(config, config.tasks{itask});
+    current_stats = stats.stats;
+    current_stats.NRMSE = current_stats.NRMSE(:,:,:,itask);
+    current_stats.rho = current_stats.rho(:,:,:,itask);
+    current_stats.tstat = current_stats.tstat(:,:,:,itask);
+    current_stats.cohen_d = current_stats.cohen_d(:,:,:,itask);
+    current_stats.p = current_stats.p(:,:,:,itask);
 
-% Plot differences in channels as measures by NRMSE
-plot_NRMSE_violinplots(config,stats,bands_info)
+    %%%%%%%%%%%%%%%
+    % PLOTS
+    %%%%%%%%%%%%%%%
 
-% Plot differences in channels as measures by corr
-plot_corr(config,bands_info,plv_human_dataset,plv_sEEGnal_dataset)
+    % Topoplots of the stats
+    plot_stats_in_head(config,current_stats)
 
+    % Plot differences in channels as measures by NRMSE
+    plot_violinplot(config,stats.stats,stats.bands_info)
+
+    % Plot differences in channels as measures by corr
+    plot_first_vs_second(config,stats.bands_info,plv_dataset)
+
+end
 
 % Aux functions
-function plv_dataset = read_plv_dataset(config,dataset_name)
+function plv_dataset = read_plv_dataset(config,desired_task)
 
-for itester = 1 : numel(dataset_name)
-    
-    % Load the datset
-    dataset_path = sprintf('%s/%s/%s_dataset.mat',config.path.clean_data,...
-        dataset_name{itester},dataset_name{itester});
-    dummy = load(dataset_path);
-    
-    for icurrent = 1 : numel(dummy.dataset)
-        
+% Load the datset
+dataset_path = sprintf('%s/sEEGnal/sEEGnal_dataset.mat',...
+    config.path.clean_data);
+dummy = load(dataset_path);
+
+% Keep only the files of the condition
+subjects = {dummy.dataset.sub};
+subjects = unique(subjects);
+
+% Create the output
+% [channels x channels x bands_info x recordings x subjects]
+plv_dataset = nan(numel(config.complete_channel_labels),numel(config.complete_channel_labels),...
+    numel(config.bands_info),2,numel(subjects));
+
+for isubject = 1 : numel(subjects)
+
+    % Find the subject and 2 recordings of the current task
+    dummy_subjects = {dummy.dataset.sub};
+    dummy_tasks    = {dummy.dataset.task};
+    dummy_tasks    = cellfun(@(x) x(2:end),dummy_tasks,'UniformOutput',false);
+    subject_mask = ismember(dummy_subjects,subjects{isubject});
+    task_mask = ismember(dummy_tasks,desired_task);
+    dummy_mask = subject_mask & task_mask;
+    dummy_index = find(dummy_mask);
+
+    if numel(dummy_index) ~= 2
+        continue
+    end
+
+    for irecording = 1 : numel(dummy_index)
+
         % Load pow
-        current_dataset = dummy.dataset(icurrent);
+        current_dataset = dummy.dataset(dummy_index(irecording));
         plv_file = sprintf('../../../../%s/%s.mat',current_dataset.plv.path,...
             current_dataset.plv.file);
-        
-        if ~exist(plv_file)
-            fake_pow = nan(size(current_pow));
-            pow_dataset_norm(:,:,icurrent,itester) = fake_pow;
-            continue
-        end
-        
         plv = load(plv_file);
-        
-        % Create the PLV_all struct and the channels info
-        if icurrent == 1
-            n_sensors = numel(plv.channels_included_index);
-            n_bands = numel(plv.bands_info);
-            n_subjects = numel(dummy.dataset);
-            n_testers = numel(dataset_name);
-            plv_dataset = nan(n_sensors,n_sensors,...
-                n_bands,n_subjects,n_testers);
+
+        for iband = 1 : numel(config.bands_info)
+
+            % Add to the all matrix
+            plv_dataset(:,:,iband,irecording,isubject) = plv.(config.bands_info(iband).name).plv;
 
         end
-        
-        % Save each PLV
-        for iband = 1 : numel(plv.bands_info)
-            
-            plv_dataset(:,:,iband,icurrent,itester) = plv.(plv.bands_info(iband).name).plv;
-            
-        end
-            
+
+
     end
+
+
+
 end
 
 end
@@ -140,90 +148,127 @@ end
 
 function plot_stats_in_head(config,stats)
 
-% Draw for each band and measure
-for iband = 1 : numel(config.bands)
-    
-    current_band = config.bands{iband};
-    
+
+for imeasure = 1 : numel(config.measures)
+
+    current_measure = config.measures{imeasure};
+
+    % Colorbar limits
+    dummy = nanmean(stats.(current_measure),2);
+    high_limit = max(dummy(:));
+
     % Define figure
     fig = figure('WindowState', 'maximized');
-    
-    for imeasure = 1 : numel(config.measures)
-        
-        current_measure = config.measures{imeasure};
-        
+
+    for iband = 1 : numel(config.bands_info)
+
+        current_band = config.bands_info(iband).name;
+
+
+
         % Scatter the head
-        ax1 = subplot(1,2,imeasure);
+        ax1 = subplot(2,3,iband);
         [pos_elec, size_elec] = draw_head(config);
-        
-        % Scatter the values of interest
-        current_stats = nanmean(stats.(current_measure)(:,:,iband,:),4);
+        current_stats = stats.(current_measure)(:,:,iband);
         color_elec = nanmean(current_stats,2);
-        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled')
+
+        % Scatter the values of interest
+        scatter(pos_elec(:,1),pos_elec(:,2),size_elec,color_elec,'filled');
         c = colorbar;
         c.Location = 'south';
-           
+
+
         % Set the colormap
-        customCMap = [73 144 209; 133 58 123; 209 70 2]/255; 
-        colormap(customCMap)
-        
+        switch current_measure
+            case 'NRMSE'
+                caxis([0, high_limit])
+                customCMap = 'jet';
+            case 'rho'
+                caxis([-1 1]);
+                customCMap = 'jet';
+        end
+        colormap(ax1,customCMap)
+
         % Details
-        title(sprintf('Band %s - Measure %s', current_band, current_measure))
-           
+        title(sprintf('%s band',current_band))
+
+
     end
-    
+    % Details
+    sgtitle(sprintf('Task %s - Measure %s',config.tasks{config.itask},...
+        current_measure))
+
     % Save the figure
-    outfile = sprintf('%s/%s_head_measures.svg',config.path.figures,...
-        current_band);
+    outfile = sprintf('%s/%s_%s_whole_head.svg',...
+        config.path.figures,config.tasks{config.itask},...
+        current_measure);
+    saveas(fig,outfile);
+    outfile = sprintf('%s/%s_%s_whole_head.png',...
+        config.path.figures,config.tasks{config.itask},...
+        current_measure);
     saveas(fig,outfile);
     close(fig);
-    
-    
-end
 
 end
-
-
-function plot_NRMSE_violinplots(config,stats,bands_info)
-
-fig = figure('WindowState', 'maximized');
-hold on
-
-% For each band
-for iband = 1 : numel(bands_info)
-    
-    current_band = bands_info(iband).name;
-    current_NRMSE = stats.NRMSE(:,:,iband,:);
-    current_NRMSE = current_NRMSE(:);
-    
-    % X axis for plot
-    x_vector = iband * ones(numel(current_NRMSE),1);
-    
-    % Plot
-    sw = swarmchart(x_vector,current_NRMSE,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
-    bx = boxchart(x_vector,current_NRMSE,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
-        'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
-    
-    
-end
-
-xlim([0 numel(bands_info) + 1])
-xticks(1:numel(bands_info))
-xticklabels({bands_info.name})
-title('NRMSE for each channel')
-ylabel('NRMSE','Interpreter','none')
-set(gca,'TickLabelInterpreter','none')
-legend(bands_info.name)
-
-% Save the figure
-outfile = sprintf('%s/NRMSE_violinplot.svg',config.path.figures);
-saveas(fig,outfile);
-close(fig);
 
 end
 
 
-function plot_corr(config,bands_info,plv_human_dataset,plv_sEEGnal_dataset)
+function plot_violinplot(config,stats,bands_info)
+
+% Remove the broadband
+bands_info = bands_info(1:end-1);
+
+for imeasure = 1 : numel(config.measures)
+
+    fig = figure('WindowState', 'maximized');
+    hold on
+
+    current_measure = config.measures{imeasure};
+    current_stats = stats.(current_measure);
+
+    % For each band
+    for iband = 1 : numel(bands_info)
+
+        current_band = bands_info(iband).name;
+        current_stats_band = current_stats(:,:,iband,config.itask);
+        current_stats_band = current_stats_band(:);
+
+        % X axis for plot
+        x_vector = iband * ones(numel(current_stats_band),1);
+
+        % Plot
+        sw = swarmchart(x_vector,current_stats_band,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
+        bx = boxchart(x_vector,current_stats_band,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
+            'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
+
+
+    end
+
+    xlim([0 numel(bands_info) + 1])
+    xticks(1:numel(bands_info))
+    xticklabels({bands_info.name})
+    title(sprintf('%s for each channel',current_measure))
+    ylabel(current_measure,'Interpreter','none')
+    set(gca,'TickLabelInterpreter','none')
+    legend(bands_info.name)
+
+    % Save the figure
+    outfile = sprintf('%s/%s_plv_%s_violinplot.svg',...
+        config.path.figures, config.tasks{config.itask},current_measure);
+    saveas(fig,outfile);
+    outfile = sprintf('%s/%s_plv_%s_violinplot.png',...
+        config.path.figures, config.tasks{config.itask},current_measure);
+    saveas(fig,outfile);
+    close(fig);
+
+end
+
+
+end
+
+
+function plot_first_vs_second(config,bands_info,plv_dataset)
 
 colors = [0    0.4470    0.7410;...
     0.8500    0.3250    0.0980;...
@@ -235,60 +280,59 @@ colors = [0    0.4470    0.7410;...
 fig = figure('WindowState', 'maximized');
 hold on
 for iband = 1 : numel(bands_info)
-    
- 
+
+
     % Get the pow in the current frequencies
     current_band = bands_info(iband).name;
-    current_human = squeeze(plv_human_dataset(:,:,iband,:,:));
-    current_human = nanmean(current_human,4);
+    current_first = squeeze(plv_dataset(:,:,iband,1,:));
     % Create the upper matrix mask
-    triu_mask = triu(ones(size(current_human(:,:,1))));
-    triu_mask = repmat(triu_mask,1,1,size(current_human,3));
+    triu_mask = triu(ones(size(current_first(:,:,1))));
+    triu_mask = repmat(triu_mask,1,1,size(current_first,3));
     triu_mask = logical(triu_mask);
-    current_human = current_human(triu_mask);
-    current_sEEGnal = squeeze(plv_sEEGnal_dataset(:,:,iband,:));
-    current_sEEGnal = current_sEEGnal(triu_mask);
-    
+    current_first = current_first(triu_mask);
+    current_second = squeeze(plv_dataset(:,:,iband,2,:));
+    current_second = current_second(triu_mask);
+
     % Remove the nans
-    nans_mask = isnan(current_human) | isnan(current_sEEGnal);
-    current_human = current_human(~nans_mask);
-    current_sEEGnal = current_sEEGnal(~nans_mask);
-    
+    nans_mask = isnan(current_first) | isnan(current_second);
+    current_first = current_first(~nans_mask);
+    current_second = current_second(~nans_mask);
+
     % Plot
     subplot(2,3,iband)
-    s = scatter(current_human,current_sEEGnal,'filled');
+    s = scatter(current_first,current_second,'filled');
     s.SizeData = 10;
     s.MarkerEdgeColor = colors(iband,:);
     s.MarkerFaceColor = colors(iband,:);
     s.MarkerFaceAlpha = 0.2;
     s.MarkerEdgeAlpha = s.MarkerFaceAlpha;
-    
+
     % Set the limits of the axis to be square
     lims = axis;
     xlim([min(lims) max(lims)])
     ylim([min(lims) max(lims)])
     axis square
-    
+
     % lsline
     ls = lsline;
     ls.Color = [255 136 136]/255;
     ls.LineWidth = 2;
-    
+
     % Plot the identity line
     l = line([min(lims) max(lims)],[min(lims) max(lims)],'Color','black','LineStyle','--');
-    
+
     % Info
     title(sprintf('%s band correlation',current_band))
-    xlabel('Human Expert')
-    ylabel('sEEGnal')
+    xlabel('First recording')
+    ylabel('Second recording')
 
 end
 
-    
+
 % Save the figure
-outfile = sprintf('%s/plv_corr.svg',config.path.figures);
+outfile = sprintf('%s/%s_plv_first_vs_second.svg',config.path.figures,...
+    config.tasks{config.itask});
 saveas(fig,outfile);
 close(fig);
 
 end
-
