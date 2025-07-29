@@ -39,76 +39,70 @@ bands_info = struct('name',{'delta', 'theta','alpha','beta','gamma'},...
 % Stats
 % Output struct
 results = [];
+stats = []; % dimensions: [channels,recordings,bands]
+stats.NRMSE = nan(numel (complete_channel_labels),size(plv_sEEGnal_dataset,4),numel(bands_info));
+stats.rho = nan(numel (complete_channel_labels),size(plv_sEEGnal_dataset,4),numel(bands_info));
+stats.tstat = nan(numel (complete_channel_labels),size(plv_sEEGnal_dataset,4),numel(bands_info));
+stats.cohen_d = nan(numel (complete_channel_labels),size(plv_sEEGnal_dataset,4),numel(bands_info));
+stats.p = nan(numel (complete_channel_labels),size(plv_sEEGnal_dataset,4),numel(bands_info));
+
 
 for iband = 1 : numel(bands_info)
-    
+
     % For saving purposes
     current_band = bands_info(iband).name;
-    
-    % To do the mean and std of the statistics
-    stats = [];
-    stats.NMSE = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    stats.rho = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    stats.tstat = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    stats.cohen_d = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    stats.p = nan(numel (complete_channel_labels),size(plv_lemon_dataset,4));
-    
+
     for ichannel = 1 : numel(complete_channel_labels)
-        
+
         % Get the current band matrix
         current_band_plv_lemon = squeeze(plv_lemon_dataset(:,:,iband,:));
         current_band_plv_sEEGnal = squeeze(plv_sEEGnal_dataset(:,:,iband,:));
-        
+
         % Get the current PLV for a channel with the rest of the channels
         % Just interested in interconnectivity, not intra-connectivity
         current_band_plv_lemon = squeeze(current_band_plv_lemon(:,ichannel,:));
         current_band_plv_lemon(ichannel,:) = [];
         current_band_plv_sEEGnal = squeeze(current_band_plv_sEEGnal(:,ichannel,:));
         current_band_plv_sEEGnal(ichannel,:) = [];
-        
+
         % For each subject, estimate the NMSE, corr, and t-test comparing
         % the two pre-processing pipelines
         for isubject = 1 : size(current_band_plv_lemon,2)
-            
+
             % NMSE
             lemon = current_band_plv_lemon(:,isubject);
             sEEGnal = current_band_plv_sEEGnal(:,isubject);
             MSE = nanmean((lemon - sEEGnal).^2);
             RMSE = sqrt(MSE);
             NRMSE = RMSE / 2; % To normalize we use the range, in PLV [-1 1]
-            stats.NRMSE(ichannel,isubject) = NRMSE;
-            
+            stats.NRMSE(ichannel,isubject,iband) = NRMSE;
+
             % corr
             [rho,~] = corrcoef(lemon,sEEGnal,'Rows','complete');
-            stats.rho(ichannel,isubject) = rho(1,2);
-            
+            stats.rho(ichannel,isubject,iband) = rho(1,2);
+
             % t-test and  Effect Size (Cohen's d)
             diff = lemon - sEEGnal;
             [~,p,~,t_stats] = ttest(diff);
             diff = abs(lemon - sEEGnal);
             d = mean(diff)/std(diff);
-            stats.tstat(ichannel,isubject) = t_stats.tstat;
-            stats.cohen_d(ichannel,isubject) = d;
-            stats.p(ichannel,isubject) = p;
-            
+            stats.tstat(ichannel,isubject,iband) = t_stats.tstat;
+            stats.cohen_d(ichannel,isubject,iband) = d;
+            stats.p(ichannel,isubject,iband) = p;
+
         end
-        
-        
+
+
     end
-    
-    % Save
-    results.stats.(current_band).NRMSE = stats.NRMSE;
-    results.stats.(current_band).rho = stats.rho;
-    results.stats.(current_band).tstat = stats.tstat;
-    results.stats.(current_band).cohen_d = stats.cohen_d;
-    results.stats.(current_band).p = stats.p;
-    
+
 end
 
 % Complete the information
-results.testers = testers;
+results.stats = stats;
+results.dimensions = ['channels','recordings','bands'];
 results.complete_channel_labels = complete_channel_labels;
 results.bands_info = bands_info;
+
 
 % Save the file
 outfile = sprintf('%s/plv_results.mat',config.path.results);
@@ -124,14 +118,14 @@ dataset_path = sprintf('%s/%s/%s_dataset.mat',config.path.clean_data,...
 dummy = load(dataset_path);
 
 for icurrent = 1 : numel(dummy.dataset)
-    
+
     % Load plv
     plv = load(sprintf('../../../../%s/%s',dummy.dataset(icurrent).plv.path,...
         dummy.dataset(icurrent).plv.file));
-    
+
     % Save bands_info
     bands_info = plv.bands_info;
-    
+
     % Create the PLV_all struct and the channels info
     if icurrent == 1
         n_sensors = numel(plv.channels_included_index);
@@ -142,18 +136,18 @@ for icurrent = 1 : numel(dummy.dataset)
         channels = struct('channels_included',[],...
             'channels_included_index',[]);
     end
-    
+
     % Save each PLV
     for iband = 1 : numel(bands_info)
-        
+
         plv_dataset(:,:,iband,icurrent) = plv.(bands_info(iband).name).plv;
-        
+
     end
-    
+
     % Save the channel information
     channels(icurrent).channels_included = plv.channels_included;
     channels(icurrent).channels_included_index = plv.channels_included_index;
-    
+
 end
 
 end
