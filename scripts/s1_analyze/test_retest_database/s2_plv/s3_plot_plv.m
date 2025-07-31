@@ -216,8 +216,11 @@ end
 
 function plot_violinplot(config,stats,bands_info)
 
-% Remove the broadband
-bands_info = bands_info(1:end-1);
+colors = [0    0.4470    0.7410;...
+    0.8500    0.3250    0.0980;...
+    0.9290    0.6940    0.1250;...
+    0.4940    0.1840    0.5560;...
+    0.4660    0.6740    0.1880];
 
 for imeasure = 1 : numel(config.measures)
 
@@ -238,10 +241,11 @@ for imeasure = 1 : numel(config.measures)
         x_vector = iband * ones(numel(current_stats_band),1);
 
         % Plot
-        sw = swarmchart(x_vector,current_stats_band,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
-        bx = boxchart(x_vector,current_stats_band,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
-            'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
-
+        sw = swarmchart(x_vector,current_stats_band,...
+        'MarkerFaceColor', colors(iband,:),'MArkerEdgeColor',colors(iband,:),...
+        'MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
+        bx = boxchart(x_vector,current_stats_band,'BoxFaceColor',colors(iband,:) ./ 1.2,'WhiskerLineColor',colors(iband,:) ./ 1.2,...
+        'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
 
     end
 
