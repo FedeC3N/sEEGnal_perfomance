@@ -64,7 +64,7 @@ config.bands_info = stats.bands_info;
 config.measures = {'NRMSE'};
 
 % Desired tasks
-config.tasks = {'EO'};
+config.tasks = {'EO','EC'};
 
 for itask = 1 : numel(config.tasks)
 
@@ -89,7 +89,7 @@ for itask = 1 : numel(config.tasks)
     plot_stats_in_head(config,current_stats)
 
     % Normalized pow spectrum for all areas in broadband
-    plot_pow_spectrum_norm_one_subject(config,pow_dataset_norm);
+    % plot_pow_spectrum_norm_one_subject(config,pow_dataset_norm);
 
     % Violinplots
     plot_violinplot(config,stats.stats,stats.bands_info)
@@ -285,6 +285,12 @@ end
 
 function plot_violinplot(config,stats,bands_info)
 
+colors = [0    0.4470    0.7410;...
+    0.8500    0.3250    0.0980;...
+    0.9290    0.6940    0.1250;...
+    0.4940    0.1840    0.5560;...
+    0.4660    0.6740    0.1880];
+
 % Remove the broadband
 bands_info = bands_info(1:end-1);
 
@@ -307,9 +313,11 @@ for imeasure = 1 : numel(config.measures)
         x_vector = iband * ones(numel(current_stats_band),1);
 
         % Plot
-        sw = swarmchart(x_vector,current_stats_band,'filled','MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
-        bx = boxchart(x_vector,current_stats_band,'BoxFaceColor',sw.CData ./ 1.2,'WhiskerLineColor',sw.CData ./ 1.2,...
-            'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
+        sw = swarmchart(x_vector,current_stats_band,...
+        'MarkerFaceColor', colors(iband,:),'MArkerEdgeColor',colors(iband,:),...
+        'MarkerFaceAlpha',0.5,'MarkerEdgeAlpha',0.5);
+        bx = boxchart(x_vector,current_stats_band,'BoxFaceColor',colors(iband,:) ./ 1.2,'WhiskerLineColor',colors(iband,:) ./ 1.2,...
+        'MarkerStyle','none','BoxWidth',sw.XJitterWidth);
 
 
     end
